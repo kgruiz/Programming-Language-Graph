@@ -75,6 +75,7 @@ interface GraphOptionsExtended extends Options {
 }
 
 const graphOptionsBase: GraphOptionsExtended = {
+    // This object is stable
     layout: {
         hierarchical: {
             enabled: true,
@@ -242,7 +243,6 @@ const HomePage: React.FC = () => {
                 );
                 return;
             }
-
             console.log(
                 'Data initialization useEffect: vis script IS loaded and window.vis.DataSet IS available. Processing data...'
             );
@@ -342,21 +342,26 @@ const HomePage: React.FC = () => {
         }
     }, [isVisScriptLoaded]);
 
+    // Memoize callback functions
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
-    }, []);
+    }, []); // Empty dependency array: this function never needs to change
 
     const handleCloseSidebar = useCallback(() => {
         setSelectedNodeId(null);
-    }, []);
+    }, []); // Empty dependency array
 
     const handleStabilizationDone = useCallback(() => {
-        // console.log("Stabilization done");
-    }, []);
+        console.log(
+            'HomePage: stabilizationIterationsDone received by HomePage'
+        );
+        // If you want to tie any specific HomePage logic to this, do it here.
+        // For example, if there was a specific "graph is ready" loading state.
+    }, []); // Empty dependency array
 
     const setNetwork = useCallback((network: any | null) => {
         networkInstanceRef.current = network;
-    }, []);
+    }, []); // Empty dependency array
 
     const highlightNodes = useCallback(
         (category: string, type: 'good' | 'bad') => {
@@ -526,10 +531,9 @@ const HomePage: React.FC = () => {
             </Head>
             <Script
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-                strategy="afterInteractive" // Changed strategy to afterInteractive
+                strategy="afterInteractive"
                 onLoad={() => {
                     console.log('vis-network SCRIPT onLoad: Fired.');
-                    // More direct check for window.vis
                     if (
                         window.vis &&
                         typeof window.vis.DataSet === 'function' &&
@@ -546,15 +550,13 @@ const HomePage: React.FC = () => {
                                 visExists: typeof window.vis !== 'undefined',
                                 visDataSetType: typeof window.vis?.DataSet,
                                 visNetworkType: typeof window.vis?.Network,
-                                visObject: window.vis, // Log the whole vis object if it exists
+                                visObject: window.vis,
                             }
                         );
-                        // No timeout here for now, let's see the direct logs first
                     }
                 }}
                 onError={(e) => {
                     console.error('Error loading vis-network script:', e);
-                    // Consider setting a global error state to inform the user
                 }}
             />
             <PageContainer>
@@ -579,7 +581,7 @@ const HomePage: React.FC = () => {
                             <GraphComponentWithNoSSR
                                 nodesData={nodesDataSet}
                                 edgesData={edgesDataSet}
-                                options={graphOptionsBase as Options}
+                                options={graphOptionsBase as Options} // graphOptionsBase is stable
                                 onNodeClick={handleNodeClick}
                                 onStabilizationDone={handleStabilizationDone}
                                 setNetworkInstance={setNetwork}
