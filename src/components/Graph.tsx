@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-// Types will be used, but constructors will come from window.vis
-import type { Options } from '@/types'; // Use re-exported Options type
+import type { Options } from '@/types';
 import styled from '@emotion/styled';
 import {
     VisDataSetNodes,
@@ -9,7 +8,6 @@ import {
     InfluenceEdge,
 } from '@/types';
 
-// Forward declaration for window.vis
 declare const vis: any;
 
 interface GraphProps {
@@ -18,19 +16,21 @@ interface GraphProps {
     options: Options;
     onNodeClick: (nodeId: string | null) => void;
     onStabilizationDone: () => void;
-    setNetworkInstance: (network: any | null) => void; // network will be window.vis.Network
+    setNetworkInstance: (network: any | null) => void;
 }
 
 const GraphContainerDiv = styled.div`
     flex-grow: 1;
     position: relative;
     overflow: hidden;
+    border: 1px solid red; /* DEBUG: See if this container is rendered and where */
+    min-height: 300px; /* DEBUG: Give it some minimum height */
 `;
 
 const LanguageGraphDiv = styled.div`
     width: 100%;
     height: 100%;
-    border: none;
+    border: 1px solid blue; /* DEBUG: See this inner container */
     box-sizing: border-box;
     background-color: ${(props) => props.theme.colors.background};
 `;
@@ -44,55 +44,103 @@ const GraphComponent: React.FC<GraphProps> = ({
     setNetworkInstance,
 }) => {
     const graphRef = useRef<HTMLDivElement>(null);
-    const networkRef = useRef<any | null>(null); // Type as any or window.vis.Network
+    const networkRef = useRef<any | null>(null);
 
     useEffect(() => {
+        console.log(
+            'GraphComponent useEffect: Running. nodesData:',
+            nodesData,
+            'edgesData:',
+            edgesData
+        );
         if (
             typeof window.vis === 'undefined' ||
             !window.vis.Network ||
             !window.vis.DataSet
         ) {
-            // vis-network not loaded yet, or not fully.
+            console.log(
+                'GraphComponent useEffect: vis-network not loaded yet, or not fully.'
+            );
             return;
         }
 
-        if (graphRef.current && nodesData && edgesData) {
+        if (
+            graphRef.current &&
+            nodesData &&
+            edgesData &&
+            nodesData.length > 0
+        ) {
+            // Added nodesData.length check
+            console.log(
+                'GraphComponent useEffect: All conditions met, initializing network.'
+            );
             if (networkRef.current) {
+                console.log(
+                    'GraphComponent useEffect: Destroying previous network instance.'
+                );
                 networkRef.current.destroy();
             }
 
-            const network = new window.vis.Network(
-                graphRef.current,
-                { nodes: nodesData, edges: edgesData },
-                options
-            );
+            try {
+                const network = new window.vis.Network(
+                    graphRef.current,
+                    { nodes: nodesData, edges: edgesData },
+                    options
+                );
+                console.log(
+                    'GraphComponent useEffect: Network initialized successfully.'
+                );
 
-            network.on('click', (params: any) => {
-                // params type can be more specific if needed
-                if (params.nodes.length > 0) {
-                    onNodeClick(params.nodes[0] as string);
-                } else {
-                    onNodeClick(null);
-                }
-            });
+                network.on('click', (params: any) => {
+                    if (params.nodes.length > 0) {
+                        onNodeClick(params.nodes[0] as string);
+                    } else {
+                        onNodeClick(null);
+                    }
+                });
 
-            network.on('stabilizationIterationsDone', () => {
-                onStabilizationDone();
-            });
+                network.on('stabilizationIterationsDone', () => {
+                    console.log(
+                        'GraphComponent: stabilizationIterationsDone event'
+                    );
+                    onStabilizationDone();
+                });
 
-            networkRef.current = network;
-            setNetworkInstance(network);
+                network.on('afterDrawing', () => {
+                    console.log('GraphComponent: afterDrawing event');
+                });
+
+                networkRef.current = network;
+                setNetworkInstance(network);
+            } catch (error) {
+                console.error(
+                    'GraphComponent useEffect: Error initializing vis.Network:',
+                    error
+                );
+            }
 
             return () => {
                 if (networkRef.current) {
+                    console.log(
+                        'GraphComponent cleanup: Destroying network instance.'
+                    );
                     networkRef.current.destroy();
                     networkRef.current = null;
                     setNetworkInstance(null);
                 }
             };
+        } else {
+            console.log(
+                'GraphComponent useEffect: Conditions not met for network initialization.',
+                {
+                    graphRefCurrent: !!graphRef.current,
+                    hasNodesData: !!nodesData,
+                    hasEdgesData: !!edgesData,
+                    nodesDataLength: nodesData?.length,
+                }
+            );
         }
     }, [
-        // Add nodesData and edgesData to dependency array to re-init if they change
         nodesData,
         edgesData,
         options,
@@ -101,6 +149,23 @@ const GraphComponent: React.FC<GraphProps> = ({
         setNetworkInstance,
     ]);
 
+    if (!nodesData || !edgesData) {
+        console.log(
+            'GraphComponent render: nodesData or edgesData is null, rendering nothing for graph area.'
+        );
+        return <GraphContainerDiv>Graph data not ready...</GraphContainerDiv>; // Or some placeholder
+    }
+    if (nodesData.length === 0) {
+        console.log(
+            'GraphComponent render: nodesData is empty, rendering message.'
+        );
+        return <GraphContainerDiv>No nodes to display.</GraphContainerDiv>;
+    }
+
+    console.log(
+        'GraphComponent render: Rendering LanguageGraphDiv. nodesData length:',
+        nodesData.length
+    );
     return (
         <GraphContainerDiv>
             <LanguageGraphDiv ref={graphRef} />
