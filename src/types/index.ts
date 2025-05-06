@@ -1,30 +1,21 @@
-import { DataSet, IdType } from 'vis-network/standalone'; // Import IdType
+// Revert DataSet, IdType, Node, Edge to /standalone
+import { DataSet, IdType, Node, Edge } from 'vis-network/standalone';
 
-export interface LanguageNode {
-    id: string;
+export interface LanguageNode extends Node {
+    id: IdType;
     label: string;
     labelOriginal: string;
     group: string;
-    shape: 'box';
     goodAtCategories: string[];
     badAtCategories: string[];
     goodTagsDisplay: string[];
     badTagsDisplay: string[];
-    color?: { background?: string; border?: string };
-    font?: { color?: string };
-    borderWidth?: number;
 }
 
-export type LanguageNodes = LanguageNode[];
-
-export interface InfluenceEdge {
-    from: string;
-    to: string;
-    arrows: 'to';
-    id?: IdType; // <--- ADD THIS LINE (Optional ID for edges)
+export interface InfluenceEdge extends Edge {
+    from: IdType;
+    to: IdType;
 }
-
-export type InfluenceEdges = InfluenceEdge[];
 
 export interface SyntaxData {
     [language: string]: string;
@@ -55,5 +46,5 @@ export interface VisNodeStyle {
 
 export type AllNodesOriginalStyles = Map<string, VisNodeStyle>;
 
-export type VisDataSetNodes = DataSet<LanguageNode>;
-export type VisDataSetEdges = DataSet<InfluenceEdge>;
+export type VisDataSetNodes = DataSet<LanguageNode, 'id'>;
+export type VisDataSetEdges = DataSet<InfluenceEdge, 'id'>;

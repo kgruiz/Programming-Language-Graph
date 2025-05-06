@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import styled from '@emotion/styled';
+// Revert DataSet and Network to /standalone, keep Options and other types from the main entry
 import {
     DataSet,
     Network,
@@ -10,6 +11,7 @@ import {
     EdgeOptions,
     Color,
     Font,
+    IdType,
 } from 'vis-network/standalone';
 
 import Controls from '@/components/Controls';
@@ -28,16 +30,15 @@ import {
 
 import {
     LanguageNode,
-    // InfluenceEdge, // Not directly used here, but EdgeOptions covers it
     AllNodesOriginalStyles,
     VisNodeStyle,
     VisDataSetNodes,
     VisDataSetEdges,
     CategoryShortToFullName as CategoryShortToFullNameType,
+    InfluenceEdge, // Added back InfluenceEdge for DataSet<InfluenceEdge>
 } from '@/types';
-import theme from '@/styles/theme'; // AppTheme not explicitly needed if theme is used directly
+import theme from '@/styles/theme';
 
-// Dynamically import GraphComponent for client-side rendering
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
     ssr: false,
 });
@@ -45,14 +46,14 @@ const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
 const PageContainer = styled.div`
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Full viewport height */
-    width: 100vw; /* Full viewport width */
+    height: 100vh;
+    width: 100vw;
 `;
 
 const MainContent = styled.div`
     flex-grow: 1;
     display: flex;
-    position: relative; /* For absolute positioning of sidebar/loading */
+    position: relative;
 `;
 
 interface GroupOptionsExtended extends NodeOptions {
@@ -186,18 +187,15 @@ const graphOptionsBase: GraphOptionsExtended = {
     },
 };
 
-// Apply highlight/hover colors to groups
 if (graphOptionsBase.groups) {
     Object.values(graphOptionsBase.groups).forEach(
         (group: GroupOptionsExtended) => {
             if (group.color && typeof group.color === 'object') {
-                // Now group.color is known to be an object with potential background/border
                 const baseColor = group.color as {
                     background?: string;
                     border?: string;
                 };
                 group.color.highlight = {
-                    // This assumes group.color is an object, which it is by this point
                     background: baseColor.border,
                     border: baseColor.border,
                 };
@@ -225,7 +223,6 @@ const HomePage: React.FC = () => {
     const networkInstanceRef = useRef<Network | null>(null);
 
     useEffect(() => {
-        // Initialize DataSets and original styles
         const processedNodes: LanguageNode[] = rawNodes.map((node) => {
             const originalLabel = node.label;
             const langRankings = languageRankingsData[originalLabel];
@@ -253,6 +250,7 @@ const HomePage: React.FC = () => {
             }
             return {
                 ...node,
+                id: node.id as IdType,
                 labelOriginal: originalLabel,
                 goodAtCategories,
                 badAtCategories,
@@ -261,10 +259,11 @@ const HomePage: React.FC = () => {
             };
         });
 
-        nodesDataSetRef.current = new DataSet(processedNodes);
-        edgesDataSetRef.current = new DataSet(rawEdges);
+        nodesDataSetRef.current = new DataSet<LanguageNode, 'id'>(
+            processedNodes
+        );
+        edgesDataSetRef.current = new DataSet<InfluenceEdge, 'id'>(rawEdges);
 
-        // Store original styles after datasets are created
         const tempStyles = new Map<string, VisNodeStyle>();
         nodesDataSetRef.current.forEach((node: LanguageNode) => {
             const groupSettings = graphOptionsBase.groups?.[node.group];
@@ -282,24 +281,22 @@ const HomePage: React.FC = () => {
                 typeof groupSettings.color === 'object'
             ) {
                 const grpColor = groupSettings.color as {
-                    // groupSettings.color is GroupOptionsExtended['color']
                     background?: string;
                     border?: string;
                 };
                 bg = grpColor.background || bg;
                 bd = grpColor.border || bd;
             }
-            tempStyles.set(node.id, {
+            tempStyles.set(node.id as string, {
                 color: { background: bg, border: bd },
                 font: { color: fontColor },
                 borderWidth: graphOptionsBase.nodes?.borderWidth || 0.8,
-                label: node.labelOriginal, // Store original label for reset
+                label: node.labelOriginal,
             });
         });
         allNodesOriginalStylesRef.current = tempStyles;
 
-        // Simulate loading
-        const timer = setTimeout(() => setIsLoading(false), 1500); // Fallback if stabilization event doesn't fire
+        const timer = setTimeout(() => setIsLoading(false), 1500);
         return () => clearTimeout(timer);
     }, []);
 
@@ -325,13 +322,13 @@ const HomePage: React.FC = () => {
                 return;
 
             const updates: Partial<LanguageNode>[] = [];
-            nodesDataSetRef.current.getIds().forEach((nodeId) => {
+            nodesDataSetRef.current.getIds().forEach((nodeIdUntyped) => {
+                const nodeId = nodeIdUntyped as string;
                 const node = nodesDataSetRef.current!.get(
-                    nodeId as string
+                    nodeId as IdType
                 ) as LanguageNode;
-                const originalStyle = allNodesOriginalStylesRef.current.get(
-                    nodeId as string
-                );
+                const originalStyle =
+                    allNodesOriginalStylesRef.current.get(nodeId);
                 if (!node || !originalStyle) return;
 
                 const langRankings = languageRankingsData[node.labelOriginal];
@@ -353,10 +350,10 @@ const HomePage: React.FC = () => {
                                     ? theme.colors.highlightGood
                                     : theme.colors.highlightBad,
                             background: (originalStyle.color as Color)
-                                .background, // Assert originalStyle.color is an object
+                                .background,
                         },
                         borderWidth: 2.5,
-                        font: { color: (originalStyle.font as Font).color }, // Assert originalStyle.font is an object
+                        font: { color: (originalStyle.font as Font).color },
                     };
                 } else {
                     newStyle = {
@@ -384,15 +381,14 @@ const HomePage: React.FC = () => {
         setActiveHighlightType(null);
 
         const updates: Partial<LanguageNode>[] = [];
-        nodesDataSetRef.current.getIds().forEach((nodeId) => {
-            const originalStyle = allNodesOriginalStylesRef.current.get(
-                nodeId as string
-            );
+        nodesDataSetRef.current.getIds().forEach((nodeIdUntyped) => {
+            const nodeId = nodeIdUntyped as string;
+            const originalStyle = allNodesOriginalStylesRef.current.get(nodeId);
             if (originalStyle) {
                 updates.push({
-                    id: nodeId as string,
-                    color: originalStyle.color, // This is fine as originalStyle.color is already { background, border }
-                    font: originalStyle.font, // This is fine as originalStyle.font is already { color }
+                    id: nodeId as IdType,
+                    color: originalStyle.color,
+                    font: originalStyle.font,
                     borderWidth: originalStyle.borderWidth,
                 });
             }
@@ -421,7 +417,9 @@ const HomePage: React.FC = () => {
     };
 
     const selectedNodeDetails = selectedNodeId
-        ? (nodesDataSetRef.current?.get(selectedNodeId) as LanguageNode)
+        ? (nodesDataSetRef.current?.get(
+              selectedNodeId as IdType
+          ) as LanguageNode)
         : null;
 
     useEffect(() => {
@@ -438,9 +436,9 @@ const HomePage: React.FC = () => {
                     !sidebarElement.contains(event.target as Node) &&
                     graphElement &&
                     graphElement.contains(event.target as Node) &&
-                    networkInstanceRef.current && // Check if network instance exists
+                    networkInstanceRef.current &&
                     typeof networkInstanceRef.current.getNodeAt ===
-                        'function' && // Check if getNodeAt is a function
+                        'function' &&
                     !networkInstanceRef.current.getNodeAt(
                         (event as any).pointer?.canvas || {
                             x: event.clientX,
@@ -489,7 +487,7 @@ const HomePage: React.FC = () => {
                     <GraphComponentWithNoSSR
                         nodesData={nodesDataSetRef.current}
                         edgesData={edgesDataSetRef.current}
-                        options={graphOptionsBase as Options} // Cast back to Options for the component
+                        options={graphOptionsBase as Options}
                         onNodeClick={handleNodeClick}
                         onStabilizationDone={handleStabilizationDone}
                         setNetworkInstance={setNetwork}

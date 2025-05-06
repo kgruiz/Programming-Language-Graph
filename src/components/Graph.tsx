@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Network, Options } from 'vis-network/standalone';
+// Ensure DataSet, Network, Options are from standalone for consistency with other files
+import { Network, Options, DataSet } from 'vis-network/standalone';
 import styled from '@emotion/styled';
 import {
-    LanguageNode,
-    InfluenceEdge,
     VisDataSetNodes,
     VisDataSetEdges,
+    LanguageNode, // Import for clarity if needed, though VisDataSetNodes implies it
+    InfluenceEdge, // Import for clarity
 } from '@/types';
-import { AppTheme } from '@/styles/theme';
 
 interface GraphProps {
     nodesData: VisDataSetNodes | null;
@@ -44,13 +44,21 @@ const GraphComponent: React.FC<GraphProps> = ({
     const networkRef = useRef<Network | null>(null);
 
     useEffect(() => {
+        // After this check, nodesData and edgesData are guaranteed to be
+        // DataSet<LanguageNode, 'id'> and DataSet<InfluenceEdge, 'id'> respectively.
         if (graphRef.current && nodesData && edgesData) {
             if (networkRef.current) {
-                networkRef.current.destroy(); // Destroy previous instance if any
+                networkRef.current.destroy();
             }
+
+            // Directly use nodesData and edgesData as they are already DataSet instances.
+            // The types VisDataSetNodes (DataSet<LanguageNode, 'id'>) and
+            // VisDataSetEdges (DataSet<InfluenceEdge, 'id'>) should be compatible
+            // with what the Network constructor expects, given LanguageNode extends Node
+            // and InfluenceEdge extends Edge from vis-network.
             const network = new Network(
                 graphRef.current,
-                { nodes: nodesData, edges: edgesData },
+                { nodes: nodesData, edges: edgesData }, // Pass them directly
                 options
             );
 
@@ -67,7 +75,7 @@ const GraphComponent: React.FC<GraphProps> = ({
             });
 
             networkRef.current = network;
-            setNetworkInstance(network); // Pass instance to parent
+            setNetworkInstance(network);
 
             return () => {
                 if (networkRef.current) {
