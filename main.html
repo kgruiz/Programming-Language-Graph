@@ -796,7 +796,7 @@
                         options.groups[groupName].color.highlight = {
                             // Make highlight slightly brighter than border
                             background: baseColor.border, // Use border color as background highlight
-                            border: vis.util.parseColor(baseColor.border).border // Keep border color bright
+                            border: baseColor.border // Use the same border color for highlight
                         };
                         options.groups[groupName].color.hover = {
                             // Keep hover subtle
