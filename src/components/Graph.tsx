@@ -4,8 +4,8 @@ import styled from '@emotion/styled';
 import {
     VisDataSetNodes,
     VisDataSetEdges,
-    LanguageNode,
-    InfluenceEdge,
+    // LanguageNode, // Not strictly needed if VisDataSetNodes is used
+    // InfluenceEdge // Not strictly needed if VisDataSetEdges is used
 } from '@/types';
 
 declare const vis: any;
@@ -20,17 +20,17 @@ interface GraphProps {
 }
 
 const GraphContainerDiv = styled.div`
-    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1; // Shorthand for flex-grow: 1, flex-shrink: 1, flex-basis: 0%
+    min-height: 0; // Important for flex children that grow
     position: relative;
     overflow: hidden;
-    border: 1px solid red; /* DEBUG: See if this container is rendered and where */
-    min-height: 300px; /* DEBUG: Give it some minimum height */
 `;
 
 const LanguageGraphDiv = styled.div`
     width: 100%;
     height: 100%;
-    border: 1px solid blue; /* DEBUG: See this inner container */
     box-sizing: border-box;
     background-color: ${(props) => props.theme.colors.background};
 `;
@@ -48,10 +48,12 @@ const GraphComponent: React.FC<GraphProps> = ({
 
     useEffect(() => {
         console.log(
-            'GraphComponent useEffect: Running. nodesData:',
-            nodesData,
-            'edgesData:',
-            edgesData
+            'GraphComponent useEffect: Running. nodesData available:',
+            !!nodesData,
+            'edgesData available:',
+            !!edgesData,
+            'nodesData length:',
+            nodesData?.length
         );
         if (
             typeof window.vis === 'undefined' ||
@@ -70,7 +72,6 @@ const GraphComponent: React.FC<GraphProps> = ({
             edgesData &&
             nodesData.length > 0
         ) {
-            // Added nodesData.length check
             console.log(
                 'GraphComponent useEffect: All conditions met, initializing network.'
             );
@@ -107,7 +108,8 @@ const GraphComponent: React.FC<GraphProps> = ({
                 });
 
                 network.on('afterDrawing', () => {
-                    console.log('GraphComponent: afterDrawing event');
+                    // This log can be spammy, keep it commented out unless actively debugging drawing loops
+                    // console.log("GraphComponent: afterDrawing event");
                 });
 
                 networkRef.current = network;
@@ -150,22 +152,13 @@ const GraphComponent: React.FC<GraphProps> = ({
     ]);
 
     if (!nodesData || !edgesData) {
-        console.log(
-            'GraphComponent render: nodesData or edgesData is null, rendering nothing for graph area.'
-        );
-        return <GraphContainerDiv>Graph data not ready...</GraphContainerDiv>; // Or some placeholder
+        return <GraphContainerDiv>Graph data not ready...</GraphContainerDiv>;
     }
-    if (nodesData.length === 0) {
-        console.log(
-            'GraphComponent render: nodesData is empty, rendering message.'
-        );
-        return <GraphContainerDiv>No nodes to display.</GraphContainerDiv>;
+    if (nodesData.length === 0 && edgesData.length === 0) {
+        // Check edgesData length too
+        return <GraphContainerDiv>No graph data to display.</GraphContainerDiv>;
     }
 
-    console.log(
-        'GraphComponent render: Rendering LanguageGraphDiv. nodesData length:',
-        nodesData.length
-    );
     return (
         <GraphContainerDiv>
             <LanguageGraphDiv ref={graphRef} />

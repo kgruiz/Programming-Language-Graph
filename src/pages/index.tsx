@@ -49,12 +49,16 @@ const PageContainer = styled.div`
     flex-direction: column;
     height: 100vh;
     width: 100vw;
+    overflow: hidden;
 `;
 
 const MainContent = styled.div`
-    flex-grow: 1;
     display: flex;
+    flex-direction: column; // Children (GraphComponent) will stack vertically
+    flex: 1; // Shorthand for flex-grow: 1, flex-shrink: 1, flex-basis: 0%
+    min-height: 0; // Important for flex children that grow, prevents collapsing
     position: relative;
+    overflow: hidden;
 `;
 
 interface GroupOptionsExtended extends NodeOptions {
@@ -75,7 +79,6 @@ interface GraphOptionsExtended extends Options {
 }
 
 const graphOptionsBase: GraphOptionsExtended = {
-    // This object is stable
     layout: {
         hierarchical: {
             enabled: true,
@@ -342,26 +345,23 @@ const HomePage: React.FC = () => {
         }
     }, [isVisScriptLoaded]);
 
-    // Memoize callback functions
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
-    }, []); // Empty dependency array: this function never needs to change
+    }, []);
 
     const handleCloseSidebar = useCallback(() => {
         setSelectedNodeId(null);
-    }, []); // Empty dependency array
+    }, []);
 
     const handleStabilizationDone = useCallback(() => {
         console.log(
             'HomePage: stabilizationIterationsDone received by HomePage'
         );
-        // If you want to tie any specific HomePage logic to this, do it here.
-        // For example, if there was a specific "graph is ready" loading state.
-    }, []); // Empty dependency array
+    }, []);
 
     const setNetwork = useCallback((network: any | null) => {
         networkInstanceRef.current = network;
-    }, []); // Empty dependency array
+    }, []);
 
     const highlightNodes = useCallback(
         (category: string, type: 'good' | 'bad') => {
@@ -581,7 +581,7 @@ const HomePage: React.FC = () => {
                             <GraphComponentWithNoSSR
                                 nodesData={nodesDataSet}
                                 edgesData={edgesDataSet}
-                                options={graphOptionsBase as Options} // graphOptionsBase is stable
+                                options={graphOptionsBase as Options}
                                 onNodeClick={handleNodeClick}
                                 onStabilizationDone={handleStabilizationDone}
                                 setNetworkInstance={setNetwork}
