@@ -6,7 +6,7 @@
             name="viewport"
             content="width=device-width, initial-scale=1.0"
         />
-        <title>Interactive Programming Language Graph (Floating Sidebar)</title>
+        <title>Interactive Programming Language Graph</title>
         <script
             type="text/javascript"
             src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
@@ -17,22 +17,100 @@
                 margin: 0;
                 padding: 0;
                 height: 100%;
-                /* Consistent Apple system font stack */
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
                     Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
                     'Segoe UI Emoji', 'Segoe UI Symbol';
-                overflow: hidden; /* Prevent body scrollbars */
-                background-color: #1d1d1f; /* Slightly softer dark background (Apple-like) */
-                color: #f5f5f7; /* Standard light text for dark mode */
-                /* Keep flex for potential future layout needs, though not strictly necessary now */
+                overflow: hidden;
+                background-color: #1c1c1e; /* Apple Dark Mode Background */
+                color: #f5f5f7;
                 display: flex;
+                flex-direction: column;
+            }
+
+            #controlsContainer {
+                padding: 12px 20px;
+                background-color: #2c2c2e; /* Slightly Lighter Dark Gray */
+                border-bottom: 1px solid #3a3a3c; /* Subtle Separator */
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                align-items: center;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+            }
+
+            #controlsContainer label {
+                font-size: 14px;
+                color: #a0a0a5; /* Lighter gray for label */
+                margin-right: -4px; /* Pull closer to select */
+            }
+
+            #controlsContainer select,
+            #controlsContainer button {
+                padding: 8px 14px;
+                border-radius: 8px;
+                border: 1px solid #48484a;
+                background-color: #363638; /* Control Background */
+                color: #f5f5f7;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.15s ease, border-color 0.15s ease,
+                    box-shadow 0.15s ease;
+                box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+            }
+            #controlsContainer select {
+                min-width: 180px; /* Give select more space for full names */
+                /* Basic custom arrow styling */
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3e%3cpath fill='%23a0a0a5' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 0.7em top 50%;
+                background-size: 0.65em auto;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                padding-right: 2.5em; /* Space for arrow */
+            }
+
+            #controlsContainer select:hover,
+            #controlsContainer button:hover {
+                background-color: #464649;
+                border-color: #5a5a5e;
+            }
+
+            #controlsContainer button:active {
+                background-color: #2a2a2c;
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+            }
+
+            #controlsContainer button.active-highlight-good,
+            #controlsContainer button.active-highlight-bad {
+                color: white;
+                font-weight: 500;
+            }
+            #controlsContainer button.active-highlight-good {
+                background-color: #30d158; /* Brighter Apple Green */
+                border-color: #28a745;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
+                    0 0 0 2px rgba(48, 209, 88, 0.3);
+            }
+            #controlsContainer button.active-highlight-bad {
+                background-color: #ff453a; /* Brighter Apple Red */
+                border-color: #d9362f;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
+                    0 0 0 2px rgba(255, 69, 58, 0.3);
+            }
+            #controlsContainer button#resetHighlights {
+                background-color: #0a84ff; /* Apple Blue */
+                color: white;
+                border-color: #0060df;
+            }
+            #controlsContainer button#resetHighlights:hover {
+                background-color: #0073e6;
             }
 
             #graphContainer {
-                flex-grow: 1; /* Graph takes remaining space */
-                height: 100vh;
-                position: relative; /* Crucial for absolute positioning of children like sidebar */
-                overflow: hidden; /* Hide anything that might overflow */
+                flex-grow: 1;
+                position: relative;
+                overflow: hidden;
             }
 
             #languageGraph {
@@ -40,583 +118,2006 @@
                 height: 100%;
                 border: none;
                 box-sizing: border-box;
-                background-color: #1d1d1f; /* Match body background */
+                background-color: #1c1c1e; /* Match body background */
             }
 
-            /* Style for the loading message */
             #loadingMessage {
                 position: absolute;
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 font-size: 1.1em;
-                color: #a0a0a0; /* Adjusted gray for dark mode */
-                z-index: 10; /* Ensure it's above the graph */
+                color: #a0a0a5;
+                z-index: 10;
             }
 
-            /* --- Sidebar Styles --- */
             #sidebar {
-                width: 350px; /* Slightly wider for more syntax */
+                width: 420px; /* Slightly wider for full names */
                 max-height: calc(
-                    100vh - 40px
-                ); /* Limit height, leave padding */
+                    100vh - 40px - 75px
+                ); /* Adjust for controls height (approx 55px + padding) */
                 background-color: rgba(
                     44,
                     44,
                     46,
-                    0.85
-                ); /* Semi-transparent background */
-                backdrop-filter: blur(
-                    10px
-                ); /* Apply blur for frosted glass effect */
-                -webkit-backdrop-filter: blur(10px); /* Safari */
-                border: 0.5px solid rgba(120, 120, 120, 0.5); /* Subtle border */
-                border-radius: 12px; /* More rounding */
+                    0.88
+                ); /* Dark Gray, slightly more opaque */
+                backdrop-filter: blur(12px) saturate(180%);
+                -webkit-backdrop-filter: blur(12px) saturate(180%);
+                border: 0.5px solid rgba(120, 120, 120, 0.4);
+                border-radius: 14px; /* More pronounced rounding */
                 box-sizing: border-box;
                 padding: 20px;
-                overflow-y: auto; /* Allow scrolling if content overflows */
+                overflow-y: auto;
                 color: #f5f5f7;
-                position: absolute; /* Position relative to graphContainer */
-                right: 20px; /* Position from right */
-                top: 20px; /* Position from top */
-                z-index: 1000; /* Ensure sidebar is on top */
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Enhanced shadow for floating effect */
-                display: none; /* Hidden by default */
-                transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; /* Fade and slight scale */
+                position: absolute;
+                right: 20px;
+                top: 20px;
+                z-index: 1000;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); /* Softer, more spread shadow */
+                display: none;
+                transition: opacity 0.25s ease-in-out,
+                    transform 0.25s ease-in-out;
                 opacity: 0;
-                transform: scale(0.98);
+                transform: scale(0.97) translateX(10px);
             }
 
             #sidebar.visible {
-                display: block; /* Show when visible */
+                display: block;
                 opacity: 1;
-                transform: scale(1);
+                transform: scale(1) translateX(0);
             }
 
             #sidebar h2 {
+                /* Language Name */
                 margin-top: 0;
-                margin-bottom: 15px;
-                font-size: 1.3em; /* Slightly smaller */
-                color: #fff; /* Brighter title */
-                border-bottom: 1px solid rgba(120, 120, 120, 0.5);
-                padding-bottom: 10px;
-            }
-
-            #sidebar h3 {
-                margin-top: 18px;
-                margin-bottom: 8px;
-                font-size: 1em; /* Slightly smaller */
-                color: #ccc; /* Subdued heading color */
+                margin-bottom: 12px;
+                font-size: 1.4em;
+                color: #fff;
+                border-bottom: 1px solid rgba(120, 120, 120, 0.3);
+                padding-bottom: 12px;
                 font-weight: 600;
             }
 
-            #sidebar ul {
+            #languageTagsList {
                 list-style: none;
                 padding: 0;
-                margin: 0 0 15px 0;
+                margin: 0 0 18px 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            #languageTagsList li {
+                padding: 6px 12px;
+                border-radius: 15px; /* Pill shape */
+                font-size: 0.88em;
+                font-weight: 500;
+                color: #fff;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             }
 
-            #sidebar li {
-                margin-bottom: 6px;
-                color: #c0c0c0; /* Adjusted list item color */
-                font-size: 0.95em;
+            #sidebar h3 {
+                /* Section Headers */
+                margin-top: 20px;
+                margin-bottom: 10px;
+                font-size: 1.05em;
+                color: #c0c0c5; /* Lighter gray */
+                font-weight: 600;
+                text-transform: uppercase; /* Optional: for section header style */
+                letter-spacing: 0.5px; /* Optional */
+            }
+
+            #sidebar ul:not(#languageTagsList) {
+                list-style: none;
+                padding: 0;
+                margin: 0 0 18px 0;
+            }
+
+            #sidebar li:not(#languageTagsList li) {
+                margin-bottom: 7px;
+                color: #d2d2d7; /* Slightly lighter list item text */
+                font-size: 0.98em;
             }
 
             #sidebar pre {
-                background-color: rgba(
-                    26,
-                    26,
-                    26,
-                    0.8
-                ); /* Slightly less transparent code bg */
-                border: 1px solid rgba(100, 100, 100, 0.5);
-                border-radius: 6px; /* Match button rounding */
-                padding: 12px;
-                font-family: 'Menlo', 'Monaco', 'Consolas', monospace; /* Monospace font */
-                font-size: 0.85em;
-                color: #d8d8d8;
-                white-space: pre-wrap; /* Wrap long lines */
+                /* Code block */
+                background-color: rgba(20, 20, 22, 0.75);
+                border: 1px solid rgba(80, 80, 80, 0.5);
+                border-radius: 8px;
+                padding: 14px;
+                font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+                font-size: 0.9em;
+                color: #e0e0e0;
+                white-space: pre-wrap;
                 word-wrap: break-word;
-                margin-bottom: 10px; /* Spacing between examples */
+                line-height: 1.45;
             }
-             #sidebar pre:last-of-type {
-                 margin-bottom: 0;
-             }
 
             #closeSidebar {
                 position: absolute;
-                top: 12px; /* Adjust position */
-                right: 12px; /* Adjust position */
-                background: rgba(
-                    80,
-                    80,
-                    80,
-                    0.6
-                ); /* Semi-transparent background */
+                top: 15px;
+                right: 15px;
+                background: rgba(100, 100, 100, 0.3);
                 border: none;
-                border-radius: 50%; /* Circular button */
-                width: 26px;
-                height: 26px;
-                font-size: 16px; /* Adjust icon size */
-                font-weight: bold;
-                color: #ccc;
+                border-radius: 50%;
+                width: 28px;
+                height: 28px;
+                font-size: 17px;
+                font-weight: normal; /* Less bold for 'x' */
+                color: #e0e0e0;
                 cursor: pointer;
                 padding: 0;
-                line-height: 26px; /* Center vertically */
+                line-height: 28px;
                 text-align: center;
                 transition: background-color 0.15s ease, color 0.15s ease;
             }
             #closeSidebar:hover {
-                background-color: rgba(100, 100, 100, 0.8);
+                background-color: rgba(120, 120, 120, 0.5);
                 color: #fff;
             }
-            /* --- End Sidebar Styles --- */
 
-            /* Style vis network navigation buttons - Apple Style */
+            .collapsible-section h3 {
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .collapsible-content {
+                overflow: hidden;
+                max-height: 800px;
+                transition: max-height 0.3s ease-in-out,
+                    padding 0.3s ease-in-out, margin 0.3s ease-in-out;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            .collapsible-content.collapsed {
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+            }
+            .toggle-arrow {
+                display: inline-block;
+                transition: transform 0.3s ease;
+                font-size: 0.8em;
+                color: #a0a0a5; /* Match subheading color */
+            }
+            .toggle-arrow.collapsed-arrow {
+                transform: rotate(-90deg);
+            }
+
             .vis-navigation .vis-button {
-                background-color: #3a3a3c; /* Slightly lighter solid gray (Apple dark UI) */
-                border: 0.5px solid #5a5a5c; /* Very subtle border */
-                border-radius: 7px; /* Consistent rounding */
-                box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25); /* Minimal shadow */
-                color: #e0e0e0; /* Brighter icon color */
-                font-size: 18px; /* Adjusted size for clarity */
-                width: 30px; /* Explicit width */
-                height: 30px; /* Explicit height */
-                padding: 0; /* Remove padding, rely on width/height */
-                display: flex; /* Center icon */
-                align-items: center; /* Center icon */
-                justify-content: center; /* Center icon */
-                transition: background-color 0.15s ease-in-out; /* Smooth transition */
+                background-color: #363638;
+                border: 1px solid #48484a;
+                border-radius: 8px;
+                box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+                color: #e0e0e0;
+                font-size: 18px; /* Keep vis buttons slightly larger */
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background-color 0.15s ease-in-out;
             }
             .vis-navigation .vis-button:hover {
-                background-color: #4a4a4c; /* Slightly lighter on hover */
-                box-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.3);
+                background-color: #464649;
             }
             .vis-navigation {
-                /* Position navigation buttons */
                 position: absolute;
-                bottom: 15px;
-                left: 15px;
-                z-index: 5; /* Ensure they are above the graph but below sidebar */
+                bottom: 20px;
+                left: 20px;
+                z-index: 5;
             }
-            /* Adjust zoom button position */
             .vis-zoomExtends {
-                display: none; /* Hide the fit button if desired */
+                display: none;
             }
         </style>
     </head>
     <body>
+        <div id="controlsContainer">
+            <label for="categorySelect">Highlight Category:</label>
+            <select id="categorySelect"></select>
+            <button
+                id="highlightGoodBtn"
+                data-type="good"
+            >
+                👍 Good In
+            </button>
+            <button
+                id="highlightBadBtn"
+                data-type="bad"
+            >
+                👎 Bad In
+            </button>
+            <button id="resetHighlights">Reset All</button>
+        </div>
         <div id="graphContainer">
             <div id="languageGraph"></div>
             <div id="loadingMessage">Loading graph...</div>
             <div id="sidebar">
                 <button id="closeSidebar">×</button>
                 <h2 id="sidebarTitle">Language Details</h2>
+                <ul id="languageTagsList"></ul>
                 <h3>Influenced By:</h3>
                 <ul id="influencedByList"></ul>
                 <h3>Influences:</h3>
                 <ul id="influencesList"></ul>
-                <h3>Syntax Examples:</h3>
-                <div id="syntaxExamplesContainer">
-                     <pre>Select a language node.</pre>
+                <div class="collapsible-section">
+                    <h3 id="rankingsHeader">
+                        Category Rankings <span class="toggle-arrow">▼</span>
+                    </h3>
+                    <ul
+                        id="rankingsList"
+                        class="collapsible-content"
+                    ></ul>
                 </div>
+                <h3>Basic Syntax Example:</h3>
+                <pre id="syntaxExample">Select a language node.</pre>
             </div>
         </div>
 
         <script type="text/javascript">
-            // --- Syntax Data (Expanded) ---
-            // Store examples as an array of strings for multiple blocks
             const syntaxData = {
-                Python: [
-                    `# Hello World\nprint("Hello, World!")`,
-                    `# Variable & Function\nname = "Python"\ndef greet(who):\n    print(f"Hello, {who}!")\ngreet(name)`,
-                    `# Simple Loop\nfor i in range(3):\n    print(i)`
-                ],
-                JavaScript: [
-                    `// Hello World\nconsole.log("Hello, World!");`,
-                    `// Variable & Function\nlet language = "JavaScript";\nfunction show(item) {\n    console.log("This is " + item);\n}\nshow(language);`,
-                    `// Array Iteration\n['JS', 'Example'].forEach(item => console.log(item));`
-                ],
-                Java: [
-                    `// Hello World\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
-                    `// Variable & Method\npublic class Greeter {\n    public static void main(String[] args) {\n        String target = "Java";\n        greet(target);\n    }\n    static void greet(String name) {\n        System.out.println("Hello from " + name);\n    }\n}`
-                ],
-                'C++': [
-                    `// Hello World\n#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}`,
-                    `// Variable & Simple Class\n#include <iostream>\n#include <string>\n\nclass MyClass {\npublic:\n    std::string name = "C++";\n};\n\nint main() {\n    MyClass obj;\n    std::cout << "Language: " << obj.name << std::endl;\n    return 0;\n}`
-                ],
-                C: [
-                    `// Hello World\n#include <stdio.h>\n\nint main() {\n   printf("Hello, World!\\n");\n   return 0;\n}`,
-                    `// Variable (string is char array) & Function\n#include <stdio.h>\n\nvoid say_hello(char name[]) {\n    printf("Hello from %s\\n", name);\n}\n\nint main() {\n   char lang[] = "C";\n   say_hello(lang);\n   return 0;\n}`
-                ],
-                 Ruby: [
-                    `# Hello World\nputs "Hello, World!"`,
-                    `# Variable & Method\nlanguage = "Ruby"\ndef say_hi(name)\n  puts "Hi from #{name}!"\nend\nsay_hi(language)`,
-                    `# Block Iterator\n3.times do |i|\n  puts "Iteration: #{i}"\nend`
-                 ],
-                Swift: [
-                    `// Hello World\nprint("Hello, World!")`,
-                    `// Variable & Function\nvar language = "Swift"\nfunc greet(name: String) {\n    print("Hello from \\(name)")\n}\ngreet(name: language)`,
-                    `// Optional\nvar maybeString: String? = "Maybe"\nif let str = maybeString {\n    print(str)\n}`
-                ],
-                 Go: [
-                    `// Hello World\npackage main\nimport "fmt"\nfunc main() {\n    fmt.Println("Hello, World!")\n}`,
-                    `// Variable & Function\npackage main\nimport "fmt"\nfunc main() {\n    lang := "Go"\n    describe(lang)\n}\nfunc describe(s string) {\n    fmt.Printf("This is %s\\n", s)\n}`,
-                    `// Goroutine (Concurrency)\npackage main\nimport ("fmt"; "time")\nfunc main() {\n go func() {\n  fmt.Println("Running concurrently")\n }()\n time.Sleep(10 * time.Millisecond)\n fmt.Println("Done")\n}`
-                 ],
-                 Rust: [
-                    `// Hello World\nfn main() {\n    println!("Hello, World!");\n}`,
-                    `// Variable & Function\nfn main() {\n    let language = "Rust";\n    greet(language);\n}\nfn greet(name: &str) {\n    println!("Hello from {}!", name);\n}`,
-                    `// Ownership Example\nfn main() {\n let s1 = String::from("hello");\n let s2 = s1; // s1 is moved to s2\n // println!("{}", s1); // Error: s1 no longer valid\n println!("{}", s2);\n}`
-                 ],
-                 PHP: [
-                    `// Hello World\n<?php\necho "Hello, World!\\n";\n?>`,
-                    `// Variable & Function\n<?php\n$language = "PHP";\nfunction show($item) {\n    echo "This is " . $item . "\\n";\n}\nshow($language);\n?>`,
-                    `// Array\n<?php\n$arr = ['P', 'H', 'P'];\nforeach ($arr as $char) {\n echo $char;\n}\necho "\\n";\n?>`
-                 ],
-                 'C#': [
-                    `// Hello World\nusing System;\npublic class HelloWorld {\n    public static void Main(string[] args) {\n        Console.WriteLine ("Hello, World!");\n    }\n}`,
-                    `// Variable & Method\nusing System;\npublic class Greeter {\n    public static void Main(string[] args) {\n        string lang = "C#";\n        Greet(lang);\n    }\n    public static void Greet(string name) {\n        Console.WriteLine($"Hello from {name}");\n    }\n}`
-                 ],
-                 Kotlin: [
-                    `// Hello World\nfun main() {\n    println("Hello, World!")\n}`,
-                    `// Variable & Function\nfun main() {\n    val language = "Kotlin" // Immutable\n    greet(language)\n}\nfun greet(name: String) {\n    println("Hello from $name")\n}`,
-                    `// Data Class\ndata class User(val name: String, val id: Int)\nfun main() {\n val user = User("KotlinUser", 1)\n println(user)\n}`
-                 ],
-                 Scala: [
-                    `// Hello World\nobject HelloWorld {\n    def main(args: Array[String]): Unit = {\n        println("Hello, World!")\n    }\n}`,
-                    `// Variable & Method\nobject Greeter {\n    def main(args: Array[String]): Unit = {\n        val language = "Scala" // Immutable\n        greet(language)\n    }\n    def greet(name: String): Unit = {\n        println(s"Hello from $name")\n    }\n}`
-                 ],
-                 Haskell: [
-                    `-- Hello World\nmain :: IO ()\nmain = putStrLn "Hello, World!"`,
-                    `-- Variable (Constant) & Function\nlanguage :: String\nlanguage = "Haskell"\n\ngreet :: String -> String\ngreet name = "Hello from " ++ name\n\nmain :: IO ()\nmain = putStrLn (greet language)`
-                 ],
-                 Lisp: [
-                    `;; Hello World (Common Lisp)\n(format t "Hello, World!~%")`,
-                    `;; Variable & Function (Common Lisp)\n(defparameter *language* "Lisp")\n\n(defun greet (name)\n  (format t "Hello from ~a~%" name))\n\n(greet *language*)`
-                 ],
-                 Assembly: [
-                    `; Assembly (NASM, Linux x86-64) - Hello World\nsection .data\n    msg db 'Hello, World!', 0xa\n    len equ $ - msg\nsection .text\n    global _start\n_start:\n    mov rax, 1 ; sys_write\n    mov rdi, 1 ; stdout\n    mov rsi, msg\n    mov rdx, len\n    syscall\n    mov rax, 60 ; sys_exit\n    xor rdi, rdi ; exit code 0\n    syscall`,
-                    `; Assembly (NASM, Linux x86-64) - Simple Addition\nsection .text\n    global _start\n_start:\n    mov rax, 5    ; Load 5 into RAX\n    mov rbx, 10   ; Load 10 into RBX\n    add rax, rbx  ; Add RBX to RAX (RAX = 15)\n\n    ; Exit with the result (15) - Often non-zero indicates error\n    mov rdi, rax  ; Exit code in RDI for sys_exit\n    mov rax, 60   ; sys_exit\n    syscall`
-                 ],
-                 'Algol 60': [
-                     `'BEGIN'\n    PRINT("Hello, World!");\n'END'`,
-                     `'BEGIN'\n    'INTEGER' I;\n    'FOR' I := 1 'STEP' 1 'UNTIL' 3 'DO'\n        PRINT(I);\n'END'`
-                 ],
-                 'Objective-C': [
-                     `// Hello World\n#import <Foundation/Foundation.h>\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        NSLog(@"Hello, World!");\n    }\n    return 0;\n}`,
-                     `// Variable & Method\n#import <Foundation/Foundation.h>\n\n@interface Greeter : NSObject\n- (void)sayHello:(NSString *)name;\n@end\n\n@implementation Greeter\n- (void)sayHello:(NSString *)name {\n    NSLog(@"Hello from %@", name);\n}\n@end\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        NSString *lang = @"Objective-C";\n        Greeter *greeter = [[Greeter alloc] init];\n        [greeter sayHello:lang];\n    }\n    return 0;\n}`
-                 ],
-                 Perl: [
-                     `# Hello World\nprint "Hello, World!\\n";`,
-                     `# Variable & Subroutine\nmy $language = "Perl";\nsub greet {\n    my ($name) = @_;\n    print "Hello from $name\\n";\n}\ngreet($language);`,
-                     `# Array\nmy @items = ('P', 'e', 'r', 'l');\nforeach my $item (@items) {\n print $item;\n}\nprint "\\n";`
-                 ],
-                 Awk: [
-                     `# Hello World (run with: awk 'BEGIN { print "Hello, World!" }')\nBEGIN { print "Hello, World!" }`,
-                     `# Print first field of each line (run with: awk '{ print $1 }' input.txt)\n{ print $1 }`,
-                     `# Count lines (run with: awk 'END { print NR }' input.txt)\nEND { print NR }`
-                 ],
-                 D: [
-                     `// Hello World\nimport std.stdio;\n\nvoid main() {\n    writeln("Hello, World!");\n}`,
-                     `// Variable & Function\nimport std.stdio;\n\nvoid greet(string name) {\n    writeln("Hello from ", name);\n}\n\nvoid main() {\n    string language = "D";\n    greet(language);\n}`
-                 ],
-                 Zig: [
-                     `// Hello World\nconst std = @import("std");\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    try stdout.print("Hello, World!\\n", .{});\n}`,
-                     `// Variable & Function\nconst std = @import("std");\n\nfn greet(writer: anytype, name: []const u8) !void {\n    try writer.print("Hello from {s}\\n", .{name});\n}\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    const language = "Zig";\n    try greet(stdout, language);\n}`
-                 ],
-                 Odin: [
-                    `// Hello World\npackage main\n\nimport "core:fmt"\n\nmain :: proc() {\n    fmt.println("Hello, World!")\n}`,
-                    `// Variable & Procedure\npackage main\n\nimport "core:fmt"\n\ngreet :: proc(name: string) {\n    fmt.printf("Hello from %s\\n", name)\n}\n\nmain :: proc() {\n    language := "Odin"\n    greet(language)\n}`
-                 ],
-                 V: [
-                    `// Hello World\nfn main() {\n    println('Hello, World!')\n}`,
-                    `// Variable & Function\nfn greet(name string) {\n    println('Hello from $name')\n}\n\nfn main() {\n    language := 'V'\n    greet(language)\n}`
-                 ],
-                 Dart: [
-                     `// Hello World\nvoid main() {\n  print('Hello, World!');\n}`,
-                     `// Variable & Function\nvoid greet(String name) {\n  print('Hello from $name');\n}\n\nvoid main() {\n  var language = 'Dart';\n  greet(language);\n}`,
-                     `// Async\nFuture<String> fetchData() async {\n await Future.delayed(Duration(seconds: 1));\n return "Data fetched";\n}\nvoid main() async {\n print(await fetchData());\n}`
-                 ],
-                 TypeScript: [
-                     `// Hello World\nconsole.log("Hello, World!");`,
-                     `// Variable with Type & Function\nlet language: string = "TypeScript";\n\nfunction greet(name: string): void {\n    console.log(\`Hello from ${name}\`);\n}\ngreet(language);`,
-                     `// Interface\ninterface User {\n name: string;\n id: number;\n}\nconst user: User = { name: "TS User", id: 1 };\nconsole.log(user);`
-                 ],
-                 ML: [`(* ML family syntax varies. Base concept: *)\nprint "Hello, World!\\n"; (* Example SML syntax *)`, `(* Function definition - SML syntax *)\nfun greet name = "Hello from " ^ name;`],
-                 'Standard ML': [
-                     `(* Hello World *)\nprint "Hello, World!\\n";`,
-                     `(* Variable & Function *)\nval language = "Standard ML"\nfun greet name = print ("Hello from " ^ name ^ "\\n")\nval _ = greet language`
-                 ],
-                 Haskell: [ // Duplicate, refined from above
-                    `-- Hello World\nmain :: IO ()\nmain = putStrLn "Hello, World!"`,
-                    `-- Constant & Function\nlanguage :: String\nlanguage = "Haskell"\ngreet :: String -> String\ngreet name = "Hello from " ++ name\nmain :: IO ()\nmain = putStrLn (greet language)`,
-                    `-- List comprehension\nmain :: IO ()\nmain = print ([x*2 | x <- [1,2,3]]) -- Output: [2,4,6]`
-                 ],
-                 OCaml: [
-                     `(* Hello World *)\nlet () = print_endline "Hello, World!"`,
-                     `(* Variable & Function *)\nlet language = "OCaml"\nlet greet name = print_endline ("Hello from " ^ name)\nlet () = greet language`
-                 ],
-                 'F#': [
-                     `// Hello World\nprintfn "Hello, World!"`,
-                     `// Variable & Function\nlet language = "F#"\nlet greet name = printfn "Hello from %s" name\ngreet language`,
-                     `// Pipe operator\nlet result = [1; 2; 3]\n |> List.map (fun x -> x * 2)\n |> List.sum\nprintfn "Result: %d" result // Output: Result: 12`
-                 ],
-                 Nim: [
-                     `# Hello World\necho "Hello, World!"`,
-                     `# Variable & Procedure\nvar language = "Nim"\nproc greet(name: string) =\n  echo "Hello from ", name\ngreet(language)`,
-                     `# Sequence\nvar nums = @[1, 2, 3]\nfor x in nums:\n  echo x`
-                 ],
-                 Julia: [
-                     `# Hello World\nprintln("Hello, World!")`,
-                     `# Variable & Function\nlanguage = "Julia"\nfunction greet(name)\n    println("Hello from ", name)\nend\ngreet(language)`,
-                     `# Multiple Dispatch Example\nf(x::Int) = "Integer"\nf(x::Float64) = "Float"\nprintln(f(5))     # Integer\nprintln(f(5.0))   # Float`
-                 ],
-                 Pascal: [
-                     `// Hello World\nprogram HelloWorld;\nbegin\n  WriteLn('Hello, World!');\nend.`,
-                     `// Variable & Procedure\nprogram Greeter;\nvar\n  language: string;\nprocedure Greet(name: string);\nbegin\n  WriteLn('Hello from ', name);\nend;\nbegin\n  language := 'Pascal';\n  Greet(language);\nend.`
-                 ],
-                 'Modula-2': [
-                     `(* Hello World *)\nMODULE HelloWorld;\nFROM InOut IMPORT WriteString, WriteLn;\nBEGIN\n  WriteString("Hello, World!");\n  WriteLn;\nEND HelloWorld.`,
-                     `(* Variable & Procedure *)\nMODULE Greeter;\nFROM InOut IMPORT WriteString, WriteLn;\nVAR\n  language: ARRAY [0..7] OF CHAR;\nPROCEDURE Greet(name: ARRAY OF CHAR);\nBEGIN\n  WriteString("Hello from ");\n  WriteString(name);\n  WriteLn;\nEND Greet;\nBEGIN\n  language := "Modula-2";\n  Greet(language);\nEND Greeter.`
-                 ],
-                 ABC: [
-                     `WRITE "Hello, World!" /`,
-                     `HOW TO GREET name:\n   WRITE "Hello from ", name / \nGREET "ABC"`
-                 ],
-                 Ada: [
-                     `-- Hello World\nwith Ada.Text_IO;\nprocedure Hello is\nbegin\n   Ada.Text_IO.Put_Line ("Hello, World!");\nend Hello;`,
-                     `-- Variable & Procedure\nwith Ada.Text_IO;\nprocedure Greeter is\n   Language : String := "Ada";\n   procedure Greet (Name : in String) is\n   begin\n      Ada.Text_IO.Put ("Hello from ");\n      Ada.Text_IO.Put_Line (Name);\n   end Greet;\nbegin\n   Greet (Language);\nend Greeter;`
-                 ],
-                 Oberon: [
-                    `MODULE HelloWorld;\nIMPORT Out;\nBEGIN\n  Out.String("Hello, World!"); Out.Ln\nEND HelloWorld.`,
-                    `MODULE Greeter;\nIMPORT Out;\nVAR language: ARRAY 8 OF CHAR;\nPROCEDURE Greet(name: ARRAY OF CHAR);\nBEGIN\n  Out.String("Hello from "); Out.String(name); Out.Ln\nEND Greet;\nBEGIN\n  language := "Oberon";\n  Greet(language)\nEND Greeter.`
-                 ],
-                 Scheme: [
-                     `;; Hello World\n(display "Hello, World!")\n(newline)`,
-                     `;; Variable & Procedure\n(define language "Scheme")\n(define (greet name)\n  (display (string-append "Hello from " name))\n  (newline))\n(greet language)`
-                 ],
-                 'Common Lisp': [ // Duplicate, refined
-                     `;; Hello World\n(format t "Hello, World!~%")`,
-                     `;; Parameter & Function\n(defparameter *language* "Common Lisp")\n(defun greet (name)\n  (format t "Hello from ~a~%" name))\n(greet *language*)`,
-                     `;; Loop Macro\n(loop for i from 1 to 3\n   do (format t "~d " i)) ; Output: 1 2 3`
-                 ],
-                 Clojure: [
-                     `;; Hello World\n(println "Hello, World!")`,
-                     `;; Variable & Function\n(def language "Clojure")\n(defn greet [name]\n  (println (str "Hello from " name)))\n(greet language)`,
-                     `;; Sequence processing\n(println (map #(* % 2) [1 2 3])) ; Output: (2 4 6)`
-                 ],
-                 Racket: [
-                     `;; Hello World\n#lang racket\n(displayln "Hello, World!")`,
-                     `;; Variable & Function\n#lang racket\n(define language "Racket")\n(define (greet name)\n  (displayln (string-append "Hello from " name)))\n(greet language)`
-                 ],
-                 Lua: [
-                     `-- Hello World\nprint("Hello, World!")`,
-                     `-- Variable & Function\nlocal language = "Lua"\nfunction greet(name)\n  print("Hello from " .. name)\nend\ngreet(language)`,
-                     `-- Table (Array-like)\nlocal t = { "L", "u", "a" }\nfor i, v in ipairs(t) do\n print(i, v)\nend`
-                 ],
-                 Simula: [
-                     `! Hello World;\nBegin\n   OutText("Hello, World!");\n   OutImage;\nEnd;`,
-                     `! Variable & Procedure;\nBegin\n   Text language;\n   Procedure Greet(name);\n      Text name;\n   Begin\n      OutText("Hello from ");\n      OutText(name);\n      OutImage;\n   End;\n\n   language :- "Simula";\n   Greet(language);\nEnd;`
-                 ],
-                 Smalltalk: [
-                     "'Hello, World!' displayNl.",
-                     "| language |\nlanguage := 'Smalltalk'.\nTranscript show: 'Hello from '; show: language; cr."
-                 ],
-                 Elixir: [
-                    `# Hello World\nIO.puts "Hello, World!"`,
-                    `# Variable & Function\ndefmodule Greeter do\n def greet(name) do\n  IO.puts "Hello from #{name}"\n end\nend\nlanguage = "Elixir"\nGreeter.greet(language)`,
-                    `# Process spawning (Concurrency)\nspawn(fn -> IO.puts "Running in another process" end)`
-                 ],
-                 Prolog: [
-                     `% Hello World (Query: hello.)\nhello :- write('Hello, World!'), nl.`,
-                     `% Fact & Rule (Query: language(X). or greet.)\nlanguage('Prolog').\ngreet :- language(X), write('Hello from '), write(X), nl.`
-                 ],
-                 Erlang: [
-                     `%% Hello World\n-module(hello).\n-export([start/0]).\nstart() -> io:fwrite("Hello, World!\\n").`,
-                     `%% Variable & Function\n-module(greeter).\n-export([start/0]).\ngreet(Name) -> io:fwrite("Hello from ~s\\n", [Name]).\nstart() -> Language = "Erlang", greet(Language).`,
-                    `%% Spawning a process\n-module(concurrent).\n-export([start/0]).\nstart() -> spawn(fun() -> io:fwrite("Running concurrently\\n") end), timer:sleep(10), io:fwrite("Main done\\n").`
-                 ],
-                 Fortran: [
-                     `! Hello World (Fortran 90+)\nprogram hello\n  print *, "Hello, World!"\nend program hello`,
-                     `! Variable & Subroutine (Fortran 90+)\nprogram greeter\n  implicit none\n  character(len=10) :: language\n  language = "Fortran"\n  call greet(language)\ncontains\n  subroutine greet(name)\n    character(len=*), intent(in) :: name\n    print *, "Hello from ", trim(name)\n  end subroutine greet\nend program greeter`
-                 ],
-                 SQL: [
-                     `-- Hello World (Standard SQL)\nSELECT 'Hello, World!';`,
-                     `-- Variable (Syntax varies greatly by dialect, e.g., T-SQL)\nDECLARE @language VARCHAR(50) = 'SQL';\nPRINT 'Hello from ' + @language;`,
-                    `-- Basic Table DDL & DML\nCREATE TABLE Languages (id INT PRIMARY KEY, name VARCHAR(50));\nINSERT INTO Languages (id, name) VALUES (1, 'SQL');\nSELECT * FROM Languages;`
-                 ],
-                 S: [`# Hello World (S/R syntax)\nprint("Hello, World!")`, `# Variable\nlanguage <- "S"`],
-                 MATLAB: [
-                     `% Hello World\ndisp('Hello, World!');`,
-                     `% Variable & Function\nlanguage = 'MATLAB';\ngreet(language);\n\nfunction greet(name)\n    fprintf('Hello from %s\\n', name);\nend`
-                 ],
-                 SAS: [
-                     `* Hello World;\ndata _null_;\n  put 'Hello, World!';\nrun;`,
-                     `* Variable (Macro) & Put;\n%let language = SAS;\ndata _null_;\n  put "Hello from &language";\nrun;`
-                 ],
-                 Stata: [
-                     `* Hello World\ndisplay "Hello, World!"`,
-                     `* Variable (local macro) & Display\nlocal language "Stata"\ndisplay "Hello from \`language'" ``
-                 ],
-                 R: [
-                     `# Hello World\nprint("Hello, World!")\n# or simply\n"Hello, World!"`,
-                     `# Variable & Function\nlanguage <- "R"\ngreet <- function(name) {\n  print(paste("Hello from", name))\n}\ngreet(language)`,
-                    `# Vectorization\nx <- 1:3\ny <- x * 2 # Operates element-wise\nprint(y) # Output: [1] 2 4 6`
-                 ],
-                 APL: [
-                     `'Hello, World!'`,
-                     `language ← 'APL'\n'Hello from ', language`
-                 ],
-                 J: [
-                    `'Hello, World!'`,
-                    `language =: 'J'\n'Hello from ', language`
-                 ],
-                 'Thompson sh': [`echo 'Hello, World!'`, `language='Thompson sh'; echo $language`],
-                 'Bourne sh': [`echo 'Hello, World!'`, `language='Bourne sh'\necho "Hello from $language"`],
-                 Bash: [
-                     `# Hello World\necho "Hello, World!"`,
-                     `# Variable & Function\nlanguage="Bash"\ngreet() {\n  echo "Hello from $1"\n}\ngreet "$language"`,
-                     `# Loop\nfor i in {1..3}; do\n echo "Number: $i"\ndone`
-                 ],
-                 Zsh: [
-                     `# Hello World\necho "Hello, World!"\n# or print\nprint "Hello, World!"`,
-                     `# Variable & Function\nlanguage="Zsh"\ngreet() {\n  print "Hello from $1"\n}\ngreet $language`
-                 ],
-                 PowerShell: [
-                     `# Hello World\nWrite-Host "Hello, World!"`,
-                     `# Variable & Function\n$language = "PowerShell"\nfunction Greet($name) {\n    Write-Host "Hello from $name"\n}\nGreet $language`,
-                     `# Object Manipulation\nGet-Process | Sort-Object CPU -Descending | Select-Object -First 5`
-                 ],
-                 CPL: [`// CPL syntax is rare. Example structure:\nmain() {\n print "Hello, World!\\n";\n}`, `// Variable concept:\nlet lang = "CPL"`],
-                 BCPL: [`// Hello World\nGET "libhdr"\n\nLET start() BE\n{\n  writes("Hello, World!*n")\n  RETURN 0\n}`, `// Variable\nLET language = "BCPL"`],
-                 B: [`/* Hello World */\nmain() {\n  extern putstr;\n  putstr("Hello, World!\\n");\n}`, `/* Variable */\nauto lang; lang = "B";`],
-                 Crystal: [
-                     `# Hello World\nputs "Hello, World!"`,
-                     `# Variable & Method\nlanguage = "Crystal"\ndef greet(name : String)\n  puts "Hello from #{name}"\nend\ngreet(language)`,
-                     `# Nil handling\nmaybe_string : String? = nil\nputs maybe_string.inspect # Output: nil`
-                 ],
-                 Vale: [
-                    `// Vale syntax is evolving. Example concept:\nexported func main() { println("Hello, World!"); }`,
-                    `// Variable (immutable by default):\nlet language = "Vale";`
-                 ],
-                 Carbon: [
-                     `// Carbon syntax is experimental.\npackage Sample api;\nfn Main() -> i32 {\n  Print("Hello, World!");\n  return 0;\n}`,
-                     `// Variable:\nvar language: String = "Carbon";`
-                 ],
-                 Mojo: [
-                    `# Mojo syntax blends Python and Systems features.\n# Hello World (Python-like)\nprint("Hello, World!")`,
-                    `# Function with types (Mojo extension)\nfn greet(name: String):\n print("Hello from", name)\n\nfn main():\n let language: String = "Mojo"\n greet(language)`
-                 ],
-                 COBOL: [
-                     `IDENTIFICATION DIVISION.\nPROGRAM-ID. HelloWorld.\nPROCEDURE DIVISION.\n    DISPLAY 'Hello, World!'.\n    STOP RUN.`,
-                     `IDENTIFICATION DIVISION.\nPROGRAM-ID. Greeter.\nDATA DIVISION.\nWORKING-STORAGE SECTION.\n01 LANGUAGE PIC X(10) VALUE 'COBOL'.\nPROCEDURE DIVISION.\n    DISPLAY 'Hello from ' LANGUAGE.\n    STOP RUN.`
-                 ],
-                 Svelte: [
-                     `<!-- Svelte component - combines HTML, CSS, JS -->\n<script>\n  let language = 'Svelte';\n</script>\n\n<h1>Hello from {language}!</h1>\n\n<style>\n  h1 {\n    color: orange;\n  }\n</style>`,
-                     `<!-- Event Handling -->\n<script>\n let count = 0;\n function handleClick() {\n   count += 1;\n }\n</script>\n\n<button on:click={handleClick}>\n Clicks: {count}\n</button>`
-                 ],
-                 // Add placeholders for languages without obvious simple examples if needed
+                /* Omitted for brevity, same as before */
+                Python: `print("Hello, World!")\n\n# Variable\nmessage = "This is Python"`,
+                JavaScript: `console.log("Hello, World!");\n\n// Variable\nlet message = "This is JavaScript";`,
+                Java: `public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n        \n        // Variable\n        String message = "This is Java";\n    }\n}`,
+                'C++': `#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    \n    // Variable\n    std::string message = "This is C++";\n    return 0;\n}`,
+                C: `#include <stdio.h>\n\nint main() {\n   printf("Hello, World!\\n");\n   \n   // Variable (string is char array)\n   char message[] = "This is C";\n   return 0;\n}`,
+                Ruby: `puts "Hello, World!"\n\n# Variable\nmessage = "This is Ruby"`,
+                Swift: `print("Hello, World!")\n\n// Variable\nvar message = "This is Swift"`,
+                Go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n    \n    // Variable\n    var message string = "This is Go"\n    _ = message // Use variable to avoid error\n}`,
+                Rust: `fn main() {\n    println!("Hello, World!");\n    \n    // Variable\n    let message = "This is Rust";\n}`,
+                PHP: `<?php\necho "Hello, World!\\n";\n\n// Variable\n$message = "This is PHP";\n?>`,
+                'C#': `using System;\n\npublic class HelloWorld\n{\n    public static void Main(string[] args)\n    {\n        Console.WriteLine ("Hello, World!");\n        \n        // Variable\n        string message = "This is C#";\n    }\n}`,
+                Kotlin: `fun main() {\n    println("Hello, World!")\n    \n    // Variable\n    val message = "This is Kotlin"\n}`,
+                Scala: `object HelloWorld {\n    def main(args: Array[String]): Unit = {\n        println("Hello, World!")\n        \n        // Variable\n        val message = "This is Scala"\n    }\n}`,
+                Haskell: `main :: IO ()\nmain = putStrLn "Hello, World!"\n\n-- Variable (Constants are common)\nmessage :: String\nmessage = "This is Haskell"`,
+                Lisp: `(format t "Hello, World!~%")\n\n; Variable (using Common Lisp syntax)\n(defparameter *message* "This is Lisp")`,
+                Assembly: `; Assembly varies greatly by architecture\n; Example NASM syntax for Linux x86-64 Hello World\n\nsection .data\n    msg db 'Hello, World!', 0xa ; String and newline\n    len equ $ - msg          ; Length of string\n\nsection .text\n    global _start\n\n_start:\n    ; write(1, msg, len)\n    mov rax, 1       ; system call number (sys_write)\n    mov rdi, 1       ; file descriptor 1 (stdout)\n    mov rsi, msg     ; address of string to write\n    mov rdx, len     ; number of bytes\n    syscall          ; invoke kernel\n\n    ; exit(0)\n    mov rax, 60      ; system call number (sys_exit)\n    xor rdi, rdi     ; exit code 0\n    syscall          ; invoke kernel`,
+                'Algol 60': `begin\n    comment Hello World for Algol 60;\n    outstring(1, "Hello, World!");\n    newline(1);\n\n    comment Variable example;\n    string message;\n    message := "This is Algol 60";\n    outstring(1, message);\n    newline(1);\nend`,
+                'Objective-C': `#import <Foundation/Foundation.h>\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        NSLog(@"Hello, World!");\n        \n        // Variable\n        NSString *message = @"This is Objective-C";\n        NSLog(@"%@", message);\n    }\n    return 0;\n}`,
+                Perl: `use strict;\nuse warnings;\n\nprint "Hello, World!\\n";\n\n# Variable\nmy $message = "This is Perl";\nprint "$message\\n";`,
+                Awk: `BEGIN {\n    print "Hello, World!"\n    \n    # Variable\n    message = "This is Awk"\n    print message\n}`,
+                D: `import std.stdio;\n\nvoid main() {\n    writeln("Hello, World!");\n\n    // Variable\n    string message = "This is D";\n    writeln(message);\n}`,
+                Zig: `const std = @import("std");\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    try stdout.print("Hello, World!\\n", .{});\n\n    // Variable\n    const message = "This is Zig";\n    try stdout.print("{s}\\n", .{message});\n}`,
+                Odin: `package main\n\nimport "core:fmt"\n\nmain :: proc() {\n    fmt.println("Hello, World!")\n\n    // Variable\n    message: string = "This is Odin"\n    fmt.println(message)\n}`,
+                V: `fn main() {\n    println('Hello, World!')\n\n    // Variable\n    message := 'This is V'\n    println(message)\n}`,
+                Dart: `void main() {\n  print('Hello, World!');\n\n  // Variable\n  var message = 'This is Dart';\n  print(message);\n}`,
+                TypeScript: `console.log("Hello, World!");\n\n// Variable\nlet message: string = "This is TypeScript";\nconsole.log(message);`,
+                ML: `(* Standard ML syntax for ML Family *)\nprint "Hello, World!\\n";\n\n(* Variable *)\nval message = "This is ML (via SML)";\nprint (message ^ "\\n");`,
+                'Standard ML': `print "Hello, World!\\n";\n\n(* Variable *)\nval message = "This is Standard ML";\nprint (message ^ "\\n");`,
+                OCaml: `let () = print_endline "Hello, World!"\n\n(* Variable *)\nlet message = "This is OCaml"\nlet () = print_endline message`,
+                'F#': `printfn "Hello, World!"\n\n// Variable\nlet message = "This is F#"\nprintfn "%s" message`,
+                Nim: `echo "Hello, World!"\n\n# Variable\nvar message: string = "This is Nim"\necho message`,
+                Julia: `println("Hello, World!")\n\n# Variable\nmessage = "This is Julia"\nprintln(message)`,
+                Pascal: `program HelloWorld;\nvar\n  message: string;\nbegin\n  WriteLn('Hello, World!');\n  message := 'This is Pascal';\n  WriteLn(message);\nend.`,
+                'Modula-2': `MODULE HelloWorld;\nFROM InOut IMPORT WriteString, WriteLn;\nVAR\n  message: ARRAY [0..20] OF CHAR;\nBEGIN\n  WriteString("Hello, World!");\n  WriteLn;\n  message := "This is Modula-2";\n  WriteString(message);\n  WriteLn;\nEND HelloWorld.`,
+                ABC: `WRITE "Hello, World!" /\n\n-- Variable\nPUT "This is ABC" IN message\nWRITE message /`,
+                Ada: `with Ada.Text_IO; use Ada.Text_IO;\nprocedure Hello is\n   Message : String := "This is Ada";\nbegin\n   Put_Line ("Hello, World!");\n   Put_Line (Message);\nend Hello;`,
+                Oberon: `MODULE HelloWorld;\nIMPORT Out;\nVAR\n  message: ARRAY 32 OF CHAR;\nBEGIN\n  Out.String("Hello, World!"); Out.Ln;\n  message := "This is Oberon";\n  Out.String(message); Out.Ln;\nEND HelloWorld.`,
+                Scheme: `(display "Hello, World!")\n(newline)\n\n; Variable\n(define message "This is Scheme")\n(display message)\n(newline)`,
+                'Common Lisp': `(format t "Hello, World!~%")\n\n; Variable\n(defvar *my-message* "This is Common Lisp")\n(format t "~a~%" *my-message*)`,
+                Clojure: `(println "Hello, World!")\n\n; Variable\n(def message "This is Clojure")\n(println message)`,
+                Racket: `#lang racket\n(displayln "Hello, World!")\n\n; Variable\n(define message "This is Racket")\n(displayln message)`,
+                Lua: `print("Hello, World!")\n\n-- Variable\nlocal message = "This is Lua"\nprint(message)`,
+                Simula: `Begin\n    OutText("Hello, World!");\n    OutImage;\n    ! Variable;\n    Text T;\n    T :- "This is Simula";\n    OutText(T);\n    OutImage;\nEnd;`,
+                Smalltalk: `Transcript show: 'Hello, World!'; cr.\n\n"Variable"\n| message |\nmessage := 'This is Smalltalk'.\nTranscript show: message; cr.`,
+                Elixir: `IO.puts "Hello, World!"\n\n# Variable\nmessage = "This is Elixir"\nIO.puts message`,
+                Prolog: `:- initialization(main).\nmain :-\n  write('Hello, World!'), nl,\n  Message = 'This is Prolog', % Variable-like usage\n  write(Message), nl.`,
+                Erlang: `-module(hello).\n-export([start/0]).\n\nstart() ->\n    io:fwrite("Hello, World!~n"),\n    Message = "This is Erlang",\n    io:fwrite(Message ++ "~n").`,
+                Fortran: `program hello\n  implicit none\n  character(len=30) :: message\n  print *, "Hello, World!"\n  message = "This is Fortran"\n  print *, message\nend program hello`,
+                SQL: `SELECT 'Hello, World!' AS Greeting;\n\n-- Variables are dialect-specific.\n-- Example for display:\n-- DECLARE @message VARCHAR(50) = 'This is SQL'; SELECT @message; -- (T-SQL)
+-- SET @message = 'This is SQL'; -- (MySQL user variable, conceptual)
+`,
+                S: `# S language example (often run in R)\nprint("Hello, World!")\n\n# Variable\nmessage <- "This is S (via R syntax)"\nprint(message)`,
+                MATLAB: `disp('Hello, World!');\n\n% Variable\nmessage = 'This is MATLAB';\ndisp(message);`,
+                SAS: `DATA _NULL_;\n    PUT "Hello, World!";\n    /* Variable */\n    length message $ 20;\n    message = "This is SAS";\n    PUT message;\nRUN;`,
+                Stata: `display "Hello, World!"\n\n* Variable (Stata uses macros for this kind of string)\nlocal message "This is Stata"\ndisplay "\`message'"`,
+                R: `print("Hello, World!")\n\n# Variable\nmessage <- "This is R"\nprint(message)`,
+                APL: `'Hello, World!'\n\n⍝ Variable\nmessage ← 'This is APL'\nmessage`,
+                J: `'Hello, World!' NB. Output directly\n\nNB. Variable\nmessage =: 'This is J'\nmessage`,
+                'Thompson sh': `# Thompson sh (Ken Thompson's original shell)\n# This uses Bourne-like syntax for modern representation\necho "Hello, World!"\n\n# Variables\nmessage="This is Thompson sh"\necho "$message"`,
+                'Bourne sh': `echo "Hello, World!"\n\n# Variable\nmessage="This is Bourne sh"\necho "$message"`,
+                Bash: `echo "Hello, World!"\n\n# Variable\nmessage="This is Bash"\necho "$message"`,
+                Zsh: `echo "Hello, World!"\n\n# Variable\nmessage="This is Zsh"\necho "$message"`,
+                PowerShell: `Write-Host "Hello, World!"\n\n# Variable\n$message = "This is PowerShell"\nWrite-Host $message`,
+                CPL: `(* CPL (Combined Programming Language) *)\n(* Precursor to BCPL. Exact 'Hello World' hard to pin down. *)\n(* Conceptual example based on influences: *)\nWRITESTRING("Hello, World!")\nLET Message = "This is CPL"`,
+                BCPL: `GET "libhdr.h"\n\nLET START () BE\n$(\n    WRITES ("Hello, World!*N")\n\n    // Variable\n    LET message = "This is BCPL"\n    WRITES (message)\n    WRITES ("*N")\n$)`,
+                B: `/* B Language Example (precursor to C) */\nmain() {\n  extrn putstr; /* Assumed library function */\n  putstr("Hello, World!*n"); /* *n for newline in some B versions */\n\n  /* Variable (auto on stack) */\n  auto message[20]; \n  /* String assignment was manual, char by char, or via a function */\n  /* For example: message = "This is B" (conceptual) */\n}`,
+                Crystal: `puts "Hello, World!"\n\n# Variable\nmessage = "This is Crystal"\nputs message`,
+                Vale: `import printutils.*; // Or similar for print\n\nexported func main() {\n  print("Hello, World!\\n");\n  let message = "This is Vale";\n  print(message + "\\n");\n}`,
+                Carbon: `// Carbon Language (Experimental)\npackage Main api;\n\nfn Main() -> i32 {\n  Print("Hello, World!");\n  var message: String = "This is Carbon";\n  Print(message);\n  return 0;\n}`,
+                Mojo: `# Mojo 🔥\nfn main():\n    print("Hello, World!")\n\n    # Variable\n    var message = "This is Mojo"\n    print(message)`,
+                COBOL: `       IDENTIFICATION DIVISION.\n       PROGRAM-ID. HELLOWORLD.\n       DATA DIVISION.\n       WORKING-STORAGE SECTION.\n       01 WS-MESSAGE PIC X(30) VALUE "This is COBOL".\n       PROCEDURE DIVISION.\n           DISPLAY "Hello, World!".\n           DISPLAY WS-MESSAGE.\n           STOP RUN.`,
             };
+            const rankLegend = {
+                5: 'Excellent',
+                4: 'Strong',
+                3: 'Competent',
+                2: 'Limited',
+                1: 'Rare',
+            };
+            const languageRankingsData = {
+                /* Omitted for brevity, same as before */
+                Python: {
+                    ML: 5,
+                    Perf: 2,
+                    Ease: 5,
+                    Web: 4,
+                    Sys: 2,
+                    Script: 5,
+                    Mob: 3,
+                    Emb: 1,
+                    Viz: 5,
+                    Conc: 3,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 4,
+                    UI: 3,
+                    Back: 5,
+                    Front: 2,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 5,
+                    AI: 5,
+                    Fin: 5,
+                    Sci: 5,
+                    Ent: 4,
+                    RT: 2,
+                    Sec: 3,
+                },
+                JavaScript: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 4,
+                    Web: 5,
+                    Sys: 2,
+                    Script: 4,
+                    Mob: 3,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 4,
+                    UI: 5,
+                    Back: 5,
+                    Front: 5,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 2,
+                    Sec: 3,
+                },
+                'C++': {
+                    ML: 3,
+                    Perf: 5,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 5,
+                    Script: 2,
+                    Mob: 2,
+                    Emb: 5,
+                    Viz: 3,
+                    Conc: 4,
+                    Func: 3,
+                    Game: 5,
+                    DevOps: 3,
+                    UI: 3,
+                    Back: 4,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 4,
+                    Teach: 2,
+                    AI: 3,
+                    Fin: 4,
+                    Sci: 4,
+                    Ent: 4,
+                    RT: 5,
+                    Sec: 3,
+                },
+                Java: {
+                    ML: 3,
+                    Perf: 4,
+                    Ease: 3,
+                    Web: 4,
+                    Sys: 4,
+                    Script: 3,
+                    Mob: 4,
+                    Emb: 3,
+                    Viz: 3,
+                    Conc: 4,
+                    Func: 3,
+                    Game: 4,
+                    DevOps: 4,
+                    UI: 3,
+                    Back: 5,
+                    Front: 4,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 4,
+                    Sci: 4,
+                    Ent: 5,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Go: {
+                    ML: 3,
+                    Perf: 4,
+                    Ease: 3,
+                    Web: 4,
+                    Sys: 4,
+                    Script: 3,
+                    Mob: 2,
+                    Emb: 3,
+                    Viz: 2,
+                    Conc: 4,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 5,
+                    UI: 2,
+                    Back: 5,
+                    Front: 3,
+                    Cloud: 5,
+                    Tool: 4,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Rust: {
+                    ML: 3,
+                    Perf: 5,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 5,
+                    Script: 2,
+                    Mob: 2,
+                    Emb: 4,
+                    Viz: 2,
+                    Conc: 5,
+                    Func: 3,
+                    Game: 4,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 4,
+                    Front: 3,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 2,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 4,
+                    Ent: 3,
+                    RT: 5,
+                    Sec: 5,
+                },
+                R: {
+                    ML: 5,
+                    Perf: 1,
+                    Ease: 3,
+                    Web: 2,
+                    Sys: 1,
+                    Script: 3,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 5,
+                    Conc: 2,
+                    Func: 2,
+                    Game: 2,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 5,
+                    AI: 4,
+                    Fin: 4,
+                    Sci: 5,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 2,
+                },
+                TypeScript: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 4,
+                    Web: 5,
+                    Sys: 2,
+                    Script: 4,
+                    Mob: 3,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 4,
+                    UI: 5,
+                    Back: 5,
+                    Front: 5,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 2,
+                    Sec: 3,
+                },
+                'C#': {
+                    ML: 3,
+                    Perf: 4,
+                    Ease: 3,
+                    Web: 4,
+                    Sys: 4,
+                    Script: 3,
+                    Mob: 4,
+                    Emb: 3,
+                    Viz: 3,
+                    Conc: 4,
+                    Func: 3,
+                    Game: 4,
+                    DevOps: 4,
+                    UI: 4,
+                    Back: 5,
+                    Front: 4,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 4,
+                    Sci: 4,
+                    Ent: 5,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Kotlin: {
+                    ML: 3,
+                    Perf: 3,
+                    Ease: 4,
+                    Web: 4,
+                    Sys: 3,
+                    Script: 3,
+                    Mob: 5,
+                    Emb: 2,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 4,
+                    Back: 5,
+                    Front: 4,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 3,
+                    Sec: 4,
+                },
+                Swift: {
+                    ML: 3,
+                    Perf: 3,
+                    Ease: 4,
+                    Web: 4,
+                    Sys: 3,
+                    Script: 3,
+                    Mob: 5,
+                    Emb: 2,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 5,
+                    Back: 4,
+                    Front: 4,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 3,
+                    Sec: 4,
+                },
+                PHP: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 3,
+                    Web: 5,
+                    Sys: 1,
+                    Script: 3,
+                    Mob: 2,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 2,
+                    Func: 2,
+                    Game: 2,
+                    DevOps: 3,
+                    UI: 4,
+                    Back: 5,
+                    Front: 5,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 4,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Ruby: {
+                    ML: 3,
+                    Perf: 1,
+                    Ease: 4,
+                    Web: 4,
+                    Sys: 1,
+                    Script: 4,
+                    Mob: 2,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 2,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 4,
+                    UI: 4,
+                    Back: 5,
+                    Front: 4,
+                    Cloud: 3,
+                    Tool: 4,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 3,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Scala: {
+                    ML: 4,
+                    Perf: 3,
+                    Ease: 2,
+                    Web: 4,
+                    Sys: 4,
+                    Script: 2,
+                    Mob: 2,
+                    Emb: 2,
+                    Viz: 3,
+                    Conc: 4,
+                    Func: 4,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 3,
+                    Back: 4,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 4,
+                    Sci: 4,
+                    Ent: 4,
+                    RT: 3,
+                    Sec: 4,
+                },
+                Haskell: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 1,
+                    Web: 2,
+                    Sys: 2,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 4,
+                    Func: 5,
+                    Game: 2,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 2,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Julia: {
+                    ML: 5,
+                    Perf: 3,
+                    Ease: 3,
+                    Web: 2,
+                    Sys: 2,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 4,
+                    Conc: 3,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 4,
+                    Fin: 4,
+                    Sci: 5,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 3,
+                },
+                Dart: {
+                    ML: 2,
+                    Perf: 3,
+                    Ease: 3,
+                    Web: 4,
+                    Sys: 2,
+                    Script: 3,
+                    Mob: 5,
+                    Emb: 2,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 4,
+                    Back: 4,
+                    Front: 4,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 3,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 3,
+                    RT: 2,
+                    Sec: 3,
+                },
+                SQL: {
+                    ML: 3,
+                    Perf: 1,
+                    Ease: 3,
+                    Web: 3,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 3,
+                    UI: 1,
+                    Back: 5,
+                    Front: 2,
+                    Cloud: 2,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 5,
+                    Sci: 4,
+                    Ent: 5,
+                    RT: 1,
+                    Sec: 3,
+                },
+                Odin: {
+                    ML: 1,
+                    Perf: 4,
+                    Ease: 2,
+                    Web: 2,
+                    Sys: 4,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 3,
+                    Viz: 1,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 2,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 2,
+                    Cloud: 2,
+                    Tool: 3,
+                    Teach: 2,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 2,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Nim: {
+                    ML: 2,
+                    Perf: 4,
+                    Ease: 3,
+                    Web: 3,
+                    Sys: 4,
+                    Script: 3,
+                    Mob: 2,
+                    Emb: 3,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 4,
+                    Teach: 3,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 3,
+                    Ent: 3,
+                    RT: 4,
+                    Sec: 4,
+                },
+                D: {
+                    ML: 3,
+                    Perf: 4,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 4,
+                    Script: 2,
+                    Mob: 2,
+                    Emb: 3,
+                    Viz: 2,
+                    Conc: 4,
+                    Func: 3,
+                    Game: 4,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 4,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 4,
+                    Teach: 2,
+                    AI: 2,
+                    Fin: 3,
+                    Sci: 4,
+                    Ent: 3,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Elixir: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 3,
+                    Web: 4,
+                    Sys: 2,
+                    Script: 3,
+                    Mob: 2,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 4,
+                    Func: 3,
+                    Game: 3,
+                    DevOps: 4,
+                    UI: 3,
+                    Back: 5,
+                    Front: 3,
+                    Cloud: 4,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 2,
+                    Sec: 3,
+                },
+                OCaml: {
+                    ML: 3,
+                    Perf: 3,
+                    Ease: 2,
+                    Web: 2,
+                    Sys: 3,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 4,
+                    Game: 2,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 2,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Lisp: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 2,
+                    Sys: 2,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 4,
+                    Game: 2,
+                    DevOps: 2,
+                    UI: 2,
+                    Back: 2,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 4,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 2,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Zig: {
+                    ML: 2,
+                    Perf: 5,
+                    Ease: 2,
+                    Web: 2,
+                    Sys: 5,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 4,
+                    Viz: 1,
+                    Conc: 4,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 2,
+                    Cloud: 4,
+                    Tool: 4,
+                    Teach: 2,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 2,
+                    RT: 5,
+                    Sec: 5,
+                },
+                Assembly: {
+                    ML: 1,
+                    Perf: 5,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 5,
+                    Script: 1,
+                    Mob: 1,
+                    Emb: 5,
+                    Viz: 1,
+                    Conc: 5,
+                    Func: 1,
+                    Game: 3,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 3,
+                    Teach: 1,
+                    AI: 1,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 1,
+                    RT: 5,
+                    Sec: 3,
+                },
+                V: {
+                    ML: 2,
+                    Perf: 4,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 4,
+                    Script: 2,
+                    Mob: 2,
+                    Emb: 3,
+                    Viz: 1,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 4,
+                    Teach: 2,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 3,
+                    RT: 4,
+                    Sec: 4,
+                },
+                Bash: {
+                    ML: 1,
+                    Perf: 1,
+                    Ease: 3,
+                    Web: 2,
+                    Sys: 1,
+                    Script: 5,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 5,
+                    UI: 1,
+                    Back: 3,
+                    Front: 1,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 1,
+                    Fin: 1,
+                    Sci: 1,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 2,
+                },
+                PowerShell: {
+                    ML: 1,
+                    Perf: 1,
+                    Ease: 3,
+                    Web: 2,
+                    Sys: 1,
+                    Script: 5,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 5,
+                    UI: 1,
+                    Back: 3,
+                    Front: 1,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 1,
+                    Fin: 1,
+                    Sci: 1,
+                    Ent: 4,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Perl: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 1,
+                    Script: 4,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 2,
+                    Func: 2,
+                    Game: 2,
+                    DevOps: 4,
+                    UI: 1,
+                    Back: 3,
+                    Front: 2,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 3,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Lua: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 3,
+                    Web: 3,
+                    Sys: 1,
+                    Script: 4,
+                    Mob: 2,
+                    Emb: 2,
+                    Viz: 2,
+                    Conc: 2,
+                    Func: 2,
+                    Game: 5,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 3,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 2,
+                    Fin: 3,
+                    Sci: 2,
+                    Ent: 2,
+                    RT: 2,
+                    Sec: 2,
+                },
+                MATLAB: {
+                    ML: 5,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 5,
+                    Conc: 2,
+                    Func: 2,
+                    Game: 2,
+                    DevOps: 1,
+                    UI: 2,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 4,
+                    AI: 4,
+                    Fin: 4,
+                    Sci: 5,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 2,
+                },
+                SAS: {
+                    ML: 4,
+                    Perf: 1,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 5,
+                    Sci: 5,
+                    Ent: 3,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Stata: {
+                    ML: 4,
+                    Perf: 1,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 3,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 5,
+                    Sci: 5,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 2,
+                },
+                'Objective-C': {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 3,
+                    Script: 2,
+                    Mob: 5,
+                    Emb: 2,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 2,
+                    Game: 3,
+                    DevOps: 3,
+                    UI: 5,
+                    Back: 4,
+                    Front: 4,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 2,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 4,
+                    RT: 3,
+                    Sec: 4,
+                },
+                'F#': {
+                    ML: 3,
+                    Perf: 3,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 3,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 4,
+                    Game: 2,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 2,
+                    Cloud: 2,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 3,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Erlang: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 2,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 5,
+                    Func: 3,
+                    Game: 2,
+                    DevOps: 4,
+                    UI: 1,
+                    Back: 4,
+                    Front: 2,
+                    Cloud: 4,
+                    Tool: 3,
+                    Teach: 2,
+                    AI: 2,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 4,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Clojure: {
+                    ML: 3,
+                    Perf: 2,
+                    Ease: 2,
+                    Web: 3,
+                    Sys: 2,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 3,
+                    Func: 5,
+                    Game: 2,
+                    DevOps: 3,
+                    UI: 2,
+                    Back: 3,
+                    Front: 2,
+                    Cloud: 2,
+                    Tool: 3,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 3,
+                    Ent: 2,
+                    RT: 2,
+                    Sec: 3,
+                },
+                Prolog: {
+                    ML: 3,
+                    Perf: 1,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 1,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 4,
+                    AI: 5,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 1,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Scheme: {
+                    ML: 3,
+                    Perf: 1,
+                    Ease: 2,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 2,
+                    Func: 4,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 4,
+                    AI: 4,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 1,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Racket: {
+                    ML: 3,
+                    Perf: 1,
+                    Ease: 2,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 2,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 2,
+                    Func: 4,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 4,
+                    AI: 4,
+                    Fin: 2,
+                    Sci: 2,
+                    Ent: 1,
+                    RT: 1,
+                    Sec: 2,
+                },
+                APL: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 1,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 4,
+                    Ent: 1,
+                    RT: 1,
+                    Sec: 2,
+                },
+                J: {
+                    ML: 2,
+                    Perf: 2,
+                    Ease: 1,
+                    Web: 1,
+                    Sys: 1,
+                    Script: 1,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 2,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 1,
+                    UI: 1,
+                    Back: 1,
+                    Front: 1,
+                    Cloud: 1,
+                    Tool: 2,
+                    Teach: 3,
+                    AI: 3,
+                    Fin: 3,
+                    Sci: 4,
+                    Ent: 1,
+                    RT: 1,
+                    Sec: 2,
+                },
+                Zsh: {
+                    ML: 1,
+                    Perf: 1,
+                    Ease: 3,
+                    Web: 2,
+                    Sys: 1,
+                    Script: 5,
+                    Mob: 1,
+                    Emb: 1,
+                    Viz: 1,
+                    Conc: 1,
+                    Func: 1,
+                    Game: 1,
+                    DevOps: 5,
+                    UI: 1,
+                    Back: 3,
+                    Front: 1,
+                    Cloud: 3,
+                    Tool: 3,
+                    Teach: 4,
+                    AI: 1,
+                    Fin: 1,
+                    Sci: 1,
+                    Ent: 2,
+                    RT: 1,
+                    Sec: 2,
+                },
+            };
+            const categoryShortToFullName = {
+                ML: 'Machine Learning',
+                Perf: 'Performance',
+                Ease: 'Ease of Use',
+                Web: 'Web Dev',
+                Sys: 'System Prog.',
+                Script: 'Scripting',
+                Mob: 'Mobile Dev',
+                Emb: 'Embedded',
+                Viz: 'Visualization',
+                Conc: 'Concurrency',
+                Func: 'Functional Prog.',
+                Game: 'Game Dev',
+                DevOps: 'DevOps',
+                UI: 'UI Dev',
+                Back: 'Backend Dev',
+                Front: 'Frontend Dev',
+                Cloud: 'Cloud Dev',
+                Tool: 'Tooling',
+                Teach: 'Teaching',
+                AI: 'AI (General)',
+                Fin: 'Finance',
+                Sci: 'Scientific Computing',
+                Ent: 'Enterprise Dev',
+                RT: 'Real-Time Systems',
+                Sec: 'Security',
+            };
+            const categoriesOrder = [
+                'ML',
+                'AI',
+                'Sci',
+                'Fin',
+                'Viz',
+                'Perf',
+                'Ease',
+                'Web',
+                'Back',
+                'Front',
+                'Mob',
+                'Game',
+                'Sys',
+                'Emb',
+                'Conc',
+                'Func',
+                'Script',
+                'DevOps',
+                'Cloud',
+                'Tool',
+                'Teach',
+                'Ent',
+                'RT',
+                'Sec',
+            ];
 
-            // Function to initialize the graph once the DOM is ready
+            let network = null;
+            let allNodesOriginalStyles = new Map();
+            let nodesDataSet = new vis.DataSet();
+
             function DrawGraph() {
-                const graphContainer = document.getElementById('graphContainer');
+                const graphContainer =
+                    document.getElementById('graphContainer');
                 const container = document.getElementById('languageGraph');
-                const loadingMessage = document.getElementById('loadingMessage');
+                const loadingMessage =
+                    document.getElementById('loadingMessage');
                 const sidebar = document.getElementById('sidebar');
-                const closeSidebarButton = document.getElementById('closeSidebar');
+                const closeSidebarButton =
+                    document.getElementById('closeSidebar');
                 const sidebarTitle = document.getElementById('sidebarTitle');
-                const influencedByList = document.getElementById('influencedByList');
-                const influencesList = document.getElementById('influencesList');
-                const syntaxExamplesContainer = document.getElementById('syntaxExamplesContainer'); // Use the container div
+                const languageTagsList =
+                    document.getElementById('languageTagsList');
+                const influencedByList =
+                    document.getElementById('influencedByList');
+                const influencesList =
+                    document.getElementById('influencesList');
+                const rankingsList = document.getElementById('rankingsList');
+                const syntaxExample = document.getElementById('syntaxExample');
+                const rankingsHeader =
+                    document.getElementById('rankingsHeader');
+                const rankingsToggleArrow =
+                    rankingsHeader.querySelector('.toggle-arrow');
 
-                // --- Define Nodes (Data from user's example) ---
-                 const nodes = new vis.DataSet([
-                    { id: 'Assembly', label: 'Assembly', group: 'misc', shape: 'box',},
-                    { id: 'Python', label: 'Python', group: 'misc', shape: 'box',},
-                    { id: 'Algol 60', label: 'Algol 60', group: 'c_syntax_algol', shape: 'box',},
-                    { id: 'C', label: 'C', group: 'c_syntax_core', shape: 'box',},
-                    { id: 'C++', label: 'C++', group: 'c_syntax_core', shape: 'box',},
-                    { id: 'Objective-C', label: 'Objective-C', group: 'c_syntax_core', shape: 'box',},
-                    { id: 'Perl', label: 'Perl', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'Awk', label: 'Awk', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'JavaScript', label: 'JavaScript', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'PHP', label: 'PHP', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'Java', label: 'Java', group: 'c_syntax_jvm', shape: 'box',},
-                    { id: 'D', label: 'D', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Rust', label: 'Rust', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Go', label: 'Go', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Zig', label: 'Zig', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Odin', label: 'Odin', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'V', label: 'V', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Swift', label: 'Swift', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'C#', label: 'C#', group: 'c_syntax_jvm', shape: 'box',},
-                    { id: 'Kotlin', label: 'Kotlin', group: 'c_syntax_jvm', shape: 'box',},
-                    { id: 'Scala', label: 'Scala', group: 'c_syntax_jvm', shape: 'box',},
-                    { id: 'Dart', label: 'Dart', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'TypeScript', label: 'TypeScript', group: 'c_syntax_script', shape: 'box',},
-                    { id: 'ML', label: 'ML', group: 'ml', shape: 'box',},
-                    { id: 'Standard ML', label: 'Standard ML', group: 'ml', shape: 'box',},
-                    { id: 'Haskell', label: 'Haskell', group: 'ml', shape: 'box',},
-                    { id: 'OCaml', label: 'OCaml', group: 'ml', shape: 'box',},
-                    { id: 'F#', label: 'F#', group: 'ml', shape: 'box',},
-                    { id: 'Nim', label: 'Nim', group: 'ml', shape: 'box',},
-                    { id: 'Julia', label: 'Julia', group: 'ml', shape: 'box',},
-                    { id: 'Pascal', label: 'Pascal', group: 'pascal_like', shape: 'box',},
-                    { id: 'Modula-2', label: 'Modula-2', group: 'pascal_like', shape: 'box',},
-                    { id: 'ABC', label: 'ABC', group: 'pascal_like', shape: 'box',},
-                    { id: 'Ada', label: 'Ada', group: 'pascal_like', shape: 'box',},
-                    { id: 'Oberon', label: 'Oberon', group: 'pascal_like', shape: 'box',},
-                    { id: 'Lisp', label: 'Lisp', group: 'lisp', shape: 'box',},
-                    { id: 'Scheme', label: 'Scheme', group: 'lisp', shape: 'box',},
-                    { id: 'Common Lisp', label: 'Common Lisp', group: 'lisp', shape: 'box',},
-                    { id: 'Clojure', label: 'Clojure', group: 'lisp', shape: 'box',},
-                    { id: 'Racket', label: 'Racket', group: 'lisp', shape: 'box',},
-                    { id: 'Lua', label: 'Lua', group: 'lisp', shape: 'box',},
-                    { id: 'Simula', label: 'Simula', group: 'smalltalk', shape: 'box',},
-                    { id: 'Smalltalk', label: 'Smalltalk', group: 'smalltalk', shape: 'box',},
-                    { id: 'Ruby', label: 'Ruby', group: 'smalltalk', shape: 'box',},
-                    { id: 'Elixir', label: 'Elixir', group: 'smalltalk', shape: 'box',},
-                    { id: 'Prolog', label: 'Prolog', group: 'logic', shape: 'box',},
-                    { id: 'Erlang', label: 'Erlang', group: 'logic', shape: 'box',},
-                    { id: 'Fortran', label: 'Fortran', group: 'stats', shape: 'box',},
-                    { id: 'SQL', label: 'SQL', group: 'stats', shape: 'box',},
-                    { id: 'S', label: 'S', group: 'stats', shape: 'box',},
-                    { id: 'MATLAB', label: 'MATLAB', group: 'stats', shape: 'box',},
-                    { id: 'SAS', label: 'SAS', group: 'stats', shape: 'box',},
-                    { id: 'Stata', label: 'Stata', group: 'stats', shape: 'box',},
-                    { id: 'R', label: 'R', group: 'stats', shape: 'box',},
-                    { id: 'APL', label: 'APL', group: 'array', shape: 'box',},
-                    { id: 'J', label: 'J', group: 'array', shape: 'box',},
-                    { id: 'Thompson sh', label: 'Thompson sh', group: 'shell', shape: 'box',},
-                    { id: 'Bourne sh', label: 'Bourne sh', group: 'shell', shape: 'box',},
-                    { id: 'Bash', label: 'Bash', group: 'shell', shape: 'box',},
-                    { id: 'Zsh', label: 'Zsh', group: 'shell', shape: 'box',},
-                    { id: 'PowerShell', label: 'PowerShell', group: 'shell', shape: 'box',},
-                    { id: 'CPL', label: 'CPL', group: 'intermediate', shape: 'box',},
-                    { id: 'BCPL', label: 'BCPL', group: 'intermediate', shape: 'box',},
-                    { id: 'B', label: 'B', group: 'intermediate', shape: 'box',},
-                    { id: 'Crystal', label: 'Crystal', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Vale', label: 'Vale', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Carbon', label: 'Carbon', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'Mojo', label: 'Mojo', group: 'c_syntax_modern', shape: 'box',},
-                    { id: 'COBOL', label: 'COBOL', group: 'pascal_like', shape: 'box',},
-                    { id: 'Svelte', label: 'Svelte', group: 'c_syntax_script', shape: 'box',},
-                 ]);
+                const initialNodesData = [
+                    /* Omitted for brevity, same as before */
+                    {
+                        id: 'Assembly',
+                        label: 'Assembly',
+                        group: 'misc',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Python',
+                        label: 'Python',
+                        group: 'misc',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Algol 60',
+                        label: 'Algol 60',
+                        group: 'c_syntax_algol',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'C',
+                        label: 'C',
+                        group: 'c_syntax_core',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'C++',
+                        label: 'C++',
+                        group: 'c_syntax_core',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Objective-C',
+                        label: 'Objective-C',
+                        group: 'c_syntax_core',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Perl',
+                        label: 'Perl',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Awk',
+                        label: 'Awk',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'JavaScript',
+                        label: 'JavaScript',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'PHP',
+                        label: 'PHP',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Java',
+                        label: 'Java',
+                        group: 'c_syntax_jvm',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'D',
+                        label: 'D',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Rust',
+                        label: 'Rust',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Go',
+                        label: 'Go',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Zig',
+                        label: 'Zig',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Odin',
+                        label: 'Odin',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'V',
+                        label: 'V',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Swift',
+                        label: 'Swift',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'C#',
+                        label: 'C#',
+                        group: 'c_syntax_jvm',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Kotlin',
+                        label: 'Kotlin',
+                        group: 'c_syntax_jvm',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Scala',
+                        label: 'Scala',
+                        group: 'c_syntax_jvm',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Dart',
+                        label: 'Dart',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'TypeScript',
+                        label: 'TypeScript',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    { id: 'ML', label: 'ML', group: 'ml', shape: 'box' },
+                    {
+                        id: 'Standard ML',
+                        label: 'Standard ML',
+                        group: 'ml',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Haskell',
+                        label: 'Haskell',
+                        group: 'ml',
+                        shape: 'box',
+                    },
+                    { id: 'OCaml', label: 'OCaml', group: 'ml', shape: 'box' },
+                    { id: 'F#', label: 'F#', group: 'ml', shape: 'box' },
+                    { id: 'Nim', label: 'Nim', group: 'ml', shape: 'box' },
+                    {
+                        id: 'Julia',
+                        label: 'Julia',
+                        group: 'stats',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Pascal',
+                        label: 'Pascal',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Modula-2',
+                        label: 'Modula-2',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'ABC',
+                        label: 'ABC',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Ada',
+                        label: 'Ada',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Oberon',
+                        label: 'Oberon',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    { id: 'Lisp', label: 'Lisp', group: 'lisp', shape: 'box' },
+                    {
+                        id: 'Scheme',
+                        label: 'Scheme',
+                        group: 'lisp',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Common Lisp',
+                        label: 'Common Lisp',
+                        group: 'lisp',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Clojure',
+                        label: 'Clojure',
+                        group: 'lisp',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Racket',
+                        label: 'Racket',
+                        group: 'lisp',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Lua',
+                        label: 'Lua',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Simula',
+                        label: 'Simula',
+                        group: 'smalltalk',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Smalltalk',
+                        label: 'Smalltalk',
+                        group: 'smalltalk',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Ruby',
+                        label: 'Ruby',
+                        group: 'smalltalk',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Elixir',
+                        label: 'Elixir',
+                        group: 'logic',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Prolog',
+                        label: 'Prolog',
+                        group: 'logic',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Erlang',
+                        label: 'Erlang',
+                        group: 'logic',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Fortran',
+                        label: 'Fortran',
+                        group: 'stats',
+                        shape: 'box',
+                    },
+                    { id: 'SQL', label: 'SQL', group: 'misc', shape: 'box' },
+                    { id: 'S', label: 'S', group: 'stats', shape: 'box' },
+                    {
+                        id: 'MATLAB',
+                        label: 'MATLAB',
+                        group: 'stats',
+                        shape: 'box',
+                    },
+                    { id: 'SAS', label: 'SAS', group: 'stats', shape: 'box' },
+                    {
+                        id: 'Stata',
+                        label: 'Stata',
+                        group: 'stats',
+                        shape: 'box',
+                    },
+                    { id: 'R', label: 'R', group: 'stats', shape: 'box' },
+                    { id: 'APL', label: 'APL', group: 'array', shape: 'box' },
+                    { id: 'J', label: 'J', group: 'array', shape: 'box' },
+                    {
+                        id: 'Thompson sh',
+                        label: 'Thompson sh',
+                        group: 'shell',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Bourne sh',
+                        label: 'Bourne sh',
+                        group: 'shell',
+                        shape: 'box',
+                    },
+                    { id: 'Bash', label: 'Bash', group: 'shell', shape: 'box' },
+                    { id: 'Zsh', label: 'Zsh', group: 'shell', shape: 'box' },
+                    {
+                        id: 'PowerShell',
+                        label: 'PowerShell',
+                        group: 'shell',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'CPL',
+                        label: 'CPL',
+                        group: 'intermediate',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'BCPL',
+                        label: 'BCPL',
+                        group: 'intermediate',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'B',
+                        label: 'B',
+                        group: 'intermediate',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Crystal',
+                        label: 'Crystal',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Vale',
+                        label: 'Vale',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Carbon',
+                        label: 'Carbon',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Mojo',
+                        label: 'Mojo',
+                        group: 'c_syntax_modern',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'COBOL',
+                        label: 'COBOL',
+                        group: 'pascal_like',
+                        shape: 'box',
+                    },
+                    {
+                        id: 'Svelte',
+                        label: 'Svelte',
+                        group: 'c_syntax_script',
+                        shape: 'box',
+                    },
+                ];
 
-                // --- Define Edges (Data from user's example) ---
+                const processedNodes = initialNodesData.map((node) => {
+                    const originalLabel = node.label;
+                    node.labelOriginal = originalLabel;
+                    node.goodAtCategories = [];
+                    node.badAtCategories = [];
+                    node.goodTagsDisplay = [];
+                    node.badTagsDisplay = [];
+
+                    const langRankings = languageRankingsData[originalLabel];
+                    if (langRankings) {
+                        categoriesOrder.forEach((cat) => {
+                            // Iterate in defined order for tags
+                            if (langRankings[cat] === undefined) return;
+
+                            if (langRankings[cat] >= 4) {
+                                node.goodAtCategories.push(cat);
+                                node.goodTagsDisplay.push(
+                                    categoryShortToFullName[cat] || cat
+                                );
+                            }
+                            if (langRankings[cat] <= 2) {
+                                node.badAtCategories.push(cat);
+                                node.badTagsDisplay.push(
+                                    categoryShortToFullName[cat] || cat
+                                );
+                            }
+                        });
+                    }
+                    node.label = originalLabel; // Graph node label is just the name
+                    return node;
+                });
+
+                nodesDataSet = new vis.DataSet(processedNodes);
+
                 const edgeData = [
+                    /* Omitted for brevity, same as before */
                     { from: 'Assembly', to: 'Fortran', arrows: 'to' },
+                    { from: 'Assembly', to: 'COBOL', arrows: 'to' },
                     { from: 'Assembly', to: 'Algol 60', arrows: 'to' },
                     { from: 'Assembly', to: 'Lisp', arrows: 'to' },
                     { from: 'Assembly', to: 'APL', arrows: 'to' },
-                    { from: 'Assembly', to: 'Prolog', arrows: 'to' },
-                    { from: 'Assembly', to: 'Thompson sh', arrows: 'to' },
+                    { from: 'Assembly', to: 'B', arrows: 'to' },
                     { from: 'Algol 60', to: 'CPL', arrows: 'to' },
                     { from: 'Algol 60', to: 'Pascal', arrows: 'to' },
                     { from: 'Algol 60', to: 'Simula', arrows: 'to' },
-                    { from: 'Algol 60', to: 'ML', arrows: 'to' },
+                    { from: 'Algol 60', to: 'Ada', arrows: 'to' },
                     { from: 'CPL', to: 'BCPL', arrows: 'to' },
                     { from: 'BCPL', to: 'B', arrows: 'to' },
                     { from: 'B', to: 'C', arrows: 'to' },
@@ -627,405 +2128,621 @@
                     { from: 'C', to: 'Python', arrows: 'to' },
                     { from: 'C', to: 'JavaScript', arrows: 'to' },
                     { from: 'C', to: 'PHP', arrows: 'to' },
+                    { from: 'C', to: 'Go', arrows: 'to' },
+                    { from: 'C', to: 'D', arrows: 'to' },
+                    { from: 'C', to: 'Rust', arrows: 'to' },
+                    { from: 'C', to: 'Java', arrows: 'to' },
                     { from: 'C++', to: 'Java', arrows: 'to' },
+                    { from: 'C++', to: 'C#', arrows: 'to' },
                     { from: 'C++', to: 'D', arrows: 'to' },
                     { from: 'C++', to: 'Rust', arrows: 'to' },
                     { from: 'C++', to: 'Go', arrows: 'to' },
                     { from: 'C++', to: 'Zig', arrows: 'to' },
                     { from: 'C++', to: 'Odin', arrows: 'to' },
                     { from: 'C++', to: 'V', arrows: 'to' },
+                    { from: 'C++', to: 'Swift', arrows: 'to' },
                     { from: 'C++', to: 'Carbon', arrows: 'to' },
+                    { from: 'C++', to: 'Vale', arrows: 'to' },
                     { from: 'Objective-C', to: 'Swift', arrows: 'to' },
                     { from: 'Java', to: 'C#', arrows: 'to' },
                     { from: 'Java', to: 'Kotlin', arrows: 'to' },
                     { from: 'Java', to: 'Scala', arrows: 'to' },
                     { from: 'Java', to: 'Dart', arrows: 'to' },
                     { from: 'C#', to: 'F#', arrows: 'to' },
+                    { from: 'C#', to: 'PowerShell', arrows: 'to' },
                     { from: 'ML', to: 'Standard ML', arrows: 'to' },
-                    { from: 'ML', to: 'Haskell', arrows: 'to' },
                     { from: 'ML', to: 'OCaml', arrows: 'to' },
+                    { from: 'ML', to: 'Haskell', arrows: 'to' },
+                    { from: 'ML', to: 'F#', arrows: 'to' },
+                    { from: 'ML', to: 'Rust', arrows: 'to' },
+                    { from: 'ML', to: 'Swift', arrows: 'to' },
                     { from: 'Standard ML', to: 'F#', arrows: 'to' },
                     { from: 'OCaml', to: 'F#', arrows: 'to' },
+                    { from: 'OCaml', to: 'Rust', arrows: 'to' },
+                    { from: 'OCaml', to: 'Swift', arrows: 'to' },
+                    { from: 'OCaml', to: 'Vale', arrows: 'to' },
                     { from: 'Haskell', to: 'Scala', arrows: 'to' },
                     { from: 'Haskell', to: 'Rust', arrows: 'to' },
                     { from: 'Haskell', to: 'Nim', arrows: 'to' },
-                    { from: 'Haskell', to: 'Julia', arrows: 'to' },
+                    { from: 'Haskell', to: 'Swift', arrows: 'to' },
+                    { from: 'Haskell', to: 'Elm', arrows: 'to' },
                     { from: 'Pascal', to: 'Modula-2', arrows: 'to' },
-                    { from: 'Pascal', to: 'ABC', arrows: 'to' },
                     { from: 'Pascal', to: 'Ada', arrows: 'to' },
+                    { from: 'Pascal', to: 'Oberon', arrows: 'to' },
+                    { from: 'Pascal', to: 'Nim', arrows: 'to' },
+                    { from: 'Pascal', to: 'Go', arrows: 'to' },
                     { from: 'Modula-2', to: 'Oberon', arrows: 'to' },
+                    { from: 'Modula-2', to: 'Lua', arrows: 'to' },
+                    { from: 'Modula-2', to: 'Python', arrows: 'to' },
                     { from: 'ABC', to: 'Python', arrows: 'to' },
-                    { from: 'Python', to: 'Julia', arrows: 'to' },
-                    { from: 'Python', to: 'Nim', arrows: 'to' },
-                    { from: 'Python', to: 'Go', arrows: 'to' },
-                    { from: 'Python', to: 'Mojo', arrows: 'to' },
-                    { from: 'Awk', to: 'Perl', arrows: 'to' },
-                    { from: 'Perl', to: 'PHP', arrows: 'to' },
-                    { from: 'JavaScript', to: 'TypeScript', arrows: 'to' },
-                    { from: 'JavaScript', to: 'Dart', arrows: 'to' },
-                    { from: 'JavaScript', to: 'Svelte', arrows: 'to' },
                     { from: 'Lisp', to: 'Scheme', arrows: 'to' },
                     { from: 'Lisp', to: 'Common Lisp', arrows: 'to' },
                     { from: 'Lisp', to: 'Clojure', arrows: 'to' },
                     { from: 'Lisp', to: 'Racket', arrows: 'to' },
+                    { from: 'Lisp', to: 'Julia', arrows: 'to' },
+                    { from: 'Lisp', to: 'Dylan', arrows: 'to' },
+                    { from: 'Lisp', to: 'Ruby', arrows: 'to' },
                     { from: 'Scheme', to: 'JavaScript', arrows: 'to' },
                     { from: 'Scheme', to: 'Lua', arrows: 'to' },
                     { from: 'Scheme', to: 'Python', arrows: 'to' },
                     { from: 'Scheme', to: 'Haskell', arrows: 'to' },
+                    { from: 'Scheme', to: 'Racket', arrows: 'to' },
+                    { from: 'Common Lisp', to: 'Clojure', arrows: 'to' },
+                    { from: 'Common Lisp', to: 'Julia', arrows: 'to' },
                     { from: 'Simula', to: 'Smalltalk', arrows: 'to' },
+                    { from: 'Simula', to: 'C++', arrows: 'to' },
+                    { from: 'Smalltalk', to: 'Objective-C', arrows: 'to' },
                     { from: 'Smalltalk', to: 'Ruby', arrows: 'to' },
-                    { from: 'Ruby', to: 'Elixir', arrows: 'to' },
-                    { from: 'Ruby', to: 'Crystal', arrows: 'to' },
+                    { from: 'Smalltalk', to: 'Python', arrows: 'to' },
+                    { from: 'Smalltalk', to: 'Java', arrows: 'to' },
+                    { from: 'Smalltalk', to: 'Self', arrows: 'to' },
+                    { from: 'Awk', to: 'Perl', arrows: 'to' },
+                    { from: 'Perl', to: 'PHP', arrows: 'to' },
+                    { from: 'Perl', to: 'Ruby', arrows: 'to' },
+                    { from: 'Perl', to: 'Python', arrows: 'to' },
+                    { from: 'Python', to: 'Julia', arrows: 'to' },
+                    { from: 'Python', to: 'Nim', arrows: 'to' },
+                    { from: 'Python', to: 'Go', arrows: 'to' },
+                    { from: 'Python', to: 'Mojo', arrows: 'to' },
+                    { from: 'Python', to: 'Swift', arrows: 'to' },
+                    { from: 'Python', to: 'Cobra', arrows: 'to' },
+                    { from: 'JavaScript', to: 'TypeScript', arrows: 'to' },
+                    { from: 'JavaScript', to: 'Dart', arrows: 'to' },
+                    { from: 'JavaScript', to: 'Svelte', arrows: 'to' },
+                    { from: 'JavaScript', to: 'CoffeeScript', arrows: 'to' },
                     { from: 'Prolog', to: 'Erlang', arrows: 'to' },
                     { from: 'Erlang', to: 'Elixir', arrows: 'to' },
-                    { from: 'Fortran', to: 'SQL', arrows: 'to' },
                     { from: 'Fortran', to: 'S', arrows: 'to' },
                     { from: 'Fortran', to: 'MATLAB', arrows: 'to' },
                     { from: 'Fortran', to: 'SAS', arrows: 'to' },
                     { from: 'Fortran', to: 'Stata', arrows: 'to' },
-                    { from: 'Fortran', to: 'COBOL', arrows: 'to' },
                     { from: 'S', to: 'R', arrows: 'to' },
+                    { from: 'R', to: 'Julia', arrows: 'to' },
                     { from: 'APL', to: 'J', arrows: 'to' },
+                    { from: 'APL', to: 'K', arrows: 'to' },
+                    { from: 'APL', to: 'S', arrows: 'to' },
                     { from: 'Thompson sh', to: 'Bourne sh', arrows: 'to' },
                     { from: 'Bourne sh', to: 'Bash', arrows: 'to' },
+                    { from: 'Bourne sh', to: 'Ksh', arrows: 'to' },
                     { from: 'Bash', to: 'Zsh', arrows: 'to' },
                     { from: 'Bash', to: 'PowerShell', arrows: 'to' },
+                    { from: 'Ruby', to: 'Elixir', arrows: 'to' },
+                    { from: 'Ruby', to: 'Crystal', arrows: 'to' },
                     { from: 'Rust', to: 'Swift', arrows: 'to' },
                     { from: 'Rust', to: 'Vale', arrows: 'to' },
+                    { from: 'Rust', to: 'Zig', arrows: 'to' },
+                    { from: 'Rust', to: 'Carbon', arrows: 'to' },
+                    { from: 'Go', to: 'Odin', arrows: 'to' },
+                    { from: 'Go', to: 'V', arrows: 'to' },
+                    { from: 'Go', to: 'Zig', arrows: 'to' },
                 ];
-                // Assign IDs to edges for easier updates
-                const edgesWithIds = edgeData.map((edge, index) => ({ ...edge, id: `e${index}` }));
-                const edges = new vis.DataSet(edgesWithIds);
+                const edges = new vis.DataSet(edgeData);
 
-                // --- Define Options (Apple Style Dark Mode) ---
                 const options = {
-                    // Layout options: Hierarchical layout from Up to Down (UD)
+                    /* Omitted for brevity, same as before, ensure node label parsing works with new format or adjust font size/margin if needed */
                     layout: {
                         hierarchical: {
                             enabled: true,
-                            direction: 'UD', // Top-down layout
+                            direction: 'UD',
                             sortMethod: 'directed',
-                            levelSeparation: 160, // Increased vertical spacing
-                            nodeSpacing: 150, // Adjusted horizontal spacing
-                            treeSpacing: 220, // Adjusted tree spacing
+                            levelSeparation: 180,
+                            nodeSpacing: 160,
+                            treeSpacing: 240,
                         },
                     },
-                    // Node options: Apple dark mode style
                     nodes: {
                         shape: 'box',
                         font: {
                             face: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-                            size: 13.5, // Slightly larger font
-                            color: '#f5f5f7', // Light text color
+                            size: 13,
+                            color: '#f5f5f7',
                         },
-                        borderWidth: 0.5, // Thinner border
-                        borderWidthSelected: 1.5, // Slightly thicker selected border
-                        shapeProperties: {
-                            borderRadius: 7, // Apple-like rounding
+                        borderWidth: 0.8,
+                        borderWidthSelected: 1.8,
+                        shapeProperties: { borderRadius: 8 },
+                        margin: { top: 12, right: 18, bottom: 12, left: 18 },
+                        shadow: {
+                            enabled: true,
+                            color: 'rgba(0, 0, 0, 0.3)',
+                            size: 7,
+                            x: 2,
+                            y: 3,
                         },
-                        margin: {
-                            top: 12, right: 18, bottom: 12, left: 18,
-                        },
-                        shadow: { // Keep subtle default shadow
-                            enabled: true, color: 'rgba(0, 0, 0, 0.4)', size: 6, x: 1, y: 3,
-                        },
-                         color: { // Default node colors (used if no group)
-                             background: 'rgba(55, 55, 55, 0.85)',
-                             border: '#777777',
-                             highlight: { background: '#777777', border: '#999999' },
-                             hover: { background: 'rgba(65, 65, 65, 0.85)', border: '#888888' }
-                         }
                     },
-                    // Edge options: Subtle edges
                     edges: {
                         arrows: {
-                            to: { enabled: true, scaleFactor: 0.5, type: 'arrow' },
+                            to: {
+                                enabled: true,
+                                scaleFactor: 0.6,
+                                type: 'arrow',
+                            },
                         },
                         smooth: {
-                            enabled: true, type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4,
+                            enabled: true,
+                            type: 'cubicBezier',
+                            forceDirection: 'vertical',
+                            roundness: 0.4,
                         },
                         color: {
-                            color: '#555555', // Darker gray for edges
-                            highlight: '#999999', // Lighter gray on hover/select
-                            hover: '#777777',
+                            color: '#505053',
+                            highlight: '#8a8a8e',
+                            hover: '#6a6a6e',
                             inherit: false,
-                            opacity: 0.8, // Slightly transparent edges
+                            opacity: 0.85,
                         },
-                        width: 0.8, // Thinner edges
-                        hoverWidth: 1.2,
-                        selectionWidth: 1.5, // Default selection width
+                        width: 0.9,
+                        hoverWidth: 1.3,
+                        selectionWidth: 1.6,
                     },
-                    // Physics options: Disabled
                     physics: { enabled: false },
-                    // Interaction options: Standard
                     interaction: {
-                        dragNodes: false, // *** Disable node dragging ***
-                        dragView: true, // Keep view dragging enabled
+                        dragNodes: false,
+                        dragView: true,
                         zoomView: true,
                         tooltipDelay: 200,
-                        navigationButtons: true, // Keep buttons enabled
+                        navigationButtons: true,
                         keyboard: true,
-                        selectConnectedEdges: false, // Don't highlight edges on node select
+                        selectConnectedEdges: false,
                     },
-                    // Group options: Refined dark mode colors with subtle accents
                     groups: {
-                        // Apply styles (Example: using muted colors for borders)
-                        c_syntax_algol: { color: { background: 'rgba(40, 45, 55, 0.85)', border: '#4a5568' } },
-                        c_syntax_core: { color: { background: 'rgba(45, 50, 60, 0.85)', border: '#5a6578' } },
-                        c_syntax_jvm: { color: { background: 'rgba(50, 45, 65, 0.85)', border: '#6b5f8a' } },
-                        c_syntax_modern: { color: { background: 'rgba(40, 55, 50, 0.85)', border: '#486a5f' } },
-                        c_syntax_script: { color: { background: 'rgba(40, 55, 55, 0.85)', border: '#4a6b6b' } },
-                        lisp: { color: { background: 'rgba(60, 50, 40, 0.85)', border: '#8a705b' } },
-                        ml: { color: { background: 'rgba(40, 60, 50, 0.85)', border: '#4a7565' } },
-                        smalltalk: { color: { background: 'rgba(60, 40, 45, 0.85)', border: '#8a5b65' } },
-                        stats: { color: { background: 'rgba(55, 45, 60, 0.85)', border: '#7a608a' } },
-                        array: { color: { background: 'rgba(60, 45, 55, 0.85)', border: '#8a607a' } },
-                        shell: { color: { background: 'rgba(45, 50, 65, 0.85)', border: '#5a658a' } },
-                        pascal_like: { color: { background: 'rgba(65, 50, 40, 0.85)', border: '#9a705b' } },
-                        logic: { color: { background: 'rgba(55, 45, 65, 0.85)', border: '#7a609a' } },
-                        misc: { color: { background: 'rgba(55, 55, 55, 0.85)', border: '#777777' } },
-                        intermediate: { color: { background: 'rgba(65, 65, 65, 0.85)', border: '#888888' } },
+                        c_syntax_algol: {
+                            color: {
+                                background: 'rgba(40, 45, 55, 0.9)',
+                                border: '#4a5568',
+                            },
+                        },
+                        c_syntax_core: {
+                            color: {
+                                background: 'rgba(45, 50, 60, 0.9)',
+                                border: '#5a6578',
+                            },
+                        },
+                        c_syntax_jvm: {
+                            color: {
+                                background: 'rgba(50, 45, 65, 0.9)',
+                                border: '#6b5f8a',
+                            },
+                        },
+                        c_syntax_modern: {
+                            color: {
+                                background: 'rgba(40, 55, 50, 0.9)',
+                                border: '#486a5f',
+                            },
+                        },
+                        c_syntax_script: {
+                            color: {
+                                background: 'rgba(40, 55, 55, 0.9)',
+                                border: '#4a6b6b',
+                            },
+                        },
+                        lisp: {
+                            color: {
+                                background: 'rgba(60, 50, 40, 0.9)',
+                                border: '#8a705b',
+                            },
+                        },
+                        ml: {
+                            color: {
+                                background: 'rgba(40, 60, 50, 0.9)',
+                                border: '#4a7565',
+                            },
+                        },
+                        smalltalk: {
+                            color: {
+                                background: 'rgba(60, 40, 45, 0.9)',
+                                border: '#8a5b65',
+                            },
+                        },
+                        stats: {
+                            color: {
+                                background: 'rgba(55, 45, 60, 0.9)',
+                                border: '#7a608a',
+                            },
+                        },
+                        array: {
+                            color: {
+                                background: 'rgba(60, 45, 55, 0.9)',
+                                border: '#8a607a',
+                            },
+                        },
+                        shell: {
+                            color: {
+                                background: 'rgba(45, 50, 65, 0.9)',
+                                border: '#5a658a',
+                            },
+                        },
+                        pascal_like: {
+                            color: {
+                                background: 'rgba(65, 50, 40, 0.9)',
+                                border: '#9a705b',
+                            },
+                        },
+                        logic: {
+                            color: {
+                                background: 'rgba(55, 45, 65, 0.9)',
+                                border: '#7a609a',
+                            },
+                        },
+                        misc: {
+                            color: {
+                                background: 'rgba(55, 55, 55, 0.9)',
+                                border: '#777777',
+                            },
+                        },
+                        intermediate: {
+                            color: {
+                                background: 'rgba(65, 65, 65, 0.9)',
+                                border: '#888888',
+                            },
+                        },
                     },
                 };
 
-                // --- Refine Group Colors with Highlight/Hover ---
-                // Assign default highlight/hover based on border/background
                 Object.keys(options.groups).forEach((groupName) => {
+                    /* Omitted for brevity, same as before */
                     if (options.groups[groupName].color) {
                         const baseColor = options.groups[groupName].color;
                         options.groups[groupName].color.highlight = {
-                            // Make highlight slightly brighter than border
-                            background: baseColor.border, // Use border color as background highlight
-                            border: baseColor.border // Use the same border color for highlight
+                            background: baseColor.border,
+                            border: baseColor.border,
                         };
                         options.groups[groupName].color.hover = {
-                            // Keep hover subtle
                             background: baseColor.background,
-                            border: baseColor.border
+                            border: baseColor.border,
                         };
                     }
                 });
 
+                allNodesOriginalStyles.clear();
+                nodesDataSet.forEach((node) => {
+                    const groupSettings = options.groups[node.group];
+                    let bg =
+                        options.nodes.color && options.nodes.color.background
+                            ? options.nodes.color.background
+                            : 'rgba(55, 55, 55, 0.9)';
+                    let bd =
+                        options.nodes.color && options.nodes.color.border
+                            ? options.nodes.color.border
+                            : '#777777';
+                    let fontColor =
+                        options.nodes.font && options.nodes.font.color
+                            ? options.nodes.font.color
+                            : '#f5f5f7';
 
-                // --- Create Network ---
-                const data = { nodes: nodes, edges: edges };
-                const network = new vis.Network(container, data, options);
+                    if (groupSettings && groupSettings.color) {
+                        bg = groupSettings.color.background || bg;
+                        bd = groupSettings.color.border || bd;
+                    }
+                    allNodesOriginalStyles.set(node.id, {
+                        color: { background: bg, border: bd },
+                        font: { color: fontColor },
+                        borderWidth: options.nodes.borderWidth || 0.8,
+                        label: node.labelOriginal,
+                    });
+                });
 
-                // --- Highlighting Logic ---
-                let currentlyHighlighted = { nodes: [], edges: [] };
-                const highlightNodeBorderWidth = 2.5; // Thicker border for highlighted nodes
-                const highlightEdgeColor = '#00BFFF'; // Deep Sky Blue for highlighted edges
-                const highlightEdgeWidth = 2; // Thicker highlighted edges
+                const data = { nodes: nodesDataSet, edges: edges };
+                network = new vis.Network(container, data, options);
 
-                function resetHighlighting() {
-                     // Reset Nodes: Revert border width to default and reset color object completely
-                     // This relies on vis.js reapplying group/default styles when color obj is reset
-                     if (currentlyHighlighted.nodes.length > 0) {
-                         const nodeUpdates = currentlyHighlighted.nodes.map(id => ({
-                             id: id,
-                             borderWidth: options.nodes.borderWidth, // Reset border width
-                             color: null // Let vis.js reapply group/default color
-                         }));
-                         try {
-                           nodes.update(nodeUpdates);
-                         } catch (e) { console.error("Error resetting node highlights:", e); }
-                     }
-
-                     // Reset Edges: Revert color and width to default options
-                     if (currentlyHighlighted.edges.length > 0) {
-                         const edgeUpdates = currentlyHighlighted.edges.map(id => ({
-                             id: id,
-                             color: options.edges.color.color, // Reset color
-                             width: options.edges.width // Reset width
-                         }));
-                         try {
-                            edges.update(edgeUpdates);
-                         } catch (e) { console.error("Error resetting edge highlights:", e); }
-                     }
-                     currentlyHighlighted = { nodes: [], edges: [] }; // Clear tracker
-                }
-
-                // --- Sidebar Logic ---
-
-                // Function to update and show the sidebar
                 function ShowSidebar(nodeId) {
-                    const node = nodes.get(nodeId);
-                    if (!node) return;
+                    const nodeData = nodesDataSet.get(nodeId);
+                    if (!nodeData) return;
 
-                    sidebarTitle.textContent = node.label;
+                    sidebarTitle.textContent = nodeData.labelOriginal;
 
-                    // Clear previous lists/syntax
+                    languageTagsList.innerHTML = '';
+                    if (
+                        nodeData.goodTagsDisplay &&
+                        nodeData.goodTagsDisplay.length > 0
+                    ) {
+                        nodeData.goodTagsDisplay.forEach((fullTagName) => {
+                            const li = document.createElement('li');
+                            li.textContent = `👍 ${fullTagName}`;
+                            li.style.backgroundColor =
+                                'rgba(48, 209, 88, 0.25)'; // Apple Green, more subtle bg
+                            li.style.border =
+                                '1px solid rgba(48, 209, 88, 0.5)';
+                            languageTagsList.appendChild(li);
+                        });
+                    }
+                    if (
+                        nodeData.badTagsDisplay &&
+                        nodeData.badTagsDisplay.length > 0
+                    ) {
+                        nodeData.badTagsDisplay.forEach((fullTagName) => {
+                            const li = document.createElement('li');
+                            li.textContent = `👎 ${fullTagName}`;
+                            li.style.backgroundColor =
+                                'rgba(255, 69, 58, 0.25)'; // Apple Red, more subtle bg
+                            li.style.border =
+                                '1px solid rgba(255, 69, 58, 0.5)';
+                            languageTagsList.appendChild(li);
+                        });
+                    }
+
                     influencedByList.innerHTML = '';
                     influencesList.innerHTML = '';
-                    syntaxExamplesContainer.innerHTML = ''; // Clear syntax container
+                    rankingsList.innerHTML = '';
 
-                    // Find relationships using the DataSet's get method with filtering
-                    const incomingEdges = edges.get({ filter: edge => edge.to === nodeId });
-                    const outgoingEdges = edges.get({ filter: edge => edge.from === nodeId });
+                    const incomingEdges = edgeData.filter(
+                        (edge) => edge.to === nodeId
+                    );
+                    incomingEdges.forEach((edge) => {
+                        const influencerNode = nodesDataSet.get(edge.from);
+                        if (influencerNode) {
+                            const li = document.createElement('li');
+                            li.textContent = influencerNode.labelOriginal;
+                            influencedByList.appendChild(li);
+                        }
+                    });
+                    if (influencedByList.children.length === 0)
+                        influencedByList.innerHTML =
+                            '<li>None in this graph</li>';
 
-                    // Populate "Influenced By" list
-                    if (incomingEdges.length > 0) {
-                        incomingEdges.forEach((edge) => {
-                            const influencerNode = nodes.get(edge.from);
-                            if (influencerNode) {
-                                const li = document.createElement('li');
-                                li.textContent = influencerNode.label;
-                                influencedByList.appendChild(li);
-                            }
+                    const outgoingEdges = edgeData.filter(
+                        (edge) => edge.from === nodeId
+                    );
+                    outgoingEdges.forEach((edge) => {
+                        const influencedNode = nodesDataSet.get(edge.to);
+                        if (influencedNode) {
+                            const li = document.createElement('li');
+                            li.textContent = influencedNode.labelOriginal;
+                            influencesList.appendChild(li);
+                        }
+                    });
+                    if (influencesList.children.length === 0)
+                        influencesList.innerHTML =
+                            '<li>None in this graph</li>';
+
+                    const langRankings =
+                        languageRankingsData[nodeData.labelOriginal];
+                    if (langRankings) {
+                        categoriesOrder.forEach((catShort) => {
+                            // Use defined order
+                            if (langRankings[catShort] === undefined) return;
+                            const score = langRankings[catShort];
+                            const legendText = rankLegend[score] || 'N/A';
+                            const li = document.createElement('li');
+                            li.textContent = `${
+                                categoryShortToFullName[catShort] || catShort
+                            }: ${score} (${legendText})`;
+                            rankingsList.appendChild(li);
                         });
                     } else {
-                        influencedByList.innerHTML = '<li>None in this graph</li>';
+                        rankingsList.innerHTML =
+                            '<li>Rankings not available.</li>';
                     }
 
-                    // Populate "Influences" list
-                    if (outgoingEdges.length > 0) {
-                        outgoingEdges.forEach((edge) => {
-                            const influencedNode = nodes.get(edge.to);
-                            if (influencedNode) {
-                                const li = document.createElement('li');
-                                li.textContent = influencedNode.label;
-                                influencesList.appendChild(li);
-                            }
-                        });
-                    } else {
-                        influencesList.innerHTML = '<li>None in this graph</li>';
-                    }
-
-                    // Populate syntax examples
-                    const examples = syntaxData[node.label];
-                    if (examples && examples.length > 0) {
-                        examples.forEach(exampleCode => {
-                            const pre = document.createElement('pre');
-                            pre.textContent = exampleCode;
-                            syntaxExamplesContainer.appendChild(pre);
-                        });
-                    } else {
-                        const pre = document.createElement('pre');
-                        pre.textContent = 'Syntax examples not available.';
-                        syntaxExamplesContainer.appendChild(pre);
-                    }
-
+                    syntaxExample.textContent =
+                        syntaxData[nodeData.labelOriginal] ||
+                        'Syntax example not available.';
                     sidebar.classList.add('visible');
                 }
 
-                // Function to hide the sidebar
                 function HideSidebar() {
                     sidebar.classList.remove('visible');
-                    resetHighlighting(); // Reset highlighting when sidebar is hidden
                 }
 
-                // --- Event Listeners ---
-
-                // Event listener for node clicks
                 network.on('click', function (params) {
-                    resetHighlighting(); // Always reset previous highlight first
-
                     if (params.nodes.length > 0) {
-                        const selectedNodeId = params.nodes[0];
-                        network.selectNodes([selectedNodeId]); // Ensure standard selection highlight happens
-
-                        // Find parents and children edges and nodes
-                        const parentEdges = edges.get({ filter: edge => edge.to === selectedNodeId });
-                        const childEdges = edges.get({ filter: edge => edge.from === selectedNodeId });
-                        const parentNodeIds = parentEdges.map(edge => edge.from);
-                        const childNodeIds = childEdges.map(edge => edge.to);
-
-                        const nodesToHighlight = [selectedNodeId, ...parentNodeIds, ...childNodeIds];
-                        const edgeIdsToHighlight = [...parentEdges.map(e => e.id), ...childEdges.map(e => e.id)];
-
-                        // Apply Node Highlighting (thicker border, maybe specific color)
-                        if (nodesToHighlight.length > 0) {
-                            const nodeUpdates = nodesToHighlight.map(id => ({
-                                id: id,
-                                borderWidth: highlightNodeBorderWidth,
-                                // Optionally set a specific border color for highlight
-                                color: {
-                                    border: highlightEdgeColor // Use same color as edge highlight for consistency
-                                }
-                            }));
-                            try {
-                                nodes.update(nodeUpdates);
-                                currentlyHighlighted.nodes = nodesToHighlight; // Track
-                            } catch (e) { console.error("Error applying node highlights:", e); }
-                        }
-
-                        // Apply Edge Highlighting (brighter color, thicker)
-                        if (edgeIdsToHighlight.length > 0) {
-                            const edgeUpdates = edgeIdsToHighlight.map(id => ({
-                                id: id,
-                                color: highlightEdgeColor,
-                                width: highlightEdgeWidth
-                            }));
-                             try {
-                                edges.update(edgeUpdates);
-                                currentlyHighlighted.edges = edgeIdsToHighlight; // Track
-                            } catch (e) { console.error("Error applying edge highlights:", e); }
-                        }
-
-                        ShowSidebar(selectedNodeId);
-
+                        ShowSidebar(params.nodes[0]);
                     } else {
-                        // Clicked on empty space - resetHighlighting() was already called
                         HideSidebar();
-                        network.unselectAll(); // Deselect nodes/edges visually
                     }
                 });
-
-                 // Event listener for double clicks (optional: focus on node)
-                 network.on("doubleClick", function (params) {
-                     if (params.nodes.length > 0) {
-                         network.focus(params.nodes[0], {
-                             scale: 1.2, // Zoom in slightly
-                             animation: { duration: 300, easingFunction: "easeInOutQuad" }
-                         });
-                     }
-                 });
-
-
-                // Event listener for the close button
                 closeSidebarButton.addEventListener('click', HideSidebar);
-
-                // Hide sidebar and clear highlight if user clicks outside sidebar/nodes
-                graphContainer.addEventListener('click', function (event) {
-                    // Check if sidebar is visible AND the click was outside the sidebar
-                    if (sidebar.classList.contains('visible') && !sidebar.contains(event.target)) {
-                        // Check if the click was on the network canvas background (not on a node/edge)
-                        const clickTargetIsCanvas = event.target.tagName === 'CANVAS' && event.target.closest('#languageGraph');
-                        // Check if the click was on the main container background
-                        const clickTargetIsContainer = event.target === graphContainer || event.target === container;
-
-                        if (clickTargetIsCanvas || clickTargetIsContainer) {
-                            // We can't easily tell if a node *wasn't* clicked just from this event,
-                            // because the network click handler fires slightly later.
-                            // The network click handler already handles hiding the sidebar
-                            // and resetting highlights if no node is clicked.
-                            // So, this listener might be redundant for hiding, but can be kept for safety.
-                            // Let network's 'click' handler manage the state based on params.nodes.length.
-                            // HideSidebar(); // Let network handler do this.
+                graphContainer.addEventListener(
+                    'click',
+                    function (event) {
+                        /* Omitted for brevity */
+                        if (
+                            sidebar.classList.contains('visible') &&
+                            !sidebar.contains(event.target) &&
+                            event.target.closest('.vis-network') === container
+                        ) {
+                            const networkCanvas =
+                                container.querySelector('canvas');
+                            if (
+                                networkCanvas &&
+                                networkCanvas.contains(event.target)
+                            ) {
+                                HideSidebar();
+                            } else if (
+                                event.target === graphContainer ||
+                                event.target === container
+                            ) {
+                                HideSidebar();
+                            }
                         }
-                    }
-                }, true); // Use capture phase
+                    },
+                    true
+                );
 
-                // --- End Event Listeners ---
-
-
-                // Hide loading message once network drawing is initially done
-                network.once('stabilizationIterationsDone', function () {
-                    loadingMessage.style.display = 'none';
+                rankingsHeader.addEventListener('click', () => {
+                    rankingsList.classList.toggle('collapsed');
+                    rankingsToggleArrow.classList.toggle('collapsed-arrow');
+                    rankingsToggleArrow.textContent =
+                        rankingsList.classList.contains('collapsed')
+                            ? '▶'
+                            : '▼';
                 });
-                 network.once('afterDrawing', function () { // Alternative event
-                     loadingMessage.style.display = 'none';
-                 });
-                // Fallback in case stabilization events don't fire quickly
+
+                network.on(
+                    'stabilizationIterationsDone',
+                    () => (loadingMessage.style.display = 'none')
+                );
                 setTimeout(() => {
-                    if (loadingMessage) {
-                        loadingMessage.style.display = 'none';
-                    }
-                }, 2500); // Increased timeout slightly
+                    if (loadingMessage) loadingMessage.style.display = 'none';
+                }, 2000);
             }
 
-            // Run the DrawGraph function when the page finishes loading
-            window.addEventListener('load', DrawGraph);
+            function setupHighlightControls() {
+                const categorySelect =
+                    document.getElementById('categorySelect');
+                const highlightGoodBtn =
+                    document.getElementById('highlightGoodBtn');
+                const highlightBadBtn =
+                    document.getElementById('highlightBadBtn');
+                const resetBtn = document.getElementById('resetHighlights');
+
+                categorySelect.innerHTML = '';
+                categoriesOrder.forEach((catShort) => {
+                    // Use defined order for dropdown
+                    const option = document.createElement('option');
+                    option.value = catShort;
+                    option.textContent =
+                        categoryShortToFullName[catShort] || catShort;
+                    categorySelect.appendChild(option);
+                });
+
+                highlightGoodBtn.addEventListener('click', () => {
+                    const selectedCategory = categorySelect.value;
+                    handleHighlightButtonClick(
+                        selectedCategory,
+                        'good',
+                        highlightGoodBtn
+                    );
+                });
+                highlightBadBtn.addEventListener('click', () => {
+                    const selectedCategory = categorySelect.value;
+                    handleHighlightButtonClick(
+                        selectedCategory,
+                        'bad',
+                        highlightBadBtn
+                    );
+                });
+                resetBtn.addEventListener('click', resetNodeHighlights);
+            }
+
+            let activeHighlightButton = null;
+
+            function handleHighlightButtonClick(category, type, clickedButton) {
+                const allControlButtons = [
+                    document.getElementById('highlightGoodBtn'),
+                    document.getElementById('highlightBadBtn'),
+                ];
+                allControlButtons.forEach((btn) =>
+                    btn.classList.remove(
+                        'active-highlight-good',
+                        'active-highlight-bad'
+                    )
+                );
+
+                if (activeHighlightButton === clickedButton) {
+                    resetNodeHighlights();
+                } else {
+                    highlightNodes(category, type);
+                    clickedButton.classList.add(
+                        type === 'good'
+                            ? 'active-highlight-good'
+                            : 'active-highlight-bad'
+                    );
+                    activeHighlightButton = clickedButton;
+                }
+            }
+
+            function highlightNodes(category, type) {
+                if (!network || !nodesDataSet) return;
+                const updates = [];
+                nodesDataSet.getIds().forEach((nodeId) => {
+                    const node = nodesDataSet.get(nodeId);
+                    const originalStyle = allNodesOriginalStyles.get(nodeId);
+                    const langRankings =
+                        languageRankingsData[node.labelOriginal];
+                    let isMatch = false;
+
+                    if (langRankings && langRankings[category] !== undefined) {
+                        const score = langRankings[category];
+                        if (type === 'good' && score >= 4) isMatch = true;
+                        if (type === 'bad' && score <= 2) isMatch = true;
+                    }
+
+                    let newStyle = {};
+                    if (isMatch) {
+                        newStyle = {
+                            color: {
+                                border: type === 'good' ? '#30d158' : '#ff453a',
+                                background: originalStyle.color.background,
+                            },
+                            borderWidth: 2.5,
+                            font: { color: originalStyle.font.color },
+                            label: originalStyle.label,
+                        };
+                    } else {
+                        newStyle = {
+                            color: {
+                                background: 'rgba(30, 30, 32, 0.7)', // Darker, more transparent
+                                border: 'rgba(60, 60, 62, 0.7)',
+                            },
+                            borderWidth: originalStyle.borderWidth,
+                            font: { color: '#757575' }, // Dimmer font
+                            label: originalStyle.label,
+                        };
+                    }
+                    updates.push({ id: nodeId, ...newStyle });
+                });
+                if (updates.length > 0) {
+                    nodesDataSet.update(updates);
+                }
+            }
+
+            function resetNodeHighlights() {
+                if (!network || !nodesDataSet) return;
+
+                const allControlButtons = [
+                    document.getElementById('highlightGoodBtn'),
+                    document.getElementById('highlightBadBtn'),
+                ];
+                allControlButtons.forEach((btn) =>
+                    btn.classList.remove(
+                        'active-highlight-good',
+                        'active-highlight-bad'
+                    )
+                );
+                activeHighlightButton = null;
+
+                const updates = [];
+                nodesDataSet.getIds().forEach((nodeId) => {
+                    const originalStyle = allNodesOriginalStyles.get(nodeId);
+                    if (originalStyle) {
+                        updates.push({
+                            id: nodeId,
+                            color: originalStyle.color,
+                            font: originalStyle.font,
+                            borderWidth: originalStyle.borderWidth,
+                            label: originalStyle.label,
+                        });
+                    }
+                });
+                if (updates.length > 0) {
+                    nodesDataSet.update(updates);
+                }
+            }
+
+            window.addEventListener('load', () => {
+                DrawGraph();
+                setupHighlightControls();
+            });
         </script>
     </body>
 </html>
