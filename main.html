@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>Interactive Programming Language Graph (Floating Sidebar)</title>
+        <script
+            type="text/javascript"
+            src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+        ></script>
+        <style>
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                /* Consistent Apple system font stack */
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                    Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+                    'Segoe UI Emoji', 'Segoe UI Symbol';
+                overflow: hidden; /* Prevent body scrollbars */
+                background-color: #1d1d1f; /* Slightly softer dark background (Apple-like) */
+                color: #f5f5f7; /* Standard light text for dark mode */
+                /* Keep flex for potential future layout needs, though not strictly necessary now */
+                display: flex;
+            }
+
+            #graphContainer {
+                flex-grow: 1; /* Graph takes remaining space */
+                height: 100vh;
+                position: relative; /* Crucial for absolute positioning of children like sidebar */
+                overflow: hidden; /* Hide anything that might overflow */
+            }
+
+            #languageGraph {
+                width: 100%;
+                height: 100%;
+                border: none;
+                box-sizing: border-box;
+                background-color: #1d1d1f; /* Match body background */
+            }
+
+            /* Style for the loading message */
+            #loadingMessage {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 1.1em;
+                color: #a0a0a0; /* Adjusted gray for dark mode */
+                z-index: 10; /* Ensure it's above the graph */
+            }
+
+            /* --- Sidebar Styles --- */
+            #sidebar {
+                width: 350px; /* Slightly wider for more syntax */
+                max-height: calc(
+                    100vh - 40px
+                ); /* Limit height, leave padding */
+                background-color: rgba(
+                    44,
+                    44,
+                    46,
+                    0.85
+                ); /* Semi-transparent background */
+                backdrop-filter: blur(
+                    10px
+                ); /* Apply blur for frosted glass effect */
+                -webkit-backdrop-filter: blur(10px); /* Safari */
+                border: 0.5px solid rgba(120, 120, 120, 0.5); /* Subtle border */
+                border-radius: 12px; /* More rounding */
+                box-sizing: border-box;
+                padding: 20px;
+                overflow-y: auto; /* Allow scrolling if content overflows */
+                color: #f5f5f7;
+                position: absolute; /* Position relative to graphContainer */
+                right: 20px; /* Position from right */
+                top: 20px; /* Position from top */
+                z-index: 1000; /* Ensure sidebar is on top */
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Enhanced shadow for floating effect */
+                display: none; /* Hidden by default */
+                transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out; /* Fade and slight scale */
+                opacity: 0;
+                transform: scale(0.98);
+            }
+
+            #sidebar.visible {
+                display: block; /* Show when visible */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            #sidebar h2 {
+                margin-top: 0;
+                margin-bottom: 15px;
+                font-size: 1.3em; /* Slightly smaller */
+                color: #fff; /* Brighter title */
+                border-bottom: 1px solid rgba(120, 120, 120, 0.5);
+                padding-bottom: 10px;
+            }
+
+            #sidebar h3 {
+                margin-top: 18px;
+                margin-bottom: 8px;
+                font-size: 1em; /* Slightly smaller */
+                color: #ccc; /* Subdued heading color */
+                font-weight: 600;
+            }
+
+            #sidebar ul {
+                list-style: none;
+                padding: 0;
+                margin: 0 0 15px 0;
+            }
+
+            #sidebar li {
+                margin-bottom: 6px;
+                color: #c0c0c0; /* Adjusted list item color */
+                font-size: 0.95em;
+            }
+
+            #sidebar pre {
+                background-color: rgba(
+                    26,
+                    26,
+                    26,
+                    0.8
+                ); /* Slightly less transparent code bg */
+                border: 1px solid rgba(100, 100, 100, 0.5);
+                border-radius: 6px; /* Match button rounding */
+                padding: 12px;
+                font-family: 'Menlo', 'Monaco', 'Consolas', monospace; /* Monospace font */
+                font-size: 0.85em;
+                color: #d8d8d8;
+                white-space: pre-wrap; /* Wrap long lines */
+                word-wrap: break-word;
+                margin-bottom: 10px; /* Spacing between examples */
+            }
+             #sidebar pre:last-of-type {
+                 margin-bottom: 0;
+             }
+
+            #closeSidebar {
+                position: absolute;
+                top: 12px; /* Adjust position */
+                right: 12px; /* Adjust position */
+                background: rgba(
+                    80,
+                    80,
+                    80,
+                    0.6
+                ); /* Semi-transparent background */
+                border: none;
+                border-radius: 50%; /* Circular button */
+                width: 26px;
+                height: 26px;
+                font-size: 16px; /* Adjust icon size */
+                font-weight: bold;
+                color: #ccc;
+                cursor: pointer;
+                padding: 0;
+                line-height: 26px; /* Center vertically */
+                text-align: center;
+                transition: background-color 0.15s ease, color 0.15s ease;
+            }
+            #closeSidebar:hover {
+                background-color: rgba(100, 100, 100, 0.8);
+                color: #fff;
+            }
+            /* --- End Sidebar Styles --- */
+
+            /* Style vis network navigation buttons - Apple Style */
+            .vis-navigation .vis-button {
+                background-color: #3a3a3c; /* Slightly lighter solid gray (Apple dark UI) */
+                border: 0.5px solid #5a5a5c; /* Very subtle border */
+                border-radius: 7px; /* Consistent rounding */
+                box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.25); /* Minimal shadow */
+                color: #e0e0e0; /* Brighter icon color */
+                font-size: 18px; /* Adjusted size for clarity */
+                width: 30px; /* Explicit width */
+                height: 30px; /* Explicit height */
+                padding: 0; /* Remove padding, rely on width/height */
+                display: flex; /* Center icon */
+                align-items: center; /* Center icon */
+                justify-content: center; /* Center icon */
+                transition: background-color 0.15s ease-in-out; /* Smooth transition */
+            }
+            .vis-navigation .vis-button:hover {
+                background-color: #4a4a4c; /* Slightly lighter on hover */
+                box-shadow: 0 0.5px 1.5px rgba(0, 0, 0, 0.3);
+            }
+            .vis-navigation {
+                /* Position navigation buttons */
+                position: absolute;
+                bottom: 15px;
+                left: 15px;
+                z-index: 5; /* Ensure they are above the graph but below sidebar */
+            }
+            /* Adjust zoom button position */
+            .vis-zoomExtends {
+                display: none; /* Hide the fit button if desired */
+            }
+        </style>
+    </head>
+    <body>
+        <div id="graphContainer">
+            <div id="languageGraph"></div>
+            <div id="loadingMessage">Loading graph...</div>
+            <div id="sidebar">
+                <button id="closeSidebar">×</button>
+                <h2 id="sidebarTitle">Language Details</h2>
+                <h3>Influenced By:</h3>
+                <ul id="influencedByList"></ul>
+                <h3>Influences:</h3>
+                <ul id="influencesList"></ul>
+                <h3>Syntax Examples:</h3>
+                <div id="syntaxExamplesContainer">
+                     <pre>Select a language node.</pre>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            // --- Syntax Data (Expanded) ---
+            // Store examples as an array of strings for multiple blocks
+            const syntaxData = {
+                Python: [
+                    `# Hello World\nprint("Hello, World!")`,
+                    `# Variable & Function\nname = "Python"\ndef greet(who):\n    print(f"Hello, {who}!")\ngreet(name)`,
+                    `# Simple Loop\nfor i in range(3):\n    print(i)`
+                ],
+                JavaScript: [
+                    `// Hello World\nconsole.log("Hello, World!");`,
+                    `// Variable & Function\nlet language = "JavaScript";\nfunction show(item) {\n    console.log("This is " + item);\n}\nshow(language);`,
+                    `// Array Iteration\n['JS', 'Example'].forEach(item => console.log(item));`
+                ],
+                Java: [
+                    `// Hello World\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+                    `// Variable & Method\npublic class Greeter {\n    public static void main(String[] args) {\n        String target = "Java";\n        greet(target);\n    }\n    static void greet(String name) {\n        System.out.println("Hello from " + name);\n    }\n}`
+                ],
+                'C++': [
+                    `// Hello World\n#include <iostream>\n\nint main() {\n    std::cout << "Hello, World!" << std::endl;\n    return 0;\n}`,
+                    `// Variable & Simple Class\n#include <iostream>\n#include <string>\n\nclass MyClass {\npublic:\n    std::string name = "C++";\n};\n\nint main() {\n    MyClass obj;\n    std::cout << "Language: " << obj.name << std::endl;\n    return 0;\n}`
+                ],
+                C: [
+                    `// Hello World\n#include <stdio.h>\n\nint main() {\n   printf("Hello, World!\\n");\n   return 0;\n}`,
+                    `// Variable (string is char array) & Function\n#include <stdio.h>\n\nvoid say_hello(char name[]) {\n    printf("Hello from %s\\n", name);\n}\n\nint main() {\n   char lang[] = "C";\n   say_hello(lang);\n   return 0;\n}`
+                ],
+                 Ruby: [
+                    `# Hello World\nputs "Hello, World!"`,
+                    `# Variable & Method\nlanguage = "Ruby"\ndef say_hi(name)\n  puts "Hi from #{name}!"\nend\nsay_hi(language)`,
+                    `# Block Iterator\n3.times do |i|\n  puts "Iteration: #{i}"\nend`
+                 ],
+                Swift: [
+                    `// Hello World\nprint("Hello, World!")`,
+                    `// Variable & Function\nvar language = "Swift"\nfunc greet(name: String) {\n    print("Hello from \\(name)")\n}\ngreet(name: language)`,
+                    `// Optional\nvar maybeString: String? = "Maybe"\nif let str = maybeString {\n    print(str)\n}`
+                ],
+                 Go: [
+                    `// Hello World\npackage main\nimport "fmt"\nfunc main() {\n    fmt.Println("Hello, World!")\n}`,
+                    `// Variable & Function\npackage main\nimport "fmt"\nfunc main() {\n    lang := "Go"\n    describe(lang)\n}\nfunc describe(s string) {\n    fmt.Printf("This is %s\\n", s)\n}`,
+                    `// Goroutine (Concurrency)\npackage main\nimport ("fmt"; "time")\nfunc main() {\n go func() {\n  fmt.Println("Running concurrently")\n }()\n time.Sleep(10 * time.Millisecond)\n fmt.Println("Done")\n}`
+                 ],
+                 Rust: [
+                    `// Hello World\nfn main() {\n    println!("Hello, World!");\n}`,
+                    `// Variable & Function\nfn main() {\n    let language = "Rust";\n    greet(language);\n}\nfn greet(name: &str) {\n    println!("Hello from {}!", name);\n}`,
+                    `// Ownership Example\nfn main() {\n let s1 = String::from("hello");\n let s2 = s1; // s1 is moved to s2\n // println!("{}", s1); // Error: s1 no longer valid\n println!("{}", s2);\n}`
+                 ],
+                 PHP: [
+                    `// Hello World\n<?php\necho "Hello, World!\\n";\n?>`,
+                    `// Variable & Function\n<?php\n$language = "PHP";\nfunction show($item) {\n    echo "This is " . $item . "\\n";\n}\nshow($language);\n?>`,
+                    `// Array\n<?php\n$arr = ['P', 'H', 'P'];\nforeach ($arr as $char) {\n echo $char;\n}\necho "\\n";\n?>`
+                 ],
+                 'C#': [
+                    `// Hello World\nusing System;\npublic class HelloWorld {\n    public static void Main(string[] args) {\n        Console.WriteLine ("Hello, World!");\n    }\n}`,
+                    `// Variable & Method\nusing System;\npublic class Greeter {\n    public static void Main(string[] args) {\n        string lang = "C#";\n        Greet(lang);\n    }\n    public static void Greet(string name) {\n        Console.WriteLine($"Hello from {name}");\n    }\n}`
+                 ],
+                 Kotlin: [
+                    `// Hello World\nfun main() {\n    println("Hello, World!")\n}`,
+                    `// Variable & Function\nfun main() {\n    val language = "Kotlin" // Immutable\n    greet(language)\n}\nfun greet(name: String) {\n    println("Hello from $name")\n}`,
+                    `// Data Class\ndata class User(val name: String, val id: Int)\nfun main() {\n val user = User("KotlinUser", 1)\n println(user)\n}`
+                 ],
+                 Scala: [
+                    `// Hello World\nobject HelloWorld {\n    def main(args: Array[String]): Unit = {\n        println("Hello, World!")\n    }\n}`,
+                    `// Variable & Method\nobject Greeter {\n    def main(args: Array[String]): Unit = {\n        val language = "Scala" // Immutable\n        greet(language)\n    }\n    def greet(name: String): Unit = {\n        println(s"Hello from $name")\n    }\n}`
+                 ],
+                 Haskell: [
+                    `-- Hello World\nmain :: IO ()\nmain = putStrLn "Hello, World!"`,
+                    `-- Variable (Constant) & Function\nlanguage :: String\nlanguage = "Haskell"\n\ngreet :: String -> String\ngreet name = "Hello from " ++ name\n\nmain :: IO ()\nmain = putStrLn (greet language)`
+                 ],
+                 Lisp: [
+                    `;; Hello World (Common Lisp)\n(format t "Hello, World!~%")`,
+                    `;; Variable & Function (Common Lisp)\n(defparameter *language* "Lisp")\n\n(defun greet (name)\n  (format t "Hello from ~a~%" name))\n\n(greet *language*)`
+                 ],
+                 Assembly: [
+                    `; Assembly (NASM, Linux x86-64) - Hello World\nsection .data\n    msg db 'Hello, World!', 0xa\n    len equ $ - msg\nsection .text\n    global _start\n_start:\n    mov rax, 1 ; sys_write\n    mov rdi, 1 ; stdout\n    mov rsi, msg\n    mov rdx, len\n    syscall\n    mov rax, 60 ; sys_exit\n    xor rdi, rdi ; exit code 0\n    syscall`,
+                    `; Assembly (NASM, Linux x86-64) - Simple Addition\nsection .text\n    global _start\n_start:\n    mov rax, 5    ; Load 5 into RAX\n    mov rbx, 10   ; Load 10 into RBX\n    add rax, rbx  ; Add RBX to RAX (RAX = 15)\n\n    ; Exit with the result (15) - Often non-zero indicates error\n    mov rdi, rax  ; Exit code in RDI for sys_exit\n    mov rax, 60   ; sys_exit\n    syscall`
+                 ],
+                 'Algol 60': [
+                     `'BEGIN'\n    PRINT("Hello, World!");\n'END'`,
+                     `'BEGIN'\n    'INTEGER' I;\n    'FOR' I := 1 'STEP' 1 'UNTIL' 3 'DO'\n        PRINT(I);\n'END'`
+                 ],
+                 'Objective-C': [
+                     `// Hello World\n#import <Foundation/Foundation.h>\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        NSLog(@"Hello, World!");\n    }\n    return 0;\n}`,
+                     `// Variable & Method\n#import <Foundation/Foundation.h>\n\n@interface Greeter : NSObject\n- (void)sayHello:(NSString *)name;\n@end\n\n@implementation Greeter\n- (void)sayHello:(NSString *)name {\n    NSLog(@"Hello from %@", name);\n}\n@end\n\nint main(int argc, const char * argv[]) {\n    @autoreleasepool {\n        NSString *lang = @"Objective-C";\n        Greeter *greeter = [[Greeter alloc] init];\n        [greeter sayHello:lang];\n    }\n    return 0;\n}`
+                 ],
+                 Perl: [
+                     `# Hello World\nprint "Hello, World!\\n";`,
+                     `# Variable & Subroutine\nmy $language = "Perl";\nsub greet {\n    my ($name) = @_;\n    print "Hello from $name\\n";\n}\ngreet($language);`,
+                     `# Array\nmy @items = ('P', 'e', 'r', 'l');\nforeach my $item (@items) {\n print $item;\n}\nprint "\\n";`
+                 ],
+                 Awk: [
+                     `# Hello World (run with: awk 'BEGIN { print "Hello, World!" }')\nBEGIN { print "Hello, World!" }`,
+                     `# Print first field of each line (run with: awk '{ print $1 }' input.txt)\n{ print $1 }`,
+                     `# Count lines (run with: awk 'END { print NR }' input.txt)\nEND { print NR }`
+                 ],
+                 D: [
+                     `// Hello World\nimport std.stdio;\n\nvoid main() {\n    writeln("Hello, World!");\n}`,
+                     `// Variable & Function\nimport std.stdio;\n\nvoid greet(string name) {\n    writeln("Hello from ", name);\n}\n\nvoid main() {\n    string language = "D";\n    greet(language);\n}`
+                 ],
+                 Zig: [
+                     `// Hello World\nconst std = @import("std");\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    try stdout.print("Hello, World!\\n", .{});\n}`,
+                     `// Variable & Function\nconst std = @import("std");\n\nfn greet(writer: anytype, name: []const u8) !void {\n    try writer.print("Hello from {s}\\n", .{name});\n}\n\npub fn main() !void {\n    const stdout = std.io.getStdOut().writer();\n    const language = "Zig";\n    try greet(stdout, language);\n}`
+                 ],
+                 Odin: [
+                    `// Hello World\npackage main\n\nimport "core:fmt"\n\nmain :: proc() {\n    fmt.println("Hello, World!")\n}`,
+                    `// Variable & Procedure\npackage main\n\nimport "core:fmt"\n\ngreet :: proc(name: string) {\n    fmt.printf("Hello from %s\\n", name)\n}\n\nmain :: proc() {\n    language := "Odin"\n    greet(language)\n}`
+                 ],
+                 V: [
+                    `// Hello World\nfn main() {\n    println('Hello, World!')\n}`,
+                    `// Variable & Function\nfn greet(name string) {\n    println('Hello from $name')\n}\n\nfn main() {\n    language := 'V'\n    greet(language)\n}`
+                 ],
+                 Dart: [
+                     `// Hello World\nvoid main() {\n  print('Hello, World!');\n}`,
+                     `// Variable & Function\nvoid greet(String name) {\n  print('Hello from $name');\n}\n\nvoid main() {\n  var language = 'Dart';\n  greet(language);\n}`,
+                     `// Async\nFuture<String> fetchData() async {\n await Future.delayed(Duration(seconds: 1));\n return "Data fetched";\n}\nvoid main() async {\n print(await fetchData());\n}`
+                 ],
+                 TypeScript: [
+                     `// Hello World\nconsole.log("Hello, World!");`,
+                     `// Variable with Type & Function\nlet language: string = "TypeScript";\n\nfunction greet(name: string): void {\n    console.log(\`Hello from ${name}\`);\n}\ngreet(language);`,
+                     `// Interface\ninterface User {\n name: string;\n id: number;\n}\nconst user: User = { name: "TS User", id: 1 };\nconsole.log(user);`
+                 ],
+                 ML: [`(* ML family syntax varies. Base concept: *)\nprint "Hello, World!\\n"; (* Example SML syntax *)`, `(* Function definition - SML syntax *)\nfun greet name = "Hello from " ^ name;`],
+                 'Standard ML': [
+                     `(* Hello World *)\nprint "Hello, World!\\n";`,
+                     `(* Variable & Function *)\nval language = "Standard ML"\nfun greet name = print ("Hello from " ^ name ^ "\\n")\nval _ = greet language`
+                 ],
+                 Haskell: [ // Duplicate, refined from above
+                    `-- Hello World\nmain :: IO ()\nmain = putStrLn "Hello, World!"`,
+                    `-- Constant & Function\nlanguage :: String\nlanguage = "Haskell"\ngreet :: String -> String\ngreet name = "Hello from " ++ name\nmain :: IO ()\nmain = putStrLn (greet language)`,
+                    `-- List comprehension\nmain :: IO ()\nmain = print ([x*2 | x <- [1,2,3]]) -- Output: [2,4,6]`
+                 ],
+                 OCaml: [
+                     `(* Hello World *)\nlet () = print_endline "Hello, World!"`,
+                     `(* Variable & Function *)\nlet language = "OCaml"\nlet greet name = print_endline ("Hello from " ^ name)\nlet () = greet language`
+                 ],
+                 'F#': [
+                     `// Hello World\nprintfn "Hello, World!"`,
+                     `// Variable & Function\nlet language = "F#"\nlet greet name = printfn "Hello from %s" name\ngreet language`,
+                     `// Pipe operator\nlet result = [1; 2; 3]\n |> List.map (fun x -> x * 2)\n |> List.sum\nprintfn "Result: %d" result // Output: Result: 12`
+                 ],
+                 Nim: [
+                     `# Hello World\necho "Hello, World!"`,
+                     `# Variable & Procedure\nvar language = "Nim"\nproc greet(name: string) =\n  echo "Hello from ", name\ngreet(language)`,
+                     `# Sequence\nvar nums = @[1, 2, 3]\nfor x in nums:\n  echo x`
+                 ],
+                 Julia: [
+                     `# Hello World\nprintln("Hello, World!")`,
+                     `# Variable & Function\nlanguage = "Julia"\nfunction greet(name)\n    println("Hello from ", name)\nend\ngreet(language)`,
+                     `# Multiple Dispatch Example\nf(x::Int) = "Integer"\nf(x::Float64) = "Float"\nprintln(f(5))     # Integer\nprintln(f(5.0))   # Float`
+                 ],
+                 Pascal: [
+                     `// Hello World\nprogram HelloWorld;\nbegin\n  WriteLn('Hello, World!');\nend.`,
+                     `// Variable & Procedure\nprogram Greeter;\nvar\n  language: string;\nprocedure Greet(name: string);\nbegin\n  WriteLn('Hello from ', name);\nend;\nbegin\n  language := 'Pascal';\n  Greet(language);\nend.`
+                 ],
+                 'Modula-2': [
+                     `(* Hello World *)\nMODULE HelloWorld;\nFROM InOut IMPORT WriteString, WriteLn;\nBEGIN\n  WriteString("Hello, World!");\n  WriteLn;\nEND HelloWorld.`,
+                     `(* Variable & Procedure *)\nMODULE Greeter;\nFROM InOut IMPORT WriteString, WriteLn;\nVAR\n  language: ARRAY [0..7] OF CHAR;\nPROCEDURE Greet(name: ARRAY OF CHAR);\nBEGIN\n  WriteString("Hello from ");\n  WriteString(name);\n  WriteLn;\nEND Greet;\nBEGIN\n  language := "Modula-2";\n  Greet(language);\nEND Greeter.`
+                 ],
+                 ABC: [
+                     `WRITE "Hello, World!" /`,
+                     `HOW TO GREET name:\n   WRITE "Hello from ", name / \nGREET "ABC"`
+                 ],
+                 Ada: [
+                     `-- Hello World\nwith Ada.Text_IO;\nprocedure Hello is\nbegin\n   Ada.Text_IO.Put_Line ("Hello, World!");\nend Hello;`,
+                     `-- Variable & Procedure\nwith Ada.Text_IO;\nprocedure Greeter is\n   Language : String := "Ada";\n   procedure Greet (Name : in String) is\n   begin\n      Ada.Text_IO.Put ("Hello from ");\n      Ada.Text_IO.Put_Line (Name);\n   end Greet;\nbegin\n   Greet (Language);\nend Greeter;`
+                 ],
+                 Oberon: [
+                    `MODULE HelloWorld;\nIMPORT Out;\nBEGIN\n  Out.String("Hello, World!"); Out.Ln\nEND HelloWorld.`,
+                    `MODULE Greeter;\nIMPORT Out;\nVAR language: ARRAY 8 OF CHAR;\nPROCEDURE Greet(name: ARRAY OF CHAR);\nBEGIN\n  Out.String("Hello from "); Out.String(name); Out.Ln\nEND Greet;\nBEGIN\n  language := "Oberon";\n  Greet(language)\nEND Greeter.`
+                 ],
+                 Scheme: [
+                     `;; Hello World\n(display "Hello, World!")\n(newline)`,
+                     `;; Variable & Procedure\n(define language "Scheme")\n(define (greet name)\n  (display (string-append "Hello from " name))\n  (newline))\n(greet language)`
+                 ],
+                 'Common Lisp': [ // Duplicate, refined
+                     `;; Hello World\n(format t "Hello, World!~%")`,
+                     `;; Parameter & Function\n(defparameter *language* "Common Lisp")\n(defun greet (name)\n  (format t "Hello from ~a~%" name))\n(greet *language*)`,
+                     `;; Loop Macro\n(loop for i from 1 to 3\n   do (format t "~d " i)) ; Output: 1 2 3`
+                 ],
+                 Clojure: [
+                     `;; Hello World\n(println "Hello, World!")`,
+                     `;; Variable & Function\n(def language "Clojure")\n(defn greet [name]\n  (println (str "Hello from " name)))\n(greet language)`,
+                     `;; Sequence processing\n(println (map #(* % 2) [1 2 3])) ; Output: (2 4 6)`
+                 ],
+                 Racket: [
+                     `;; Hello World\n#lang racket\n(displayln "Hello, World!")`,
+                     `;; Variable & Function\n#lang racket\n(define language "Racket")\n(define (greet name)\n  (displayln (string-append "Hello from " name)))\n(greet language)`
+                 ],
+                 Lua: [
+                     `-- Hello World\nprint("Hello, World!")`,
+                     `-- Variable & Function\nlocal language = "Lua"\nfunction greet(name)\n  print("Hello from " .. name)\nend\ngreet(language)`,
+                     `-- Table (Array-like)\nlocal t = { "L", "u", "a" }\nfor i, v in ipairs(t) do\n print(i, v)\nend`
+                 ],
+                 Simula: [
+                     `! Hello World;\nBegin\n   OutText("Hello, World!");\n   OutImage;\nEnd;`,
+                     `! Variable & Procedure;\nBegin\n   Text language;\n   Procedure Greet(name);\n      Text name;\n   Begin\n      OutText("Hello from ");\n      OutText(name);\n      OutImage;\n   End;\n\n   language :- "Simula";\n   Greet(language);\nEnd;`
+                 ],
+                 Smalltalk: [
+                     "'Hello, World!' displayNl.",
+                     "| language |\nlanguage := 'Smalltalk'.\nTranscript show: 'Hello from '; show: language; cr."
+                 ],
+                 Elixir: [
+                    `# Hello World\nIO.puts "Hello, World!"`,
+                    `# Variable & Function\ndefmodule Greeter do\n def greet(name) do\n  IO.puts "Hello from #{name}"\n end\nend\nlanguage = "Elixir"\nGreeter.greet(language)`,
+                    `# Process spawning (Concurrency)\nspawn(fn -> IO.puts "Running in another process" end)`
+                 ],
+                 Prolog: [
+                     `% Hello World (Query: hello.)\nhello :- write('Hello, World!'), nl.`,
+                     `% Fact & Rule (Query: language(X). or greet.)\nlanguage('Prolog').\ngreet :- language(X), write('Hello from '), write(X), nl.`
+                 ],
+                 Erlang: [
+                     `%% Hello World\n-module(hello).\n-export([start/0]).\nstart() -> io:fwrite("Hello, World!\\n").`,
+                     `%% Variable & Function\n-module(greeter).\n-export([start/0]).\ngreet(Name) -> io:fwrite("Hello from ~s\\n", [Name]).\nstart() -> Language = "Erlang", greet(Language).`,
+                    `%% Spawning a process\n-module(concurrent).\n-export([start/0]).\nstart() -> spawn(fun() -> io:fwrite("Running concurrently\\n") end), timer:sleep(10), io:fwrite("Main done\\n").`
+                 ],
+                 Fortran: [
+                     `! Hello World (Fortran 90+)\nprogram hello\n  print *, "Hello, World!"\nend program hello`,
+                     `! Variable & Subroutine (Fortran 90+)\nprogram greeter\n  implicit none\n  character(len=10) :: language\n  language = "Fortran"\n  call greet(language)\ncontains\n  subroutine greet(name)\n    character(len=*), intent(in) :: name\n    print *, "Hello from ", trim(name)\n  end subroutine greet\nend program greeter`
+                 ],
+                 SQL: [
+                     `-- Hello World (Standard SQL)\nSELECT 'Hello, World!';`,
+                     `-- Variable (Syntax varies greatly by dialect, e.g., T-SQL)\nDECLARE @language VARCHAR(50) = 'SQL';\nPRINT 'Hello from ' + @language;`,
+                    `-- Basic Table DDL & DML\nCREATE TABLE Languages (id INT PRIMARY KEY, name VARCHAR(50));\nINSERT INTO Languages (id, name) VALUES (1, 'SQL');\nSELECT * FROM Languages;`
+                 ],
+                 S: [`# Hello World (S/R syntax)\nprint("Hello, World!")`, `# Variable\nlanguage <- "S"`],
+                 MATLAB: [
+                     `% Hello World\ndisp('Hello, World!');`,
+                     `% Variable & Function\nlanguage = 'MATLAB';\ngreet(language);\n\nfunction greet(name)\n    fprintf('Hello from %s\\n', name);\nend`
+                 ],
+                 SAS: [
+                     `* Hello World;\ndata _null_;\n  put 'Hello, World!';\nrun;`,
+                     `* Variable (Macro) & Put;\n%let language = SAS;\ndata _null_;\n  put "Hello from &language";\nrun;`
+                 ],
+                 Stata: [
+                     `* Hello World\ndisplay "Hello, World!"`,
+                     `* Variable (local macro) & Display\nlocal language "Stata"\ndisplay "Hello from \`language'" `
+                 ],
+                 R: [
+                     `# Hello World\nprint("Hello, World!")\n# or simply\n"Hello, World!"`,
+                     `# Variable & Function\nlanguage <- "R"\ngreet <- function(name) {\n  print(paste("Hello from", name))\n}\ngreet(language)`,
+                    `# Vectorization\nx <- 1:3\ny <- x * 2 # Operates element-wise\nprint(y) # Output: [1] 2 4 6`
+                 ],
+                 APL: [
+                     `'Hello, World!'`,
+                     `language ← 'APL'\n'Hello from ', language`
+                 ],
+                 J: [
+                    `'Hello, World!'`,
+                    `language =: 'J'\n'Hello from ', language`
+                 ],
+                 'Thompson sh': [`echo 'Hello, World!'`, `language='Thompson sh'; echo $language`],
+                 'Bourne sh': [`echo 'Hello, World!'`, `language='Bourne sh'\necho "Hello from $language"`],
+                 Bash: [
+                     `# Hello World\necho "Hello, World!"`,
+                     `# Variable & Function\nlanguage="Bash"\ngreet() {\n  echo "Hello from $1"\n}\ngreet "$language"`,
+                     `# Loop\nfor i in {1..3}; do\n echo "Number: $i"\ndone`
+                 ],
+                 Zsh: [
+                     `# Hello World\necho "Hello, World!"\n# or print\nprint "Hello, World!"`,
+                     `# Variable & Function\nlanguage="Zsh"\ngreet() {\n  print "Hello from $1"\n}\ngreet $language`
+                 ],
+                 PowerShell: [
+                     `# Hello World\nWrite-Host "Hello, World!"`,
+                     `# Variable & Function\n$language = "PowerShell"\nfunction Greet($name) {\n    Write-Host "Hello from $name"\n}\nGreet $language`,
+                     `# Object Manipulation\nGet-Process | Sort-Object CPU -Descending | Select-Object -First 5`
+                 ],
+                 CPL: [`// CPL syntax is rare. Example structure:\nmain() {\n print "Hello, World!\\n";\n}`, `// Variable concept:\nlet lang = "CPL"`],
+                 BCPL: [`// Hello World\nGET "libhdr"\n\nLET start() BE\n{\n  writes("Hello, World!*n")\n  RETURN 0\n}`, `// Variable\nLET language = "BCPL"`],
+                 B: [`/* Hello World */\nmain() {\n  extern putstr;\n  putstr("Hello, World!\\n");\n}`, `/* Variable */\nauto lang; lang = "B";`],
+                 Crystal: [
+                     `# Hello World\nputs "Hello, World!"`,
+                     `# Variable & Method\nlanguage = "Crystal"\ndef greet(name : String)\n  puts "Hello from #{name}"\nend\ngreet(language)`,
+                     `# Nil handling\nmaybe_string : String? = nil\nputs maybe_string.inspect # Output: nil`
+                 ],
+                 Vale: [
+                    `// Vale syntax is evolving. Example concept:\nexported func main() { println("Hello, World!"); }`,
+                    `// Variable (immutable by default):\nlet language = "Vale";`
+                 ],
+                 Carbon: [
+                     `// Carbon syntax is experimental.\npackage Sample api;\nfn Main() -> i32 {\n  Print("Hello, World!");\n  return 0;\n}`,
+                     `// Variable:\nvar language: String = "Carbon";`
+                 ],
+                 Mojo: [
+                    `# Mojo syntax blends Python and Systems features.\n# Hello World (Python-like)\nprint("Hello, World!")`,
+                    `# Function with types (Mojo extension)\nfn greet(name: String):\n print("Hello from", name)\n\nfn main():\n let language: String = "Mojo"\n greet(language)`
+                 ],
+                 COBOL: [
+                     `IDENTIFICATION DIVISION.\nPROGRAM-ID. HelloWorld.\nPROCEDURE DIVISION.\n    DISPLAY 'Hello, World!'.\n    STOP RUN.`,
+                     `IDENTIFICATION DIVISION.\nPROGRAM-ID. Greeter.\nDATA DIVISION.\nWORKING-STORAGE SECTION.\n01 LANGUAGE PIC X(10) VALUE 'COBOL'.\nPROCEDURE DIVISION.\n    DISPLAY 'Hello from ' LANGUAGE.\n    STOP RUN.`
+                 ],
+                 Svelte: [
+                     `<!-- Svelte component - combines HTML, CSS, JS -->\n<script>\n  let language = 'Svelte';\n</script>\n\n<h1>Hello from {language}!</h1>\n\n<style>\n  h1 {\n    color: orange;\n  }\n</style>`,
+                     `<!-- Event Handling -->\n<script>\n let count = 0;\n function handleClick() {\n   count += 1;\n }\n</script>\n\n<button on:click={handleClick}>\n Clicks: {count}\n</button>`
+                 ],
+                 // Add placeholders for languages without obvious simple examples if needed
+            };
+
+            // Function to initialize the graph once the DOM is ready
+            function DrawGraph() {
+                const graphContainer = document.getElementById('graphContainer');
+                const container = document.getElementById('languageGraph');
+                const loadingMessage = document.getElementById('loadingMessage');
+                const sidebar = document.getElementById('sidebar');
+                const closeSidebarButton = document.getElementById('closeSidebar');
+                const sidebarTitle = document.getElementById('sidebarTitle');
+                const influencedByList = document.getElementById('influencedByList');
+                const influencesList = document.getElementById('influencesList');
+                const syntaxExamplesContainer = document.getElementById('syntaxExamplesContainer'); // Use the container div
+
+                // --- Define Nodes (Data from user's example) ---
+                 const nodes = new vis.DataSet([
+                    { id: 'Assembly', label: 'Assembly', group: 'misc', shape: 'box',},
+                    { id: 'Python', label: 'Python', group: 'misc', shape: 'box',},
+                    { id: 'Algol 60', label: 'Algol 60', group: 'c_syntax_algol', shape: 'box',},
+                    { id: 'C', label: 'C', group: 'c_syntax_core', shape: 'box',},
+                    { id: 'C++', label: 'C++', group: 'c_syntax_core', shape: 'box',},
+                    { id: 'Objective-C', label: 'Objective-C', group: 'c_syntax_core', shape: 'box',},
+                    { id: 'Perl', label: 'Perl', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'Awk', label: 'Awk', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'JavaScript', label: 'JavaScript', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'PHP', label: 'PHP', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'Java', label: 'Java', group: 'c_syntax_jvm', shape: 'box',},
+                    { id: 'D', label: 'D', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Rust', label: 'Rust', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Go', label: 'Go', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Zig', label: 'Zig', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Odin', label: 'Odin', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'V', label: 'V', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Swift', label: 'Swift', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'C#', label: 'C#', group: 'c_syntax_jvm', shape: 'box',},
+                    { id: 'Kotlin', label: 'Kotlin', group: 'c_syntax_jvm', shape: 'box',},
+                    { id: 'Scala', label: 'Scala', group: 'c_syntax_jvm', shape: 'box',},
+                    { id: 'Dart', label: 'Dart', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'TypeScript', label: 'TypeScript', group: 'c_syntax_script', shape: 'box',},
+                    { id: 'ML', label: 'ML', group: 'ml', shape: 'box',},
+                    { id: 'Standard ML', label: 'Standard ML', group: 'ml', shape: 'box',},
+                    { id: 'Haskell', label: 'Haskell', group: 'ml', shape: 'box',},
+                    { id: 'OCaml', label: 'OCaml', group: 'ml', shape: 'box',},
+                    { id: 'F#', label: 'F#', group: 'ml', shape: 'box',},
+                    { id: 'Nim', label: 'Nim', group: 'ml', shape: 'box',},
+                    { id: 'Julia', label: 'Julia', group: 'ml', shape: 'box',},
+                    { id: 'Pascal', label: 'Pascal', group: 'pascal_like', shape: 'box',},
+                    { id: 'Modula-2', label: 'Modula-2', group: 'pascal_like', shape: 'box',},
+                    { id: 'ABC', label: 'ABC', group: 'pascal_like', shape: 'box',},
+                    { id: 'Ada', label: 'Ada', group: 'pascal_like', shape: 'box',},
+                    { id: 'Oberon', label: 'Oberon', group: 'pascal_like', shape: 'box',},
+                    { id: 'Lisp', label: 'Lisp', group: 'lisp', shape: 'box',},
+                    { id: 'Scheme', label: 'Scheme', group: 'lisp', shape: 'box',},
+                    { id: 'Common Lisp', label: 'Common Lisp', group: 'lisp', shape: 'box',},
+                    { id: 'Clojure', label: 'Clojure', group: 'lisp', shape: 'box',},
+                    { id: 'Racket', label: 'Racket', group: 'lisp', shape: 'box',},
+                    { id: 'Lua', label: 'Lua', group: 'lisp', shape: 'box',},
+                    { id: 'Simula', label: 'Simula', group: 'smalltalk', shape: 'box',},
+                    { id: 'Smalltalk', label: 'Smalltalk', group: 'smalltalk', shape: 'box',},
+                    { id: 'Ruby', label: 'Ruby', group: 'smalltalk', shape: 'box',},
+                    { id: 'Elixir', label: 'Elixir', group: 'smalltalk', shape: 'box',},
+                    { id: 'Prolog', label: 'Prolog', group: 'logic', shape: 'box',},
+                    { id: 'Erlang', label: 'Erlang', group: 'logic', shape: 'box',},
+                    { id: 'Fortran', label: 'Fortran', group: 'stats', shape: 'box',},
+                    { id: 'SQL', label: 'SQL', group: 'stats', shape: 'box',},
+                    { id: 'S', label: 'S', group: 'stats', shape: 'box',},
+                    { id: 'MATLAB', label: 'MATLAB', group: 'stats', shape: 'box',},
+                    { id: 'SAS', label: 'SAS', group: 'stats', shape: 'box',},
+                    { id: 'Stata', label: 'Stata', group: 'stats', shape: 'box',},
+                    { id: 'R', label: 'R', group: 'stats', shape: 'box',},
+                    { id: 'APL', label: 'APL', group: 'array', shape: 'box',},
+                    { id: 'J', label: 'J', group: 'array', shape: 'box',},
+                    { id: 'Thompson sh', label: 'Thompson sh', group: 'shell', shape: 'box',},
+                    { id: 'Bourne sh', label: 'Bourne sh', group: 'shell', shape: 'box',},
+                    { id: 'Bash', label: 'Bash', group: 'shell', shape: 'box',},
+                    { id: 'Zsh', label: 'Zsh', group: 'shell', shape: 'box',},
+                    { id: 'PowerShell', label: 'PowerShell', group: 'shell', shape: 'box',},
+                    { id: 'CPL', label: 'CPL', group: 'intermediate', shape: 'box',},
+                    { id: 'BCPL', label: 'BCPL', group: 'intermediate', shape: 'box',},
+                    { id: 'B', label: 'B', group: 'intermediate', shape: 'box',},
+                    { id: 'Crystal', label: 'Crystal', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Vale', label: 'Vale', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Carbon', label: 'Carbon', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'Mojo', label: 'Mojo', group: 'c_syntax_modern', shape: 'box',},
+                    { id: 'COBOL', label: 'COBOL', group: 'pascal_like', shape: 'box',},
+                    { id: 'Svelte', label: 'Svelte', group: 'c_syntax_script', shape: 'box',},
+                 ]);
+
+                // --- Define Edges (Data from user's example) ---
+                const edgeData = [
+                    { from: 'Assembly', to: 'Fortran', arrows: 'to' },
+                    { from: 'Assembly', to: 'Algol 60', arrows: 'to' },
+                    { from: 'Assembly', to: 'Lisp', arrows: 'to' },
+                    { from: 'Assembly', to: 'APL', arrows: 'to' },
+                    { from: 'Assembly', to: 'Prolog', arrows: 'to' },
+                    { from: 'Assembly', to: 'Thompson sh', arrows: 'to' },
+                    { from: 'Algol 60', to: 'CPL', arrows: 'to' },
+                    { from: 'Algol 60', to: 'Pascal', arrows: 'to' },
+                    { from: 'Algol 60', to: 'Simula', arrows: 'to' },
+                    { from: 'Algol 60', to: 'ML', arrows: 'to' },
+                    { from: 'CPL', to: 'BCPL', arrows: 'to' },
+                    { from: 'BCPL', to: 'B', arrows: 'to' },
+                    { from: 'B', to: 'C', arrows: 'to' },
+                    { from: 'C', to: 'C++', arrows: 'to' },
+                    { from: 'C', to: 'Objective-C', arrows: 'to' },
+                    { from: 'C', to: 'Perl', arrows: 'to' },
+                    { from: 'C', to: 'Awk', arrows: 'to' },
+                    { from: 'C', to: 'Python', arrows: 'to' },
+                    { from: 'C', to: 'JavaScript', arrows: 'to' },
+                    { from: 'C', to: 'PHP', arrows: 'to' },
+                    { from: 'C++', to: 'Java', arrows: 'to' },
+                    { from: 'C++', to: 'D', arrows: 'to' },
+                    { from: 'C++', to: 'Rust', arrows: 'to' },
+                    { from: 'C++', to: 'Go', arrows: 'to' },
+                    { from: 'C++', to: 'Zig', arrows: 'to' },
+                    { from: 'C++', to: 'Odin', arrows: 'to' },
+                    { from: 'C++', to: 'V', arrows: 'to' },
+                    { from: 'C++', to: 'Carbon', arrows: 'to' },
+                    { from: 'Objective-C', to: 'Swift', arrows: 'to' },
+                    { from: 'Java', to: 'C#', arrows: 'to' },
+                    { from: 'Java', to: 'Kotlin', arrows: 'to' },
+                    { from: 'Java', to: 'Scala', arrows: 'to' },
+                    { from: 'Java', to: 'Dart', arrows: 'to' },
+                    { from: 'C#', to: 'F#', arrows: 'to' },
+                    { from: 'ML', to: 'Standard ML', arrows: 'to' },
+                    { from: 'ML', to: 'Haskell', arrows: 'to' },
+                    { from: 'ML', to: 'OCaml', arrows: 'to' },
+                    { from: 'Standard ML', to: 'F#', arrows: 'to' },
+                    { from: 'OCaml', to: 'F#', arrows: 'to' },
+                    { from: 'Haskell', to: 'Scala', arrows: 'to' },
+                    { from: 'Haskell', to: 'Rust', arrows: 'to' },
+                    { from: 'Haskell', to: 'Nim', arrows: 'to' },
+                    { from: 'Haskell', to: 'Julia', arrows: 'to' },
+                    { from: 'Pascal', to: 'Modula-2', arrows: 'to' },
+                    { from: 'Pascal', to: 'ABC', arrows: 'to' },
+                    { from: 'Pascal', to: 'Ada', arrows: 'to' },
+                    { from: 'Modula-2', to: 'Oberon', arrows: 'to' },
+                    { from: 'ABC', to: 'Python', arrows: 'to' },
+                    { from: 'Python', to: 'Julia', arrows: 'to' },
+                    { from: 'Python', to: 'Nim', arrows: 'to' },
+                    { from: 'Python', to: 'Go', arrows: 'to' },
+                    { from: 'Python', to: 'Mojo', arrows: 'to' },
+                    { from: 'Awk', to: 'Perl', arrows: 'to' },
+                    { from: 'Perl', to: 'PHP', arrows: 'to' },
+                    { from: 'JavaScript', to: 'TypeScript', arrows: 'to' },
+                    { from: 'JavaScript', to: 'Dart', arrows: 'to' },
+                    { from: 'JavaScript', to: 'Svelte', arrows: 'to' },
+                    { from: 'Lisp', to: 'Scheme', arrows: 'to' },
+                    { from: 'Lisp', to: 'Common Lisp', arrows: 'to' },
+                    { from: 'Lisp', to: 'Clojure', arrows: 'to' },
+                    { from: 'Lisp', to: 'Racket', arrows: 'to' },
+                    { from: 'Scheme', to: 'JavaScript', arrows: 'to' },
+                    { from: 'Scheme', to: 'Lua', arrows: 'to' },
+                    { from: 'Scheme', to: 'Python', arrows: 'to' },
+                    { from: 'Scheme', to: 'Haskell', arrows: 'to' },
+                    { from: 'Simula', to: 'Smalltalk', arrows: 'to' },
+                    { from: 'Smalltalk', to: 'Ruby', arrows: 'to' },
+                    { from: 'Ruby', to: 'Elixir', arrows: 'to' },
+                    { from: 'Ruby', to: 'Crystal', arrows: 'to' },
+                    { from: 'Prolog', to: 'Erlang', arrows: 'to' },
+                    { from: 'Erlang', to: 'Elixir', arrows: 'to' },
+                    { from: 'Fortran', to: 'SQL', arrows: 'to' },
+                    { from: 'Fortran', to: 'S', arrows: 'to' },
+                    { from: 'Fortran', to: 'MATLAB', arrows: 'to' },
+                    { from: 'Fortran', to: 'SAS', arrows: 'to' },
+                    { from: 'Fortran', to: 'Stata', arrows: 'to' },
+                    { from: 'Fortran', to: 'COBOL', arrows: 'to' },
+                    { from: 'S', to: 'R', arrows: 'to' },
+                    { from: 'APL', to: 'J', arrows: 'to' },
+                    { from: 'Thompson sh', to: 'Bourne sh', arrows: 'to' },
+                    { from: 'Bourne sh', to: 'Bash', arrows: 'to' },
+                    { from: 'Bash', to: 'Zsh', arrows: 'to' },
+                    { from: 'Bash', to: 'PowerShell', arrows: 'to' },
+                    { from: 'Rust', to: 'Swift', arrows: 'to' },
+                    { from: 'Rust', to: 'Vale', arrows: 'to' },
+                ];
+                // Assign IDs to edges for easier updates
+                const edgesWithIds = edgeData.map((edge, index) => ({ ...edge, id: `e${index}` }));
+                const edges = new vis.DataSet(edgesWithIds);
+
+                // --- Define Options (Apple Style Dark Mode) ---
+                const options = {
+                    // Layout options: Hierarchical layout from Up to Down (UD)
+                    layout: {
+                        hierarchical: {
+                            enabled: true,
+                            direction: 'UD', // Top-down layout
+                            sortMethod: 'directed',
+                            levelSeparation: 160, // Increased vertical spacing
+                            nodeSpacing: 150, // Adjusted horizontal spacing
+                            treeSpacing: 220, // Adjusted tree spacing
+                        },
+                    },
+                    // Node options: Apple dark mode style
+                    nodes: {
+                        shape: 'box',
+                        font: {
+                            face: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                            size: 13.5, // Slightly larger font
+                            color: '#f5f5f7', // Light text color
+                        },
+                        borderWidth: 0.5, // Thinner border
+                        borderWidthSelected: 1.5, // Slightly thicker selected border
+                        shapeProperties: {
+                            borderRadius: 7, // Apple-like rounding
+                        },
+                        margin: {
+                            top: 12, right: 18, bottom: 12, left: 18,
+                        },
+                        shadow: { // Keep subtle default shadow
+                            enabled: true, color: 'rgba(0, 0, 0, 0.4)', size: 6, x: 1, y: 3,
+                        },
+                         color: { // Default node colors (used if no group)
+                             background: 'rgba(55, 55, 55, 0.85)',
+                             border: '#777777',
+                             highlight: { background: '#777777', border: '#999999' },
+                             hover: { background: 'rgba(65, 65, 65, 0.85)', border: '#888888' }
+                         }
+                    },
+                    // Edge options: Subtle edges
+                    edges: {
+                        arrows: {
+                            to: { enabled: true, scaleFactor: 0.5, type: 'arrow' },
+                        },
+                        smooth: {
+                            enabled: true, type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4,
+                        },
+                        color: {
+                            color: '#555555', // Darker gray for edges
+                            highlight: '#999999', // Lighter gray on hover/select
+                            hover: '#777777',
+                            inherit: false,
+                            opacity: 0.8, // Slightly transparent edges
+                        },
+                        width: 0.8, // Thinner edges
+                        hoverWidth: 1.2,
+                        selectionWidth: 1.5, // Default selection width
+                    },
+                    // Physics options: Disabled
+                    physics: { enabled: false },
+                    // Interaction options: Standard
+                    interaction: {
+                        dragNodes: false, // *** Disable node dragging ***
+                        dragView: true, // Keep view dragging enabled
+                        zoomView: true,
+                        tooltipDelay: 200,
+                        navigationButtons: true, // Keep buttons enabled
+                        keyboard: true,
+                        selectConnectedEdges: false, // Don't highlight edges on node select
+                    },
+                    // Group options: Refined dark mode colors with subtle accents
+                    groups: {
+                        // Apply styles (Example: using muted colors for borders)
+                        c_syntax_algol: { color: { background: 'rgba(40, 45, 55, 0.85)', border: '#4a5568' } },
+                        c_syntax_core: { color: { background: 'rgba(45, 50, 60, 0.85)', border: '#5a6578' } },
+                        c_syntax_jvm: { color: { background: 'rgba(50, 45, 65, 0.85)', border: '#6b5f8a' } },
+                        c_syntax_modern: { color: { background: 'rgba(40, 55, 50, 0.85)', border: '#486a5f' } },
+                        c_syntax_script: { color: { background: 'rgba(40, 55, 55, 0.85)', border: '#4a6b6b' } },
+                        lisp: { color: { background: 'rgba(60, 50, 40, 0.85)', border: '#8a705b' } },
+                        ml: { color: { background: 'rgba(40, 60, 50, 0.85)', border: '#4a7565' } },
+                        smalltalk: { color: { background: 'rgba(60, 40, 45, 0.85)', border: '#8a5b65' } },
+                        stats: { color: { background: 'rgba(55, 45, 60, 0.85)', border: '#7a608a' } },
+                        array: { color: { background: 'rgba(60, 45, 55, 0.85)', border: '#8a607a' } },
+                        shell: { color: { background: 'rgba(45, 50, 65, 0.85)', border: '#5a658a' } },
+                        pascal_like: { color: { background: 'rgba(65, 50, 40, 0.85)', border: '#9a705b' } },
+                        logic: { color: { background: 'rgba(55, 45, 65, 0.85)', border: '#7a609a' } },
+                        misc: { color: { background: 'rgba(55, 55, 55, 0.85)', border: '#777777' } },
+                        intermediate: { color: { background: 'rgba(65, 65, 65, 0.85)', border: '#888888' } },
+                    },
+                };
+
+                // --- Refine Group Colors with Highlight/Hover ---
+                // Assign default highlight/hover based on border/background
+                Object.keys(options.groups).forEach((groupName) => {
+                    if (options.groups[groupName].color) {
+                        const baseColor = options.groups[groupName].color;
+                        options.groups[groupName].color.highlight = {
+                            // Make highlight slightly brighter than border
+                            background: baseColor.border, // Use border color as background highlight
+                            border: vis.util.parseColor(baseColor.border).border // Keep border color bright
+                        };
+                        options.groups[groupName].color.hover = {
+                            // Keep hover subtle
+                            background: baseColor.background,
+                            border: baseColor.border
+                        };
+                    }
+                });
+
+
+                // --- Create Network ---
+                const data = { nodes: nodes, edges: edges };
+                const network = new vis.Network(container, data, options);
+
+                // --- Highlighting Logic ---
+                let currentlyHighlighted = { nodes: [], edges: [] };
+                const highlightNodeBorderWidth = 2.5; // Thicker border for highlighted nodes
+                const highlightEdgeColor = '#00BFFF'; // Deep Sky Blue for highlighted edges
+                const highlightEdgeWidth = 2; // Thicker highlighted edges
+
+                function resetHighlighting() {
+                     // Reset Nodes: Revert border width to default and reset color object completely
+                     // This relies on vis.js reapplying group/default styles when color obj is reset
+                     if (currentlyHighlighted.nodes.length > 0) {
+                         const nodeUpdates = currentlyHighlighted.nodes.map(id => ({
+                             id: id,
+                             borderWidth: options.nodes.borderWidth, // Reset border width
+                             color: null // Let vis.js reapply group/default color
+                         }));
+                         try {
+                           nodes.update(nodeUpdates);
+                         } catch (e) { console.error("Error resetting node highlights:", e); }
+                     }
+
+                     // Reset Edges: Revert color and width to default options
+                     if (currentlyHighlighted.edges.length > 0) {
+                         const edgeUpdates = currentlyHighlighted.edges.map(id => ({
+                             id: id,
+                             color: options.edges.color.color, // Reset color
+                             width: options.edges.width // Reset width
+                         }));
+                         try {
+                            edges.update(edgeUpdates);
+                         } catch (e) { console.error("Error resetting edge highlights:", e); }
+                     }
+                     currentlyHighlighted = { nodes: [], edges: [] }; // Clear tracker
+                }
+
+                // --- Sidebar Logic ---
+
+                // Function to update and show the sidebar
+                function ShowSidebar(nodeId) {
+                    const node = nodes.get(nodeId);
+                    if (!node) return;
+
+                    sidebarTitle.textContent = node.label;
+
+                    // Clear previous lists/syntax
+                    influencedByList.innerHTML = '';
+                    influencesList.innerHTML = '';
+                    syntaxExamplesContainer.innerHTML = ''; // Clear syntax container
+
+                    // Find relationships using the DataSet's get method with filtering
+                    const incomingEdges = edges.get({ filter: edge => edge.to === nodeId });
+                    const outgoingEdges = edges.get({ filter: edge => edge.from === nodeId });
+
+                    // Populate "Influenced By" list
+                    if (incomingEdges.length > 0) {
+                        incomingEdges.forEach((edge) => {
+                            const influencerNode = nodes.get(edge.from);
+                            if (influencerNode) {
+                                const li = document.createElement('li');
+                                li.textContent = influencerNode.label;
+                                influencedByList.appendChild(li);
+                            }
+                        });
+                    } else {
+                        influencedByList.innerHTML = '<li>None in this graph</li>';
+                    }
+
+                    // Populate "Influences" list
+                    if (outgoingEdges.length > 0) {
+                        outgoingEdges.forEach((edge) => {
+                            const influencedNode = nodes.get(edge.to);
+                            if (influencedNode) {
+                                const li = document.createElement('li');
+                                li.textContent = influencedNode.label;
+                                influencesList.appendChild(li);
+                            }
+                        });
+                    } else {
+                        influencesList.innerHTML = '<li>None in this graph</li>';
+                    }
+
+                    // Populate syntax examples
+                    const examples = syntaxData[node.label];
+                    if (examples && examples.length > 0) {
+                        examples.forEach(exampleCode => {
+                            const pre = document.createElement('pre');
+                            pre.textContent = exampleCode;
+                            syntaxExamplesContainer.appendChild(pre);
+                        });
+                    } else {
+                        const pre = document.createElement('pre');
+                        pre.textContent = 'Syntax examples not available.';
+                        syntaxExamplesContainer.appendChild(pre);
+                    }
+
+                    sidebar.classList.add('visible');
+                }
+
+                // Function to hide the sidebar
+                function HideSidebar() {
+                    sidebar.classList.remove('visible');
+                    resetHighlighting(); // Reset highlighting when sidebar is hidden
+                }
+
+                // --- Event Listeners ---
+
+                // Event listener for node clicks
+                network.on('click', function (params) {
+                    resetHighlighting(); // Always reset previous highlight first
+
+                    if (params.nodes.length > 0) {
+                        const selectedNodeId = params.nodes[0];
+                        network.selectNodes([selectedNodeId]); // Ensure standard selection highlight happens
+
+                        // Find parents and children edges and nodes
+                        const parentEdges = edges.get({ filter: edge => edge.to === selectedNodeId });
+                        const childEdges = edges.get({ filter: edge => edge.from === selectedNodeId });
+                        const parentNodeIds = parentEdges.map(edge => edge.from);
+                        const childNodeIds = childEdges.map(edge => edge.to);
+
+                        const nodesToHighlight = [selectedNodeId, ...parentNodeIds, ...childNodeIds];
+                        const edgeIdsToHighlight = [...parentEdges.map(e => e.id), ...childEdges.map(e => e.id)];
+
+                        // Apply Node Highlighting (thicker border, maybe specific color)
+                        if (nodesToHighlight.length > 0) {
+                            const nodeUpdates = nodesToHighlight.map(id => ({
+                                id: id,
+                                borderWidth: highlightNodeBorderWidth,
+                                // Optionally set a specific border color for highlight
+                                color: {
+                                    border: highlightEdgeColor // Use same color as edge highlight for consistency
+                                }
+                            }));
+                            try {
+                                nodes.update(nodeUpdates);
+                                currentlyHighlighted.nodes = nodesToHighlight; // Track
+                            } catch (e) { console.error("Error applying node highlights:", e); }
+                        }
+
+                        // Apply Edge Highlighting (brighter color, thicker)
+                        if (edgeIdsToHighlight.length > 0) {
+                            const edgeUpdates = edgeIdsToHighlight.map(id => ({
+                                id: id,
+                                color: highlightEdgeColor,
+                                width: highlightEdgeWidth
+                            }));
+                             try {
+                                edges.update(edgeUpdates);
+                                currentlyHighlighted.edges = edgeIdsToHighlight; // Track
+                            } catch (e) { console.error("Error applying edge highlights:", e); }
+                        }
+
+                        ShowSidebar(selectedNodeId);
+
+                    } else {
+                        // Clicked on empty space - resetHighlighting() was already called
+                        HideSidebar();
+                        network.unselectAll(); // Deselect nodes/edges visually
+                    }
+                });
+
+                 // Event listener for double clicks (optional: focus on node)
+                 network.on("doubleClick", function (params) {
+                     if (params.nodes.length > 0) {
+                         network.focus(params.nodes[0], {
+                             scale: 1.2, // Zoom in slightly
+                             animation: { duration: 300, easingFunction: "easeInOutQuad" }
+                         });
+                     }
+                 });
+
+
+                // Event listener for the close button
+                closeSidebarButton.addEventListener('click', HideSidebar);
+
+                // Hide sidebar and clear highlight if user clicks outside sidebar/nodes
+                graphContainer.addEventListener('click', function (event) {
+                    // Check if sidebar is visible AND the click was outside the sidebar
+                    if (sidebar.classList.contains('visible') && !sidebar.contains(event.target)) {
+                        // Check if the click was on the network canvas background (not on a node/edge)
+                        const clickTargetIsCanvas = event.target.tagName === 'CANVAS' && event.target.closest('#languageGraph');
+                        // Check if the click was on the main container background
+                        const clickTargetIsContainer = event.target === graphContainer || event.target === container;
+
+                        if (clickTargetIsCanvas || clickTargetIsContainer) {
+                            // We can't easily tell if a node *wasn't* clicked just from this event,
+                            // because the network click handler fires slightly later.
+                            // The network click handler already handles hiding the sidebar
+                            // and resetting highlights if no node is clicked.
+                            // So, this listener might be redundant for hiding, but can be kept for safety.
+                            // Let network's 'click' handler manage the state based on params.nodes.length.
+                            // HideSidebar(); // Let network handler do this.
+                        }
+                    }
+                }, true); // Use capture phase
+
+                // --- End Event Listeners ---
+
+
+                // Hide loading message once network drawing is initially done
+                network.once('stabilizationIterationsDone', function () {
+                    loadingMessage.style.display = 'none';
+                });
+                 network.once('afterDrawing', function () { // Alternative event
+                     loadingMessage.style.display = 'none';
+                 });
+                // Fallback in case stabilization events don't fire quickly
+                setTimeout(() => {
+                    if (loadingMessage) {
+                        loadingMessage.style.display = 'none';
+                    }
+                }, 2500); // Increased timeout slightly
+            }
+
+            // Run the DrawGraph function when the page finishes loading
+            window.addEventListener('load', DrawGraph);
+        </script>
+    </body>
+</html>
