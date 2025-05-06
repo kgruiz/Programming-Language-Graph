@@ -2,7 +2,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import styled from '@emotion/styled';
-import { DataSet, Network, Options } from 'vis-network/standalone';
+import {
+    DataSet,
+    Network,
+    Options,
+    NodeOptions,
+    EdgeOptions,
+    Color,
+    Font,
+} from 'vis-network/standalone';
 
 import Controls from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
@@ -20,13 +28,14 @@ import {
 
 import {
     LanguageNode,
-    InfluenceEdge,
+    // InfluenceEdge, // Not directly used here, but EdgeOptions covers it
     AllNodesOriginalStyles,
     VisNodeStyle,
     VisDataSetNodes,
     VisDataSetEdges,
+    CategoryShortToFullName as CategoryShortToFullNameType,
 } from '@/types';
-import theme, { AppTheme } from '@/styles/theme';
+import theme from '@/styles/theme'; // AppTheme not explicitly needed if theme is used directly
 
 // Dynamically import GraphComponent for client-side rendering
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
@@ -46,7 +55,24 @@ const MainContent = styled.div`
     position: relative; /* For absolute positioning of sidebar/loading */
 `;
 
-const graphOptionsBase: Options = {
+interface GroupOptionsExtended extends NodeOptions {
+    color?:
+        | NodeOptions['color']
+        | {
+              background?: string;
+              border?: string;
+              highlight?: { background?: string; border?: string };
+              hover?: { background?: string; border?: string };
+          };
+}
+
+interface GraphOptionsExtended extends Options {
+    groups?: Record<string, GroupOptionsExtended>;
+    nodes?: NodeOptions;
+    edges?: EdgeOptions;
+}
+
+const graphOptionsBase: GraphOptionsExtended = {
     layout: {
         hierarchical: {
             enabled: true,
@@ -161,23 +187,28 @@ const graphOptionsBase: Options = {
 };
 
 // Apply highlight/hover colors to groups
-Object.values(graphOptionsBase.groups!).forEach((group) => {
-    if (group.color && typeof group.color === 'object') {
-        // Type guard
-        const baseColor = group.color as {
-            background?: string;
-            border?: string;
-        };
-        group.color.highlight = {
-            background: baseColor.border,
-            border: baseColor.border,
-        };
-        group.color.hover = {
-            background: baseColor.background,
-            border: baseColor.border,
-        };
-    }
-});
+if (graphOptionsBase.groups) {
+    Object.values(graphOptionsBase.groups).forEach(
+        (group: GroupOptionsExtended) => {
+            if (group.color && typeof group.color === 'object') {
+                // Now group.color is known to be an object with potential background/border
+                const baseColor = group.color as {
+                    background?: string;
+                    border?: string;
+                };
+                group.color.highlight = {
+                    // This assumes group.color is an object, which it is by this point
+                    background: baseColor.border,
+                    border: baseColor.border,
+                };
+                group.color.hover = {
+                    background: baseColor.background,
+                    border: baseColor.border,
+                };
+            }
+        }
+    );
+}
 
 const HomePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -238,17 +269,20 @@ const HomePage: React.FC = () => {
         nodesDataSetRef.current.forEach((node: LanguageNode) => {
             const groupSettings = graphOptionsBase.groups?.[node.group];
             let bg =
-                graphOptionsBase.nodes?.color?.background ||
+                (graphOptionsBase.nodes?.color as Color)?.background ||
                 'rgba(55, 55, 55, 0.9)';
-            let bd = graphOptionsBase.nodes?.color?.border || '#777777';
+            let bd =
+                (graphOptionsBase.nodes?.color as Color)?.border || '#777777';
             let fontColor =
-                graphOptionsBase.nodes?.font?.color || theme.colors.text;
+                (graphOptionsBase.nodes?.font as Font)?.color ||
+                theme.colors.text;
 
             if (
                 groupSettings?.color &&
                 typeof groupSettings.color === 'object'
             ) {
                 const grpColor = groupSettings.color as {
+                    // groupSettings.color is GroupOptionsExtended['color']
                     background?: string;
                     border?: string;
                 };
@@ -294,7 +328,7 @@ const HomePage: React.FC = () => {
             nodesDataSetRef.current.getIds().forEach((nodeId) => {
                 const node = nodesDataSetRef.current!.get(
                     nodeId as string
-                ) as LanguageNode; // Type assertion
+                ) as LanguageNode;
                 const originalStyle = allNodesOriginalStylesRef.current.get(
                     nodeId as string
                 );
@@ -318,11 +352,11 @@ const HomePage: React.FC = () => {
                                 type === 'good'
                                     ? theme.colors.highlightGood
                                     : theme.colors.highlightBad,
-                            background: originalStyle.color.background,
+                            background: (originalStyle.color as Color)
+                                .background, // Assert originalStyle.color is an object
                         },
                         borderWidth: 2.5,
-                        font: { color: originalStyle.font.color },
-                        // label: originalStyle.label, // Keep original label from dataset
+                        font: { color: (originalStyle.font as Font).color }, // Assert originalStyle.font is an object
                     };
                 } else {
                     newStyle = {
@@ -333,7 +367,6 @@ const HomePage: React.FC = () => {
                         },
                         borderWidth: originalStyle.borderWidth,
                         font: { color: theme.colors.dimmedNodeText },
-                        // label: originalStyle.label,
                     };
                 }
                 updates.push(newStyle);
@@ -358,10 +391,9 @@ const HomePage: React.FC = () => {
             if (originalStyle) {
                 updates.push({
                     id: nodeId as string,
-                    color: originalStyle.color,
-                    font: originalStyle.font,
+                    color: originalStyle.color, // This is fine as originalStyle.color is already { background, border }
+                    font: originalStyle.font, // This is fine as originalStyle.font is already { color }
                     borderWidth: originalStyle.borderWidth,
-                    // label: originalStyle.label,
                 });
             }
         });
@@ -392,13 +424,11 @@ const HomePage: React.FC = () => {
         ? (nodesDataSetRef.current?.get(selectedNodeId) as LanguageNode)
         : null;
 
-    // Click outside sidebar to close
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (selectedNodeId) {
-                // Check if click is on graph canvas or graph container but not sidebar
                 const sidebarElement =
-                    document.getElementById('details-sidebar'); // Give sidebar an ID
+                    document.getElementById('details-sidebar');
                 const graphElement = document.querySelector(
                     '.vis-network canvas'
                 )?.parentElement;
@@ -408,10 +438,15 @@ const HomePage: React.FC = () => {
                     !sidebarElement.contains(event.target as Node) &&
                     graphElement &&
                     graphElement.contains(event.target as Node) &&
-                    !networkInstanceRef.current?.getNodeAt({
-                        x: (event as any).x,
-                        y: (event as any).y,
-                    }) // check if not clicking on a node
+                    networkInstanceRef.current && // Check if network instance exists
+                    typeof networkInstanceRef.current.getNodeAt ===
+                        'function' && // Check if getNodeAt is a function
+                    !networkInstanceRef.current.getNodeAt(
+                        (event as any).pointer?.canvas || {
+                            x: event.clientX,
+                            y: event.clientY,
+                        }
+                    )
                 ) {
                     handleCloseSidebar();
                 }
@@ -439,7 +474,9 @@ const HomePage: React.FC = () => {
             <PageContainer>
                 <Controls
                     categories={categoriesOrder}
-                    categoryMap={categoryShortToFullName}
+                    categoryMap={
+                        categoryShortToFullName as CategoryShortToFullNameType
+                    }
                     selectedCategory={selectedHighlightCategory}
                     onCategoryChange={setSelectedHighlightCategory}
                     onHighlightGood={handleHighlightGood}
@@ -452,7 +489,7 @@ const HomePage: React.FC = () => {
                     <GraphComponentWithNoSSR
                         nodesData={nodesDataSetRef.current}
                         edgesData={edgesDataSetRef.current}
-                        options={graphOptionsBase}
+                        options={graphOptionsBase as Options} // Cast back to Options for the component
                         onNodeClick={handleNodeClick}
                         onStabilizationDone={handleStabilizationDone}
                         setNetworkInstance={setNetwork}
@@ -464,12 +501,12 @@ const HomePage: React.FC = () => {
                         syntaxData={syntaxData}
                         languageRankingsData={languageRankingsData}
                         rankLegend={rankLegend}
-                        categoryMap={categoryShortToFullName}
+                        categoryMap={
+                            categoryShortToFullName as CategoryShortToFullNameType
+                        }
                         categoriesOrder={categoriesOrder}
                         onClose={handleCloseSidebar}
                         isVisible={!!selectedNodeId}
-                        // Make sure Sidebar has an id for click outside detection
-                        // e.g., by wrapping its styled component or adding id prop
                     />
                 </MainContent>
             </PageContainer>

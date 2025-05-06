@@ -1,4 +1,8 @@
-import { RankLegend, LanguageRankings, CategoryShortToFullName } from '@/types';
+import {
+    RankLegend,
+    LanguageRankings,
+    CategoryShortToFullName as CategoryShortToFullNameType,
+} from '@/types';
 
 export const rankLegend: RankLegend = {
     5: 'Excellent',
@@ -1227,7 +1231,7 @@ export const languageRankingsData: LanguageRankings = {
     // Add other languages if needed
 };
 
-export const categoryShortToFullName: CategoryShortToFullName = {
+export const categoryShortToFullName: CategoryShortToFullNameType = {
     ML: 'Machine Learning',
     Perf: 'Performance',
     Ease: 'Ease of Use',

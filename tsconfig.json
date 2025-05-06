@@ -1,8 +1,23 @@
 {
     "compilerOptions": {
-        // ... other options
+        "target": "es5",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
         "baseUrl": ".",
         "paths": {
+            "@/data": ["src/data/index.ts"],
+            "@/types": ["src/types/index.ts"],
             "@/components/*": ["src/components/*"],
             "@/data/*": ["src/data/*"],
             "@/styles/*": ["src/styles/*"],
@@ -10,11 +25,12 @@
             "@/pages/*": ["src/pages/*"],
             "@/public/*": ["public/*"]
         },
-        "esModuleInterop": true, // Often helpful with CJS libraries
-        "forceConsistentCasingInFileNames": true,
-        "strict": true, // Recommended for new projects
-        "skipLibCheck": true // Can help with vis-network types sometimes
+        "plugins": [
+            {
+                "name": "next"
+            }
+        ]
     },
-    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
     "exclude": ["node_modules"]
 }

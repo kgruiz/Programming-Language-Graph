@@ -1,14 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import {
-    CategoryShortToFullName,
-    categoriesOrder as defaultCategoriesOrder,
-} from '@/data';
-import { AppTheme } from '@/styles/theme';
+import { categoriesOrder as defaultCategoriesOrder } from '@/data'; // Data for categoriesOrder
+import type { CategoryShortToFullName as CategoryShortToFullNameType } from '@/types'; // Type definition
 
 interface ControlsProps {
-    categories: typeof defaultCategoriesOrder;
-    categoryMap: CategoryShortToFullName;
+    categories: string[]; // This is typeof defaultCategoriesOrder from @/data
+    categoryMap: CategoryShortToFullNameType; // This is the data object from @/data, conforming to the type from @/types
     selectedCategory: string;
     onCategoryChange: (category: string) => void;
     onHighlightGood: () => void;
@@ -55,14 +52,14 @@ const Select = styled.select`
     }
 `;
 
-interface ButtonProps {
-    theme: AppTheme;
+// Props passed directly to the Button component in JSX
+interface ButtonElementProps {
     isActiveGood?: boolean;
     isActiveBad?: boolean;
     isReset?: boolean;
 }
 
-const Button = styled.button<ButtonProps>`
+const Button = styled.button<ButtonElementProps>`
     padding: 8px 14px;
     border-radius: 8px;
     border: 1px solid ${(props) => props.theme.colors.controlBorder};
@@ -139,14 +136,18 @@ const Controls: React.FC<ControlsProps> = ({
                 value={selectedCategory}
                 onChange={(e) => onCategoryChange(e.target.value)}
             >
-                {categories.map((catShort) => (
-                    <option
-                        key={catShort}
-                        value={catShort}
-                    >
-                        {categoryMap[catShort] || catShort}
-                    </option>
-                ))}
+                {categories.map(
+                    (
+                        catShort: string // Added type for catShort
+                    ) => (
+                        <option
+                            key={catShort}
+                            value={catShort}
+                        >
+                            {categoryMap[catShort] || catShort}
+                        </option>
+                    )
+                )}
             </Select>
             <Button
                 onClick={onHighlightGood}

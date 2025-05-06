@@ -6,12 +6,12 @@ import {
     SyntaxData,
     LanguageRankings,
     RankLegend,
-    CategoryShortToFullName,
-    categoriesOrder as defaultCategoriesOrder,
+    CategoryShortToFullName as CategoryShortToFullNameType,
     VisDataSetNodes,
     VisDataSetEdges,
-} from '@/types';
-import { AppTheme } from '@/styles/theme';
+} from '@/types'; // Types from @/types
+// Data for categoriesOrder is not directly needed here, it's passed as a prop
+// import { categoriesOrder as defaultCategoriesOrderFromData } from '@/data';
 
 interface SidebarProps {
     selectedNode: LanguageNode | null;
@@ -20,21 +20,20 @@ interface SidebarProps {
     syntaxData: SyntaxData;
     languageRankingsData: LanguageRankings;
     rankLegend: RankLegend;
-    categoryMap: CategoryShortToFullName;
-    categoriesOrder: typeof defaultCategoriesOrder;
+    categoryMap: CategoryShortToFullNameType;
+    categoriesOrder: string[];
     onClose: () => void;
     isVisible: boolean;
 }
 
-interface SidebarContainerProps {
+interface SidebarContainerStyleProps {
     isVisible: boolean;
-    theme: AppTheme;
 }
 
-const SidebarContainer = styled.div<SidebarContainerProps>`
+const SidebarContainer = styled.div<SidebarContainerStyleProps>`
     id: details-sidebar;
     width: 420px;
-    max-height: calc(100vh - 40px - 75px); /* Adjust for controls height */
+    max-height: calc(100vh - 40px - 75px);
     background-color: ${(props) => props.theme.colors.sidebarBackground};
     backdrop-filter: blur(12px) saturate(180%);
     -webkit-backdrop-filter: blur(12px) saturate(180%);
@@ -45,7 +44,7 @@ const SidebarContainer = styled.div<SidebarContainerProps>`
     color: ${(props) => props.theme.colors.sidebarText};
     position: absolute;
     right: 20px;
-    top: 80px; /* Approx controls height + padding */
+    top: 80px;
     z-index: 1000;
     box-shadow: ${(props) => props.theme.shadows.sidebar};
     transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
@@ -153,7 +152,10 @@ const CollapsibleSectionHeader = styled(SectionTitle)`
     align-items: center;
 `;
 
-const ToggleArrow = styled.span<{ isCollapsed: boolean }>`
+interface ToggleArrowProps {
+    isCollapsed: boolean;
+}
+const ToggleArrow = styled.span<ToggleArrowProps>`
     display: inline-block;
     transition: transform 0.3s ease;
     font-size: 0.8em;
@@ -162,7 +164,10 @@ const ToggleArrow = styled.span<{ isCollapsed: boolean }>`
         props.isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};
 `;
 
-const CollapsibleContent = styled.div<{ isCollapsed: boolean }>`
+interface CollapsibleContentProps {
+    isCollapsed: boolean;
+}
+const CollapsibleContent = styled.div<CollapsibleContentProps>`
     overflow: hidden;
     max-height: ${(props) => (props.isCollapsed ? '0' : '800px')};
     transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out,
@@ -188,46 +193,37 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(false);
 
     if (!selectedNode || !nodesDataSet || !edgesDataSet) {
-        return (
-            <SidebarContainer
-                isVisible={false}
-                theme={{} as AppTheme}
-            >
-                {' '}
-                {/* Empty theme for non-visible state */}{' '}
-            </SidebarContainer>
-        );
+        return <SidebarContainer isVisible={false} />;
     }
 
     const { labelOriginal, goodTagsDisplay, badTagsDisplay } = selectedNode;
 
     const incomingEdges = edgesDataSet.get({
-        filter: (edge) => edge.to === selectedNode.id,
+        filter: (edge: InfluenceEdge) => edge.to === selectedNode.id,
     });
-    const influencedBy = incomingEdges
-        .map((edge) => nodesDataSet.get(edge.from)?.labelOriginal)
-        .filter(Boolean);
+    const influencedBy: string[] = incomingEdges // Explicitly type influencedBy as string[]
+        .map(
+            (edge: InfluenceEdge) => nodesDataSet.get(edge.from)?.labelOriginal
+        )
+        .filter(Boolean) as string[]; // Assert that filter(Boolean) returns string[]
 
     const outgoingEdges = edgesDataSet.get({
-        filter: (edge) => edge.from === selectedNode.id,
+        filter: (edge: InfluenceEdge) => edge.from === selectedNode.id,
     });
-    const influences = outgoingEdges
-        .map((edge) => nodesDataSet.get(edge.to)?.labelOriginal)
-        .filter(Boolean);
+    const influences: string[] = outgoingEdges // Explicitly type influences as string[]
+        .map((edge: InfluenceEdge) => nodesDataSet.get(edge.to)?.labelOriginal)
+        .filter(Boolean) as string[]; // Assert that filter(Boolean) returns string[]
 
     const langRankings = languageRankingsData[labelOriginal];
 
     return (
-        <SidebarContainer
-            isVisible={isVisible}
-            theme={{} as AppTheme /* Actual theme provided by ThemeProvider */}
-        >
+        <SidebarContainer isVisible={isVisible}>
             <CloseButton onClick={onClose}>×</CloseButton>
             <SidebarTitle>{labelOriginal}</SidebarTitle>
 
             {(goodTagsDisplay.length > 0 || badTagsDisplay.length > 0) && (
                 <LanguageTagsList>
-                    {goodTagsDisplay.map((tag) => (
+                    {goodTagsDisplay.map((tag: string) => (
                         <li
                             key={`good-${tag}`}
                             style={{
@@ -238,7 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                             👍 {tag}
                         </li>
                     ))}
-                    {badTagsDisplay.map((tag) => (
+                    {badTagsDisplay.map((tag: string) => (
                         <li
                             key={`bad-${tag}`}
                             style={{
@@ -255,7 +251,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             <SectionTitle>Influenced By:</SectionTitle>
             <List>
                 {influencedBy.length > 0 ? (
-                    influencedBy.map((name) => <li key={name}>{name}</li>)
+                    influencedBy.map(
+                        (
+                            name: string // name is now guaranteed to be string
+                        ) => <li key={name}>{name}</li>
+                    )
                 ) : (
                     <li>None in this graph</li>
                 )}
@@ -264,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <SectionTitle>Influences:</SectionTitle>
             <List>
                 {influences.length > 0 ? (
-                    influences.map((name) => <li key={name}>{name}</li>)
+                    influences.map((name: string) => <li key={name}>{name}</li>) // name is now guaranteed to be string
                 ) : (
                     <li>None in this graph</li>
                 )}
@@ -282,7 +282,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <CollapsibleContent isCollapsed={isRankingsCollapsed}>
                     <List>
                         {langRankings ? (
-                            categoriesOrder.map((catShort) => {
+                            categoriesOrder.map((catShort: string) => {
                                 if (langRankings[catShort] === undefined)
                                     return null;
                                 const score = langRankings[catShort];

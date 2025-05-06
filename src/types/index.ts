@@ -1,16 +1,15 @@
-import { DataSet } from 'vis-network/standalone';
+import { DataSet, IdType } from 'vis-network/standalone'; // Import IdType
 
 export interface LanguageNode {
     id: string;
-    label: string; // This will be the display label in the graph
-    labelOriginal: string; // The actual language name, used for data lookups
+    label: string;
+    labelOriginal: string;
     group: string;
     shape: 'box';
     goodAtCategories: string[];
     badAtCategories: string[];
     goodTagsDisplay: string[];
     badTagsDisplay: string[];
-    // Vis-network specific styling properties (optional, can be added by vis-network)
     color?: { background?: string; border?: string };
     font?: { color?: string };
     borderWidth?: number;
@@ -22,6 +21,7 @@ export interface InfluenceEdge {
     from: string;
     to: string;
     arrows: 'to';
+    id?: IdType; // <--- ADD THIS LINE (Optional ID for edges)
 }
 
 export type InfluenceEdges = InfluenceEdge[];
