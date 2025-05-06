@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        // ... other options
+        "baseUrl": ".",
+        "paths": {
+            "@/components/*": ["src/components/*"],
+            "@/data/*": ["src/data/*"],
+            "@/styles/*": ["src/styles/*"],
+            "@/types/*": ["src/types/*"],
+            "@/pages/*": ["src/pages/*"],
+            "@/public/*": ["public/*"]
+        },
+        "esModuleInterop": true, // Often helpful with CJS libraries
+        "forceConsistentCasingInFileNames": true,
+        "strict": true, // Recommended for new projects
+        "skipLibCheck": true // Can help with vis-network types sometimes
+    },
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+    "exclude": ["node_modules"]
+}
