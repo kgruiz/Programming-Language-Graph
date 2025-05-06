@@ -54,9 +54,9 @@ const PageContainer = styled.div`
 
 const MainContent = styled.div`
     display: flex;
-    flex-direction: column; // Children (GraphComponent) will stack vertically
-    flex: 1; // Shorthand for flex-grow: 1, flex-shrink: 1, flex-basis: 0%
-    min-height: 0; // Important for flex children that grow, prevents collapsing
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     position: relative;
     overflow: hidden;
 `;
@@ -79,6 +79,9 @@ interface GraphOptionsExtended extends Options {
 }
 
 const graphOptionsBase: GraphOptionsExtended = {
+    autoResize: true, // Explicitly true
+    width: '100%', // Tell vis.js to use container width
+    height: '100%', // Tell vis.js to use container height
     layout: {
         hierarchical: {
             enabled: true,
