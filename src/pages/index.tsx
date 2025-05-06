@@ -210,8 +210,9 @@ if (graphOptionsBase.groups) {
 }
 
 const HomePage: React.FC = () => {
-    const [isVisLoaded, setIsVisLoaded] = useState(false);
-    const [isLoading, setIsLoading] = useState(true); // Still useful for data processing phase
+    const [isVisScriptLoaded, setIsVisScriptLoaded] = useState(false);
+    const [areDataSetsInitialized, setAreDataSetsInitialized] = useState(false);
+
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [selectedHighlightCategory, setSelectedHighlightCategory] =
         useState<string>(categoriesOrder[0]);
@@ -219,7 +220,6 @@ const HomePage: React.FC = () => {
         'good' | 'bad' | null
     >(null);
 
-    // Use state for DataSets to trigger re-renders when they are ready
     const [nodesDataSet, setNodesDataSet] = useState<VisDataSetNodes | null>(
         null
     );
@@ -231,108 +231,121 @@ const HomePage: React.FC = () => {
     const networkInstanceRef = useRef<any | null>(null);
 
     useEffect(() => {
-        if (
-            !isVisLoaded ||
-            typeof window.vis === 'undefined' ||
-            !window.vis.DataSet
-        ) {
-            console.log(
-                'HomePage data useEffect: vis script not fully loaded or DataSet unavailable.'
-            );
-            return;
-        }
-        console.log(
-            'HomePage data useEffect: vis IS ready, processing data...'
-        );
-
-        const processedNodes: LanguageNode[] = rawNodes.map((node) => {
-            const originalLabel = node.label;
-            const langRankings = languageRankingsData[originalLabel];
-            const goodAtCategories: string[] = [];
-            const badAtCategories: string[] = [];
-            const goodTagsDisplay: string[] = [];
-            const badTagsDisplay: string[] = [];
-
-            if (langRankings) {
-                categoriesOrder.forEach((cat) => {
-                    if (langRankings[cat] === undefined) return;
-                    if (langRankings[cat] >= 4) {
-                        goodAtCategories.push(cat);
-                        goodTagsDisplay.push(
-                            categoryShortToFullName[cat] || cat
-                        );
-                    }
-                    if (langRankings[cat] <= 2) {
-                        badAtCategories.push(cat);
-                        badTagsDisplay.push(
-                            categoryShortToFullName[cat] || cat
-                        );
-                    }
-                });
-            }
-            return {
-                ...node,
-                id: node.id as IdType,
-                labelOriginal: originalLabel,
-                goodAtCategories,
-                badAtCategories,
-                goodTagsDisplay,
-                badTagsDisplay,
-            };
-        });
-
-        const newNodesDataSet = new window.vis.DataSet<LanguageNode, 'id'>(
-            processedNodes
-        );
-        const newEdgesDataSet = new window.vis.DataSet<InfluenceEdge, 'id'>(
-            rawEdges
-        );
-
-        setNodesDataSet(newNodesDataSet);
-        setEdgesDataSet(newEdgesDataSet);
-        console.log(
-            'HomePage data useEffect: DataSets created and set to state',
-            newNodesDataSet,
-            newEdgesDataSet
-        );
-
-        const tempStyles = new Map<string, VisNodeStyle>();
-        newNodesDataSet.forEach((node: LanguageNode) => {
-            // Iterate over the newly created DataSet
-            const groupSettings = graphOptionsBase.groups?.[node.group];
-            let bg =
-                (graphOptionsBase.nodes?.color as Color)?.background ||
-                'rgba(55, 55, 55, 0.9)';
-            let bd =
-                (graphOptionsBase.nodes?.color as Color)?.border || '#777777';
-            let fontColor =
-                (graphOptionsBase.nodes?.font as Font)?.color ||
-                theme.colors.text;
-
+        // This effect now ONLY depends on isVisScriptLoaded.
+        // It will attempt to initialize DataSets once the script is loaded.
+        if (isVisScriptLoaded) {
+            // CRITICAL CHECK: Ensure window.vis and its properties are truly available NOW
             if (
-                groupSettings?.color &&
-                typeof groupSettings.color === 'object'
+                typeof window.vis === 'undefined' ||
+                !window.vis.DataSet ||
+                !window.vis.Network
             ) {
-                const grpColor = groupSettings.color as {
-                    background?: string;
-                    border?: string;
-                };
-                bg = grpColor.background || bg;
-                bd = grpColor.border || bd;
+                console.warn(
+                    'Data initialization useEffect: window.vis or its properties (DataSet/Network) are still UNDEFINED even though isVisScriptLoaded is true. This might indicate a timing issue with the UMD script or a load error not caught by onError.'
+                );
+                // Optionally, you could implement a retry mechanism here with a short timeout,
+                // or set an error state to inform the user. For now, we just log and return.
+                return;
             }
-            tempStyles.set(node.id as string, {
-                color: { background: bg, border: bd },
-                font: { color: fontColor },
-                borderWidth: graphOptionsBase.nodes?.borderWidth || 0.8,
-                label: node.labelOriginal,
-            });
-        });
-        allNodesOriginalStylesRef.current = tempStyles;
-        console.log('HomePage data useEffect: Original styles stored');
 
-        setIsLoading(false);
-        console.log('HomePage data useEffect: setIsLoading(false) called');
-    }, [isVisLoaded]);
+            console.log(
+                'Data initialization useEffect: vis script IS loaded and window.vis.DataSet IS available. Processing data...'
+            );
+
+            const processedNodes: LanguageNode[] = rawNodes.map((node) => {
+                const originalLabel = node.label;
+                const langRankings = languageRankingsData[originalLabel];
+                const goodAtCategories: string[] = [];
+                const badAtCategories: string[] = [];
+                const goodTagsDisplay: string[] = [];
+                const badTagsDisplay: string[] = [];
+
+                if (langRankings) {
+                    categoriesOrder.forEach((cat) => {
+                        if (langRankings[cat] === undefined) return;
+                        if (langRankings[cat] >= 4) {
+                            goodAtCategories.push(cat);
+                            goodTagsDisplay.push(
+                                categoryShortToFullName[cat] || cat
+                            );
+                        }
+                        if (langRankings[cat] <= 2) {
+                            badAtCategories.push(cat);
+                            badTagsDisplay.push(
+                                categoryShortToFullName[cat] || cat
+                            );
+                        }
+                    });
+                }
+                return {
+                    ...node,
+                    id: node.id as IdType,
+                    labelOriginal: originalLabel,
+                    goodAtCategories,
+                    badAtCategories,
+                    goodTagsDisplay,
+                    badTagsDisplay,
+                };
+            });
+
+            const newNodesDataSet = new window.vis.DataSet<LanguageNode, 'id'>(
+                processedNodes
+            );
+            const newEdgesDataSet = new window.vis.DataSet<InfluenceEdge, 'id'>(
+                rawEdges
+            );
+
+            setNodesDataSet(newNodesDataSet);
+            setEdgesDataSet(newEdgesDataSet);
+            console.log(
+                'Data initialization useEffect: DataSets created and set to state'
+            );
+
+            const tempStyles = new Map<string, VisNodeStyle>();
+            newNodesDataSet.forEach((node: LanguageNode) => {
+                const groupSettings = graphOptionsBase.groups?.[node.group];
+                let bg =
+                    (graphOptionsBase.nodes?.color as Color)?.background ||
+                    'rgba(55, 55, 55, 0.9)';
+                let bd =
+                    (graphOptionsBase.nodes?.color as Color)?.border ||
+                    '#777777';
+                let fontColor =
+                    (graphOptionsBase.nodes?.font as Font)?.color ||
+                    theme.colors.text;
+
+                if (
+                    groupSettings?.color &&
+                    typeof groupSettings.color === 'object'
+                ) {
+                    const grpColor = groupSettings.color as {
+                        background?: string;
+                        border?: string;
+                    };
+                    bg = grpColor.background || bg;
+                    bd = grpColor.border || bd;
+                }
+                tempStyles.set(node.id as string, {
+                    color: { background: bg, border: bd },
+                    font: { color: fontColor },
+                    borderWidth: graphOptionsBase.nodes?.borderWidth || 0.8,
+                    label: node.labelOriginal,
+                });
+            });
+            allNodesOriginalStylesRef.current = tempStyles;
+            console.log(
+                'Data initialization useEffect: Original styles stored'
+            );
+            setAreDataSetsInitialized(true);
+            console.log(
+                'Data initialization useEffect: setAreDataSetsInitialized(true)'
+            );
+        } else {
+            console.log(
+                'Data initialization useEffect: isVisScriptLoaded is false. Waiting...'
+            );
+        }
+    }, [isVisScriptLoaded]); // Only re-run when the script loaded state changes.
 
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
@@ -343,8 +356,7 @@ const HomePage: React.FC = () => {
     }, []);
 
     const handleStabilizationDone = useCallback(() => {
-        // console.log("HomePage: stabilizationIterationsDone from GraphComponent");
-        // setIsLoading(false); // This might be redundant if isLoading is primarily for data prep
+        // console.log("Stabilization done");
     }, []);
 
     const setNetwork = useCallback((network: any | null) => {
@@ -356,7 +368,8 @@ const HomePage: React.FC = () => {
             if (
                 !nodesDataSet ||
                 !allNodesOriginalStylesRef.current ||
-                !isVisLoaded
+                !isVisScriptLoaded ||
+                !areDataSetsInitialized
             )
                 return;
 
@@ -410,11 +423,16 @@ const HomePage: React.FC = () => {
                 nodesDataSet.update(updates);
             }
         },
-        [isVisLoaded, nodesDataSet]
+        [isVisScriptLoaded, areDataSetsInitialized, nodesDataSet]
     );
 
     const resetNodeHighlights = useCallback(() => {
-        if (!nodesDataSet || !allNodesOriginalStylesRef.current || !isVisLoaded)
+        if (
+            !nodesDataSet ||
+            !allNodesOriginalStylesRef.current ||
+            !isVisScriptLoaded ||
+            !areDataSetsInitialized
+        )
             return;
         setActiveHighlightType(null);
 
@@ -434,7 +452,7 @@ const HomePage: React.FC = () => {
         if (updates.length > 0) {
             nodesDataSet.update(updates);
         }
-    }, [isVisLoaded, nodesDataSet]);
+    }, [isVisScriptLoaded, areDataSetsInitialized, nodesDataSet]);
 
     const handleHighlightGood = () => {
         if (activeHighlightType === 'good' && selectedHighlightCategory) {
@@ -486,15 +504,17 @@ const HomePage: React.FC = () => {
                 }
             }
         };
-        if (isVisLoaded) {
+        if (isVisScriptLoaded) {
             document.addEventListener('click', handleClickOutside, true);
         }
         return () => {
-            if (isVisLoaded) {
+            if (isVisScriptLoaded) {
                 document.removeEventListener('click', handleClickOutside, true);
             }
         };
-    }, [selectedNodeId, handleCloseSidebar, isVisLoaded]);
+    }, [selectedNodeId, handleCloseSidebar, isVisScriptLoaded]);
+
+    const showLoadingIndicator = !isVisScriptLoaded || !areDataSetsInitialized;
 
     return (
         <>
@@ -511,14 +531,13 @@ const HomePage: React.FC = () => {
             </Head>
             <Script
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-                strategy="beforeInteractive" // Changed strategy
+                strategy="beforeInteractive" // Could also be "afterInteractive"
                 onLoad={() => {
                     console.log(
                         'vis-network SCRIPT onLoad: Fired. typeof window.vis:',
-                        typeof window.vis,
-                        'window.vis:',
-                        window.vis
+                        typeof window.vis
                     );
+                    // Check if vis and its necessary components are truly available
                     if (
                         typeof window.vis !== 'undefined' &&
                         window.vis.DataSet &&
@@ -527,18 +546,33 @@ const HomePage: React.FC = () => {
                         console.log(
                             'vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE defined.'
                         );
-                        setIsVisLoaded(true);
+                        setIsVisScriptLoaded(true);
                     } else {
                         console.error(
-                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are UNDEFINED.',
+                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are UNDEFINED immediately after script load. This is unexpected.',
                             window.vis
                         );
-                        // Potentially set an error state here to inform the user
+                        // Attempt a very short delay to see if it helps with UMD initialization races
+                        setTimeout(() => {
+                            if (
+                                typeof window.vis !== 'undefined' &&
+                                window.vis.DataSet &&
+                                window.vis.Network
+                            ) {
+                                console.log(
+                                    'vis-network SCRIPT onLoad (after short delay): window.vis.DataSet and window.vis.Network ARE defined.'
+                                );
+                                setIsVisScriptLoaded(true);
+                            } else {
+                                console.error(
+                                    'vis-network SCRIPT onLoad (after short delay): window.vis or its properties still UNDEFINED.'
+                                );
+                            }
+                        }, 100); // 100ms delay
                     }
                 }}
                 onError={(e) => {
                     console.error('Error loading vis-network script:', e);
-                    // Potentially set an error state here
                 }}
             />
             <PageContainer>
@@ -555,11 +589,11 @@ const HomePage: React.FC = () => {
                     activeHighlightType={activeHighlightType || undefined}
                 />
                 <MainContent>
-                    {(isLoading || !isVisLoaded) && <LoadingIndicator />}
-                    {isVisLoaded &&
+                    {showLoadingIndicator && <LoadingIndicator />}
+                    {isVisScriptLoaded &&
+                        areDataSetsInitialized &&
                         nodesDataSet &&
-                        edgesDataSet &&
-                        !isLoading && (
+                        edgesDataSet && (
                             <GraphComponentWithNoSSR
                                 nodesData={nodesDataSet}
                                 edgesData={edgesDataSet}
@@ -569,7 +603,7 @@ const HomePage: React.FC = () => {
                                 setNetworkInstance={setNetwork}
                             />
                         )}
-                    {isVisLoaded && (
+                    {isVisScriptLoaded && areDataSetsInitialized && (
                         <Sidebar
                             selectedNode={selectedNodeDetails}
                             nodesDataSet={nodesDataSet}
