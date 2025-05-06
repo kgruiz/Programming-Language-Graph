@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
+import Script from 'next/script'; // Import next/script
 import styled from '@emotion/styled';
-// Revert DataSet and Network to /standalone, keep Options and other types from the main entry
-import {
-    DataSet,
-    Network,
+
+// Types will be used, but constructors (DataSet, Network) will come from window.vis
+import type {
     Options,
     NodeOptions,
     EdgeOptions,
     Color,
     Font,
     IdType,
-} from 'vis-network/standalone';
+} from '@/types'; // Use re-exported types
 
 import Controls from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
@@ -35,9 +35,13 @@ import {
     VisDataSetNodes,
     VisDataSetEdges,
     CategoryShortToFullName as CategoryShortToFullNameType,
-    InfluenceEdge, // Added back InfluenceEdge for DataSet<InfluenceEdge>
+    InfluenceEdge,
 } from '@/types';
 import theme from '@/styles/theme';
+
+// Forward declaration for window.vis to satisfy TypeScript before script loads
+// This is slightly redundant with types/index.ts but helps local context.
+declare const vis: any;
 
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
     ssr: false,
@@ -209,6 +213,7 @@ if (graphOptionsBase.groups) {
 }
 
 const HomePage: React.FC = () => {
+    const [isVisLoaded, setIsVisLoaded] = useState(false); // New state for vis script loading
     const [isLoading, setIsLoading] = useState(true);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [selectedHighlightCategory, setSelectedHighlightCategory] =
@@ -220,9 +225,14 @@ const HomePage: React.FC = () => {
     const nodesDataSetRef = useRef<VisDataSetNodes | null>(null);
     const edgesDataSetRef = useRef<VisDataSetEdges | null>(null);
     const allNodesOriginalStylesRef = useRef<AllNodesOriginalStyles>(new Map());
-    const networkInstanceRef = useRef<Network | null>(null);
+    const networkInstanceRef = useRef<any | null>(null); // Type as any or vis.Network after load
 
+    // Effect to initialize DataSets once vis is loaded
     useEffect(() => {
+        if (!isVisLoaded || typeof window.vis === 'undefined') {
+            return; // Don't proceed if vis is not loaded
+        }
+
         const processedNodes: LanguageNode[] = rawNodes.map((node) => {
             const originalLabel = node.label;
             const langRankings = languageRankingsData[originalLabel];
@@ -259,10 +269,12 @@ const HomePage: React.FC = () => {
             };
         });
 
-        nodesDataSetRef.current = new DataSet<LanguageNode, 'id'>(
+        nodesDataSetRef.current = new window.vis.DataSet<LanguageNode, 'id'>(
             processedNodes
         );
-        edgesDataSetRef.current = new DataSet<InfluenceEdge, 'id'>(rawEdges);
+        edgesDataSetRef.current = new window.vis.DataSet<InfluenceEdge, 'id'>(
+            rawEdges
+        );
 
         const tempStyles = new Map<string, VisNodeStyle>();
         nodesDataSetRef.current.forEach((node: LanguageNode) => {
@@ -296,9 +308,9 @@ const HomePage: React.FC = () => {
         });
         allNodesOriginalStylesRef.current = tempStyles;
 
-        const timer = setTimeout(() => setIsLoading(false), 1500);
-        return () => clearTimeout(timer);
-    }, []);
+        // Data is ready, GraphComponent will handle its own loading/stabilization
+        setIsLoading(false);
+    }, [isVisLoaded]); // Re-run when isVisLoaded changes
 
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
@@ -309,16 +321,23 @@ const HomePage: React.FC = () => {
     }, []);
 
     const handleStabilizationDone = useCallback(() => {
-        setIsLoading(false);
+        // This might not be strictly necessary if loading is tied to vis script load
+        // and initial data processing.
+        // setIsLoading(false);
     }, []);
 
-    const setNetwork = useCallback((network: Network | null) => {
+    const setNetwork = useCallback((network: any | null) => {
+        // network will be window.vis.Network instance
         networkInstanceRef.current = network;
     }, []);
 
     const highlightNodes = useCallback(
         (category: string, type: 'good' | 'bad') => {
-            if (!nodesDataSetRef.current || !allNodesOriginalStylesRef.current)
+            if (
+                !nodesDataSetRef.current ||
+                !allNodesOriginalStylesRef.current ||
+                !isVisLoaded
+            )
                 return;
 
             const updates: Partial<LanguageNode>[] = [];
@@ -372,11 +391,15 @@ const HomePage: React.FC = () => {
                 nodesDataSetRef.current.update(updates);
             }
         },
-        []
+        [isVisLoaded]
     );
 
     const resetNodeHighlights = useCallback(() => {
-        if (!nodesDataSetRef.current || !allNodesOriginalStylesRef.current)
+        if (
+            !nodesDataSetRef.current ||
+            !allNodesOriginalStylesRef.current ||
+            !isVisLoaded
+        )
             return;
         setActiveHighlightType(null);
 
@@ -396,7 +419,7 @@ const HomePage: React.FC = () => {
         if (updates.length > 0) {
             nodesDataSetRef.current.update(updates);
         }
-    }, []);
+    }, [isVisLoaded]);
 
     const handleHighlightGood = () => {
         if (activeHighlightType === 'good' && selectedHighlightCategory) {
@@ -416,15 +439,17 @@ const HomePage: React.FC = () => {
         }
     };
 
-    const selectedNodeDetails = selectedNodeId
-        ? (nodesDataSetRef.current?.get(
-              selectedNodeId as IdType
-          ) as LanguageNode)
-        : null;
+    const selectedNodeDetails =
+        selectedNodeId && nodesDataSetRef.current
+            ? (nodesDataSetRef.current?.get(
+                  selectedNodeId as IdType
+              ) as LanguageNode)
+            : null;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (selectedNodeId) {
+            if (selectedNodeId && networkInstanceRef.current) {
+                // Check networkInstanceRef
                 const sidebarElement =
                     document.getElementById('details-sidebar');
                 const graphElement = document.querySelector(
@@ -436,7 +461,6 @@ const HomePage: React.FC = () => {
                     !sidebarElement.contains(event.target as Node) &&
                     graphElement &&
                     graphElement.contains(event.target as Node) &&
-                    networkInstanceRef.current &&
                     typeof networkInstanceRef.current.getNodeAt ===
                         'function' &&
                     !networkInstanceRef.current.getNodeAt(
@@ -450,11 +474,16 @@ const HomePage: React.FC = () => {
                 }
             }
         };
-        document.addEventListener('click', handleClickOutside, true);
+        if (isVisLoaded) {
+            // Add listener only after vis is loaded
+            document.addEventListener('click', handleClickOutside, true);
+        }
         return () => {
-            document.removeEventListener('click', handleClickOutside, true);
+            if (isVisLoaded) {
+                document.removeEventListener('click', handleClickOutside, true);
+            }
         };
-    }, [selectedNodeId, handleCloseSidebar]);
+    }, [selectedNodeId, handleCloseSidebar, isVisLoaded]);
 
     return (
         <>
@@ -469,6 +498,17 @@ const HomePage: React.FC = () => {
                     content="width=device-width, initial-scale=1.0"
                 />
             </Head>
+            <Script
+                src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+                strategy="lazyOnload" // Load after page is interactive
+                onLoad={() => {
+                    setIsVisLoaded(true);
+                    console.log('vis-network script loaded.');
+                }}
+                onError={(e) => {
+                    console.error('Error loading vis-network script:', e);
+                }}
+            />
             <PageContainer>
                 <Controls
                     categories={categoriesOrder}
@@ -483,29 +523,35 @@ const HomePage: React.FC = () => {
                     activeHighlightType={activeHighlightType || undefined}
                 />
                 <MainContent>
-                    {isLoading && <LoadingIndicator />}
-                    <GraphComponentWithNoSSR
-                        nodesData={nodesDataSetRef.current}
-                        edgesData={edgesDataSetRef.current}
-                        options={graphOptionsBase as Options}
-                        onNodeClick={handleNodeClick}
-                        onStabilizationDone={handleStabilizationDone}
-                        setNetworkInstance={setNetwork}
-                    />
-                    <Sidebar
-                        selectedNode={selectedNodeDetails}
-                        nodesDataSet={nodesDataSetRef.current}
-                        edgesDataSet={edgesDataSetRef.current}
-                        syntaxData={syntaxData}
-                        languageRankingsData={languageRankingsData}
-                        rankLegend={rankLegend}
-                        categoryMap={
-                            categoryShortToFullName as CategoryShortToFullNameType
-                        }
-                        categoriesOrder={categoriesOrder}
-                        onClose={handleCloseSidebar}
-                        isVisible={!!selectedNodeId}
-                    />
+                    {(isLoading || !isVisLoaded) && <LoadingIndicator />}
+                    {isVisLoaded &&
+                        nodesDataSetRef.current &&
+                        edgesDataSetRef.current && (
+                            <GraphComponentWithNoSSR
+                                nodesData={nodesDataSetRef.current}
+                                edgesData={edgesDataSetRef.current}
+                                options={graphOptionsBase as Options}
+                                onNodeClick={handleNodeClick}
+                                onStabilizationDone={handleStabilizationDone}
+                                setNetworkInstance={setNetwork}
+                            />
+                        )}
+                    {isVisLoaded && (
+                        <Sidebar
+                            selectedNode={selectedNodeDetails}
+                            nodesDataSet={nodesDataSetRef.current}
+                            edgesDataSet={edgesDataSetRef.current}
+                            syntaxData={syntaxData}
+                            languageRankingsData={languageRankingsData}
+                            rankLegend={rankLegend}
+                            categoryMap={
+                                categoryShortToFullName as CategoryShortToFullNameType
+                            }
+                            categoriesOrder={categoriesOrder}
+                            onClose={handleCloseSidebar}
+                            isVisible={!!selectedNodeId}
+                        />
+                    )}
                 </MainContent>
             </PageContainer>
         </>

@@ -1,13 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-// Ensure DataSet, Network, Options are from standalone for consistency with other files
-import { Network, Options, DataSet } from 'vis-network/standalone';
+// Types will be used, but constructors will come from window.vis
+import type { Options } from '@/types'; // Use re-exported Options type
 import styled from '@emotion/styled';
 import {
     VisDataSetNodes,
     VisDataSetEdges,
-    LanguageNode, // Import for clarity if needed, though VisDataSetNodes implies it
-    InfluenceEdge, // Import for clarity
+    LanguageNode,
+    InfluenceEdge,
 } from '@/types';
+
+// Forward declaration for window.vis
+declare const vis: any;
 
 interface GraphProps {
     nodesData: VisDataSetNodes | null;
@@ -15,7 +18,7 @@ interface GraphProps {
     options: Options;
     onNodeClick: (nodeId: string | null) => void;
     onStabilizationDone: () => void;
-    setNetworkInstance: (network: Network | null) => void;
+    setNetworkInstance: (network: any | null) => void; // network will be window.vis.Network
 }
 
 const GraphContainerDiv = styled.div`
@@ -41,28 +44,31 @@ const GraphComponent: React.FC<GraphProps> = ({
     setNetworkInstance,
 }) => {
     const graphRef = useRef<HTMLDivElement>(null);
-    const networkRef = useRef<Network | null>(null);
+    const networkRef = useRef<any | null>(null); // Type as any or window.vis.Network
 
     useEffect(() => {
-        // After this check, nodesData and edgesData are guaranteed to be
-        // DataSet<LanguageNode, 'id'> and DataSet<InfluenceEdge, 'id'> respectively.
+        if (
+            typeof window.vis === 'undefined' ||
+            !window.vis.Network ||
+            !window.vis.DataSet
+        ) {
+            // vis-network not loaded yet, or not fully.
+            return;
+        }
+
         if (graphRef.current && nodesData && edgesData) {
             if (networkRef.current) {
                 networkRef.current.destroy();
             }
 
-            // Directly use nodesData and edgesData as they are already DataSet instances.
-            // The types VisDataSetNodes (DataSet<LanguageNode, 'id'>) and
-            // VisDataSetEdges (DataSet<InfluenceEdge, 'id'>) should be compatible
-            // with what the Network constructor expects, given LanguageNode extends Node
-            // and InfluenceEdge extends Edge from vis-network.
-            const network = new Network(
+            const network = new window.vis.Network(
                 graphRef.current,
-                { nodes: nodesData, edges: edgesData }, // Pass them directly
+                { nodes: nodesData, edges: edgesData },
                 options
             );
 
-            network.on('click', (params) => {
+            network.on('click', (params: any) => {
+                // params type can be more specific if needed
                 if (params.nodes.length > 0) {
                     onNodeClick(params.nodes[0] as string);
                 } else {
@@ -86,6 +92,7 @@ const GraphComponent: React.FC<GraphProps> = ({
             };
         }
     }, [
+        // Add nodesData and edgesData to dependency array to re-init if they change
         nodesData,
         edgesData,
         options,

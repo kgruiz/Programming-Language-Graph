@@ -1,5 +1,17 @@
-// Revert DataSet, IdType, Node, Edge to /standalone
-import { DataSet, IdType, Node, Edge } from 'vis-network/standalone';
+// Import types from the main 'vis-network' entry for type checking,
+// but runtime objects will come from window.vis
+import {
+    DataSet as VisDataSetConstructor, // Alias to avoid conflict if window.vis.DataSet is typed
+    Network as VisNetworkConstructor, // Alias
+    IdType,
+    Node,
+    Edge,
+    Options,
+    NodeOptions,
+    EdgeOptions,
+    Color,
+    Font,
+} from 'vis-network';
 
 export interface LanguageNode extends Node {
     id: IdType;
@@ -46,5 +58,25 @@ export interface VisNodeStyle {
 
 export type AllNodesOriginalStyles = Map<string, VisNodeStyle>;
 
-export type VisDataSetNodes = DataSet<LanguageNode, 'id'>;
-export type VisDataSetEdges = DataSet<InfluenceEdge, 'id'>;
+// These types now refer to the constructor types from vis-network for type safety
+// The actual instances will be created via window.vis.DataSet
+export type VisDataSetNodes = InstanceType<
+    typeof VisDataSetConstructor<LanguageNode, 'id'>
+>;
+export type VisDataSetEdges = InstanceType<
+    typeof VisDataSetConstructor<InfluenceEdge, 'id'>
+>;
+
+// Extend the global Window interface
+declare global {
+    interface Window {
+        vis: {
+            DataSet: typeof VisDataSetConstructor;
+            Network: typeof VisNetworkConstructor;
+            // Add other vis objects if needed, e.g., util
+        };
+    }
+}
+
+// Re-export Options and other specific types if they are used directly elsewhere
+export type { Options, NodeOptions, EdgeOptions, Color, Font, IdType };
