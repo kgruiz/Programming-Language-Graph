@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
-import Script from 'next/script'; // Import next/script
+import Script from 'next/script';
 import styled from '@emotion/styled';
 
-// Types will be used, but constructors (DataSet, Network) will come from window.vis
 import type {
     Options,
     NodeOptions,
@@ -12,7 +11,7 @@ import type {
     Color,
     Font,
     IdType,
-} from '@/types'; // Use re-exported types
+} from '@/types';
 
 import Controls from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
@@ -39,8 +38,6 @@ import {
 } from '@/types';
 import theme from '@/styles/theme';
 
-// Forward declaration for window.vis to satisfy TypeScript before script loads
-// This is slightly redundant with types/index.ts but helps local context.
 declare const vis: any;
 
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
@@ -213,8 +210,8 @@ if (graphOptionsBase.groups) {
 }
 
 const HomePage: React.FC = () => {
-    const [isVisLoaded, setIsVisLoaded] = useState(false); // New state for vis script loading
-    const [isLoading, setIsLoading] = useState(true);
+    const [isVisLoaded, setIsVisLoaded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true); // Still useful for data processing phase
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [selectedHighlightCategory, setSelectedHighlightCategory] =
         useState<string>(categoriesOrder[0]);
@@ -222,16 +219,31 @@ const HomePage: React.FC = () => {
         'good' | 'bad' | null
     >(null);
 
-    const nodesDataSetRef = useRef<VisDataSetNodes | null>(null);
-    const edgesDataSetRef = useRef<VisDataSetEdges | null>(null);
-    const allNodesOriginalStylesRef = useRef<AllNodesOriginalStyles>(new Map());
-    const networkInstanceRef = useRef<any | null>(null); // Type as any or vis.Network after load
+    // Use state for DataSets to trigger re-renders when they are ready
+    const [nodesDataSet, setNodesDataSet] = useState<VisDataSetNodes | null>(
+        null
+    );
+    const [edgesDataSet, setEdgesDataSet] = useState<VisDataSetEdges | null>(
+        null
+    );
 
-    // Effect to initialize DataSets once vis is loaded
+    const allNodesOriginalStylesRef = useRef<AllNodesOriginalStyles>(new Map());
+    const networkInstanceRef = useRef<any | null>(null);
+
     useEffect(() => {
-        if (!isVisLoaded || typeof window.vis === 'undefined') {
-            return; // Don't proceed if vis is not loaded
+        if (
+            !isVisLoaded ||
+            typeof window.vis === 'undefined' ||
+            !window.vis.DataSet
+        ) {
+            console.log(
+                'HomePage data useEffect: vis script not fully loaded or DataSet unavailable.'
+            );
+            return;
         }
+        console.log(
+            'HomePage data useEffect: vis IS ready, processing data...'
+        );
 
         const processedNodes: LanguageNode[] = rawNodes.map((node) => {
             const originalLabel = node.label;
@@ -269,15 +281,24 @@ const HomePage: React.FC = () => {
             };
         });
 
-        nodesDataSetRef.current = new window.vis.DataSet<LanguageNode, 'id'>(
+        const newNodesDataSet = new window.vis.DataSet<LanguageNode, 'id'>(
             processedNodes
         );
-        edgesDataSetRef.current = new window.vis.DataSet<InfluenceEdge, 'id'>(
+        const newEdgesDataSet = new window.vis.DataSet<InfluenceEdge, 'id'>(
             rawEdges
         );
 
+        setNodesDataSet(newNodesDataSet);
+        setEdgesDataSet(newEdgesDataSet);
+        console.log(
+            'HomePage data useEffect: DataSets created and set to state',
+            newNodesDataSet,
+            newEdgesDataSet
+        );
+
         const tempStyles = new Map<string, VisNodeStyle>();
-        nodesDataSetRef.current.forEach((node: LanguageNode) => {
+        newNodesDataSet.forEach((node: LanguageNode) => {
+            // Iterate over the newly created DataSet
             const groupSettings = graphOptionsBase.groups?.[node.group];
             let bg =
                 (graphOptionsBase.nodes?.color as Color)?.background ||
@@ -307,10 +328,11 @@ const HomePage: React.FC = () => {
             });
         });
         allNodesOriginalStylesRef.current = tempStyles;
+        console.log('HomePage data useEffect: Original styles stored');
 
-        // Data is ready, GraphComponent will handle its own loading/stabilization
         setIsLoading(false);
-    }, [isVisLoaded]); // Re-run when isVisLoaded changes
+        console.log('HomePage data useEffect: setIsLoading(false) called');
+    }, [isVisLoaded]);
 
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
@@ -321,33 +343,30 @@ const HomePage: React.FC = () => {
     }, []);
 
     const handleStabilizationDone = useCallback(() => {
-        // This might not be strictly necessary if loading is tied to vis script load
-        // and initial data processing.
-        // setIsLoading(false);
+        // console.log("HomePage: stabilizationIterationsDone from GraphComponent");
+        // setIsLoading(false); // This might be redundant if isLoading is primarily for data prep
     }, []);
 
     const setNetwork = useCallback((network: any | null) => {
-        // network will be window.vis.Network instance
         networkInstanceRef.current = network;
     }, []);
 
     const highlightNodes = useCallback(
         (category: string, type: 'good' | 'bad') => {
             if (
-                !nodesDataSetRef.current ||
+                !nodesDataSet ||
                 !allNodesOriginalStylesRef.current ||
                 !isVisLoaded
             )
                 return;
 
             const updates: Partial<LanguageNode>[] = [];
-            nodesDataSetRef.current.getIds().forEach((nodeIdUntyped) => {
+            nodesDataSet.getIds().forEach((nodeIdUntyped) => {
                 const nodeId = nodeIdUntyped as string;
-                const node = nodesDataSetRef.current!.get(
-                    nodeId as IdType
-                ) as LanguageNode;
+                const node = nodesDataSet.get(nodeId as IdType) as LanguageNode;
                 const originalStyle =
                     allNodesOriginalStylesRef.current.get(nodeId);
+
                 if (!node || !originalStyle) return;
 
                 const langRankings = languageRankingsData[node.labelOriginal];
@@ -388,23 +407,19 @@ const HomePage: React.FC = () => {
                 updates.push(newStyle);
             });
             if (updates.length > 0) {
-                nodesDataSetRef.current.update(updates);
+                nodesDataSet.update(updates);
             }
         },
-        [isVisLoaded]
+        [isVisLoaded, nodesDataSet]
     );
 
     const resetNodeHighlights = useCallback(() => {
-        if (
-            !nodesDataSetRef.current ||
-            !allNodesOriginalStylesRef.current ||
-            !isVisLoaded
-        )
+        if (!nodesDataSet || !allNodesOriginalStylesRef.current || !isVisLoaded)
             return;
         setActiveHighlightType(null);
 
         const updates: Partial<LanguageNode>[] = [];
-        nodesDataSetRef.current.getIds().forEach((nodeIdUntyped) => {
+        nodesDataSet.getIds().forEach((nodeIdUntyped) => {
             const nodeId = nodeIdUntyped as string;
             const originalStyle = allNodesOriginalStylesRef.current.get(nodeId);
             if (originalStyle) {
@@ -417,9 +432,9 @@ const HomePage: React.FC = () => {
             }
         });
         if (updates.length > 0) {
-            nodesDataSetRef.current.update(updates);
+            nodesDataSet.update(updates);
         }
-    }, [isVisLoaded]);
+    }, [isVisLoaded, nodesDataSet]);
 
     const handleHighlightGood = () => {
         if (activeHighlightType === 'good' && selectedHighlightCategory) {
@@ -440,16 +455,13 @@ const HomePage: React.FC = () => {
     };
 
     const selectedNodeDetails =
-        selectedNodeId && nodesDataSetRef.current
-            ? (nodesDataSetRef.current?.get(
-                  selectedNodeId as IdType
-              ) as LanguageNode)
+        selectedNodeId && nodesDataSet
+            ? (nodesDataSet.get(selectedNodeId as IdType) as LanguageNode)
             : null;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (selectedNodeId && networkInstanceRef.current) {
-                // Check networkInstanceRef
                 const sidebarElement =
                     document.getElementById('details-sidebar');
                 const graphElement = document.querySelector(
@@ -475,7 +487,6 @@ const HomePage: React.FC = () => {
             }
         };
         if (isVisLoaded) {
-            // Add listener only after vis is loaded
             document.addEventListener('click', handleClickOutside, true);
         }
         return () => {
@@ -500,13 +511,34 @@ const HomePage: React.FC = () => {
             </Head>
             <Script
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-                strategy="lazyOnload" // Load after page is interactive
+                strategy="beforeInteractive" // Changed strategy
                 onLoad={() => {
-                    setIsVisLoaded(true);
-                    console.log('vis-network script loaded.');
+                    console.log(
+                        'vis-network SCRIPT onLoad: Fired. typeof window.vis:',
+                        typeof window.vis,
+                        'window.vis:',
+                        window.vis
+                    );
+                    if (
+                        typeof window.vis !== 'undefined' &&
+                        window.vis.DataSet &&
+                        window.vis.Network
+                    ) {
+                        console.log(
+                            'vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE defined.'
+                        );
+                        setIsVisLoaded(true);
+                    } else {
+                        console.error(
+                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are UNDEFINED.',
+                            window.vis
+                        );
+                        // Potentially set an error state here to inform the user
+                    }
                 }}
                 onError={(e) => {
                     console.error('Error loading vis-network script:', e);
+                    // Potentially set an error state here
                 }}
             />
             <PageContainer>
@@ -525,11 +557,12 @@ const HomePage: React.FC = () => {
                 <MainContent>
                     {(isLoading || !isVisLoaded) && <LoadingIndicator />}
                     {isVisLoaded &&
-                        nodesDataSetRef.current &&
-                        edgesDataSetRef.current && (
+                        nodesDataSet &&
+                        edgesDataSet &&
+                        !isLoading && (
                             <GraphComponentWithNoSSR
-                                nodesData={nodesDataSetRef.current}
-                                edgesData={edgesDataSetRef.current}
+                                nodesData={nodesDataSet}
+                                edgesData={edgesDataSet}
                                 options={graphOptionsBase as Options}
                                 onNodeClick={handleNodeClick}
                                 onStabilizationDone={handleStabilizationDone}
@@ -539,8 +572,8 @@ const HomePage: React.FC = () => {
                     {isVisLoaded && (
                         <Sidebar
                             selectedNode={selectedNodeDetails}
-                            nodesDataSet={nodesDataSetRef.current}
-                            edgesDataSet={edgesDataSetRef.current}
+                            nodesDataSet={nodesDataSet}
+                            edgesDataSet={edgesDataSet}
                             syntaxData={syntaxData}
                             languageRankingsData={languageRankingsData}
                             rankLegend={rankLegend}
