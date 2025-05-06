@@ -231,20 +231,15 @@ const HomePage: React.FC = () => {
     const networkInstanceRef = useRef<any | null>(null);
 
     useEffect(() => {
-        // This effect now ONLY depends on isVisScriptLoaded.
-        // It will attempt to initialize DataSets once the script is loaded.
         if (isVisScriptLoaded) {
-            // CRITICAL CHECK: Ensure window.vis and its properties are truly available NOW
             if (
                 typeof window.vis === 'undefined' ||
                 !window.vis.DataSet ||
                 !window.vis.Network
             ) {
                 console.warn(
-                    'Data initialization useEffect: window.vis or its properties (DataSet/Network) are still UNDEFINED even though isVisScriptLoaded is true. This might indicate a timing issue with the UMD script or a load error not caught by onError.'
+                    'Data initialization useEffect: window.vis or its properties (DataSet/Network) are still UNDEFINED even though isVisScriptLoaded is true. Retrying initialization may be needed if script load had issues.'
                 );
-                // Optionally, you could implement a retry mechanism here with a short timeout,
-                // or set an error state to inform the user. For now, we just log and return.
                 return;
             }
 
@@ -345,7 +340,7 @@ const HomePage: React.FC = () => {
                 'Data initialization useEffect: isVisScriptLoaded is false. Waiting...'
             );
         }
-    }, [isVisScriptLoaded]); // Only re-run when the script loaded state changes.
+    }, [isVisScriptLoaded]);
 
     const handleNodeClick = useCallback((nodeId: string | null) => {
         setSelectedNodeId(nodeId);
@@ -531,48 +526,35 @@ const HomePage: React.FC = () => {
             </Head>
             <Script
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
-                strategy="beforeInteractive" // Could also be "afterInteractive"
+                strategy="afterInteractive" // Changed strategy to afterInteractive
                 onLoad={() => {
-                    console.log(
-                        'vis-network SCRIPT onLoad: Fired. typeof window.vis:',
-                        typeof window.vis
-                    );
-                    // Check if vis and its necessary components are truly available
+                    console.log('vis-network SCRIPT onLoad: Fired.');
+                    // More direct check for window.vis
                     if (
-                        typeof window.vis !== 'undefined' &&
-                        window.vis.DataSet &&
-                        window.vis.Network
+                        window.vis &&
+                        typeof window.vis.DataSet === 'function' &&
+                        typeof window.vis.Network === 'function'
                     ) {
                         console.log(
-                            'vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE defined.'
+                            'vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE functions.'
                         );
                         setIsVisScriptLoaded(true);
                     } else {
                         console.error(
-                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are UNDEFINED immediately after script load. This is unexpected.',
-                            window.vis
-                        );
-                        // Attempt a very short delay to see if it helps with UMD initialization races
-                        setTimeout(() => {
-                            if (
-                                typeof window.vis !== 'undefined' &&
-                                window.vis.DataSet &&
-                                window.vis.Network
-                            ) {
-                                console.log(
-                                    'vis-network SCRIPT onLoad (after short delay): window.vis.DataSet and window.vis.Network ARE defined.'
-                                );
-                                setIsVisScriptLoaded(true);
-                            } else {
-                                console.error(
-                                    'vis-network SCRIPT onLoad (after short delay): window.vis or its properties still UNDEFINED.'
-                                );
+                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are NOT functions or undefined.',
+                            {
+                                visExists: typeof window.vis !== 'undefined',
+                                visDataSetType: typeof window.vis?.DataSet,
+                                visNetworkType: typeof window.vis?.Network,
+                                visObject: window.vis, // Log the whole vis object if it exists
                             }
-                        }, 100); // 100ms delay
+                        );
+                        // No timeout here for now, let's see the direct logs first
                     }
                 }}
                 onError={(e) => {
                     console.error('Error loading vis-network script:', e);
+                    // Consider setting a global error state to inform the user
                 }}
             />
             <PageContainer>
