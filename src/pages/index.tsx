@@ -14,7 +14,7 @@ import type {
     ArrowHead,
 } from '@/types';
 
-import Controls from '@/components/Controls';
+import ControlsComponent from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
 import LoadingIndicator from '@/components/LoadingIndicator';
 
@@ -43,7 +43,6 @@ import theme from '@/styles/theme';
 
 declare const vis: any;
 
-// Forward ref if needed for direct DOM access, but usually not for vis.js instance
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
     ssr: false,
 });
@@ -57,6 +56,13 @@ const PageContainer = styled.div`
     background-color: ${(props) => props.theme.colors.backgroundPrimary};
 `;
 
+const ControlsWrapper = styled.div`
+    height: ${(props) => props.theme.spacing.topBarHeight};
+    flex-shrink: 0;
+    position: relative;
+    z-index: 20;
+`;
+
 const MainContent = styled.div`
     display: flex;
     flex-direction: column;
@@ -66,6 +72,7 @@ const MainContent = styled.div`
     overflow: hidden;
 `;
 
+// ... (graphOptionsBase and other constants remain the same) ...
 interface GroupOptionsExtended extends NodeOptions {
     color?:
         | NodeOptions['color']
@@ -83,7 +90,6 @@ interface GraphOptionsExtended extends Options {
     edges?: EdgeOptions;
 }
 
-// Memoize graphOptionsBase to prevent it from causing re-renders if passed as prop
 const graphOptionsBase: GraphOptionsExtended = {
     autoResize: true,
     width: '100%',
@@ -239,7 +245,7 @@ const HomePage: React.FC = () => {
 
     const allNodesOriginalStylesRef = useRef<AllNodesOriginalStyles>(new Map());
     const allEdgesOriginalStylesRef = useRef<AllEdgesOriginalStyles>(new Map());
-    const networkInstanceRef = useRef<any | null>(null); // Keep this to potentially call network methods directly if needed
+    const networkInstanceRef = useRef<any | null>(null);
 
     useEffect(() => {
         if (isVisScriptLoaded) {
@@ -597,25 +603,17 @@ const HomePage: React.FC = () => {
         ]
     );
 
-    // This function is now passed to GraphComponent
     const handleGraphClick = useCallback(
         (
             type: 'node' | 'edge' | 'background',
             id: IdType | null,
             params: any
         ) => {
-            console.log(
-                '>>>> HomePage: handleGraphClick. Type:',
-                type,
-                'ID:',
-                id
-            ); // DEBUG
             if (type === 'node' && id) {
                 setSelectedNodeId(id as string);
                 highlightNodeLineage(id as string);
                 setActiveHighlightType(null);
             } else if (type === 'edge' && id && edgesDataSet && nodesDataSet) {
-                // Add null checks for datasets
                 const clickedEdgeId = id;
                 const edge = edgesDataSet.get(clickedEdgeId) as InfluenceEdge;
                 if (edge) {
@@ -734,6 +732,32 @@ const HomePage: React.FC = () => {
         ]
     );
 
+    // New callback for sidebar navigation
+    const handleNavigateToNodeFromSidebar = useCallback(
+        (nodeId: IdType) => {
+            if (networkInstanceRef.current && nodesDataSet?.get(nodeId)) {
+                setSelectedNodeId(nodeId as string);
+                highlightNodeLineage(nodeId as string);
+                setActiveHighlightType(null);
+
+                // Focus on the node in the graph
+                networkInstanceRef.current.focus(nodeId, {
+                    scale: 1.2, // Zoom in a bit
+                    animation: {
+                        duration: 800, // Animation duration in ms
+                        easingFunction: 'easeInOutQuad',
+                    },
+                });
+            }
+        },
+        [
+            highlightNodeLineage,
+            setSelectedNodeId,
+            setActiveHighlightType,
+            nodesDataSet,
+        ]
+    );
+
     const handleCloseSidebar = useCallback(() => {
         setSelectedNodeId(null);
     }, []);
@@ -782,9 +806,6 @@ const HomePage: React.FC = () => {
             : null;
     const showLoadingIndicator = !isVisScriptLoaded || !areDataSetsInitialized;
 
-    // Remove the useEffect that was directly attaching 'click' listener to networkInstanceRef.current
-    // The click handling is now done via the onGraphClick prop passed to GraphComponent.
-
     return (
         <>
             <Head>
@@ -814,18 +835,20 @@ const HomePage: React.FC = () => {
                 }
             />
             <PageContainer>
-                <Controls
-                    categories={categoriesOrder}
-                    categoryMap={
-                        categoryShortToFullName as CategoryShortToFullNameType
-                    }
-                    selectedCategory={selectedHighlightCategory}
-                    onCategoryChange={setSelectedHighlightCategory}
-                    onHighlightGood={handleHighlightGood}
-                    onHighlightBad={handleHighlightBad}
-                    onResetHighlights={resetAllGraphElementsToOriginalStyle}
-                    activeHighlightType={activeHighlightType || undefined}
-                />
+                <ControlsWrapper>
+                    <ControlsComponent
+                        categories={categoriesOrder}
+                        categoryMap={
+                            categoryShortToFullName as CategoryShortToFullNameType
+                        }
+                        selectedCategory={selectedHighlightCategory}
+                        onCategoryChange={setSelectedHighlightCategory}
+                        onHighlightGood={handleHighlightGood}
+                        onHighlightBad={handleHighlightBad}
+                        onResetHighlights={resetAllGraphElementsToOriginalStyle}
+                        activeHighlightType={activeHighlightType || undefined}
+                    />
+                </ControlsWrapper>
                 <MainContent>
                     {showLoadingIndicator && <LoadingIndicator />}
                     {isVisScriptLoaded &&
@@ -836,7 +859,7 @@ const HomePage: React.FC = () => {
                                 nodesData={nodesDataSet}
                                 edgesData={edgesDataSet}
                                 options={graphOptionsBase as Options}
-                                onGraphClick={handleGraphClick} // Pass the new handler
+                                onGraphClick={handleGraphClick}
                                 onStabilizationDone={handleStabilizationDone}
                                 setNetworkInstance={setNetwork}
                             />
@@ -855,6 +878,7 @@ const HomePage: React.FC = () => {
                             categoriesOrder={categoriesOrder}
                             onClose={handleCloseSidebar}
                             isVisible={!!selectedNodeId}
+                            onNavigateToNode={handleNavigateToNodeFromSidebar} // Pass the new handler
                         />
                     )}
                 </MainContent>

@@ -9,9 +9,11 @@ import {
     CategoryShortToFullName as CategoryShortToFullNameType,
     VisDataSetNodes,
     VisDataSetEdges,
+    IdType, // Import IdType
 } from '@/types';
 import theme from '@/styles/theme';
 
+// ... (Icon components remain the same) ...
 const IconWrapperSmall = styled.span`
     display: inline-flex;
     align-items: center;
@@ -53,7 +55,7 @@ const ThumbDownIconSmall = () => (
                 d="M0 0h24v24H0V0z"
                 fill="none"
             />
-            <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41-.17-.79-.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" />
+            <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14-.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41-.17-.79-.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" />
         </svg>
     </IconWrapperSmall>
 );
@@ -85,8 +87,10 @@ interface SidebarProps {
     categoriesOrder: string[];
     onClose: () => void;
     isVisible: boolean;
+    onNavigateToNode: (nodeId: IdType) => void; // New prop
 }
 
+// ... (SidebarContainer, CloseButton, SidebarTitle, LanguageTagsList, SectionTitle remain the same)
 interface SidebarContainerStyleProps {
     isVisible: boolean;
 }
@@ -94,11 +98,6 @@ interface SidebarContainerStyleProps {
 const SidebarContainer = styled.div<SidebarContainerStyleProps>`
     id: details-sidebar;
     width: 380px;
-    /* Subtract top bar height and top/bottom margins from viewport height */
-    max-height: calc(
-        100vh - ${(props) => props.theme.spacing.topBarHeight} -
-            (${(props) => props.theme.spacing.l} * 2)
-    );
     background-color: ${(props) => props.theme.colors.sidebarBackground};
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -113,10 +112,11 @@ const SidebarContainer = styled.div<SidebarContainerStyleProps>`
     color: ${(props) => props.theme.colors.sidebarListItem};
     position: absolute;
     right: ${(props) => props.theme.spacing.l};
-    top: calc(
-        ${(props) => props.theme.spacing.topBarHeight} +
-            ${(props) => props.theme.spacing.l}
-    ); /* Position below controls */
+    top: ${(props) => props.theme.spacing.l};
+    max-height: calc(
+        100vh - ${(props) => props.theme.spacing.topBarHeight} -
+            (2 * ${(props) => props.theme.spacing.l})
+    );
     z-index: 1000;
     box-shadow: ${(props) => props.theme.shadows.sidebar};
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -220,20 +220,49 @@ const List = styled.ul`
     list-style: none;
     padding: 0;
     margin: 0 0 ${(props) => props.theme.spacing.l} 0;
+`;
 
-    li {
-        margin-bottom: ${(props) => props.theme.spacing.s};
-        color: ${(props) => props.theme.colors.sidebarListItem};
-        font-size: 0.975em;
-        line-height: 1.5;
+const ListItem = styled.li`
+    margin-bottom: ${(props) => props.theme.spacing.s};
+    color: ${(props) => props.theme.colors.sidebarListItem};
+    font-size: 0.975em;
+    line-height: 1.5;
 
-        strong {
-            color: ${(props) => props.theme.colors.contentPrimary};
-            font-weight: 500;
-        }
+    strong {
+        color: ${(props) => props.theme.colors.contentPrimary};
+        font-weight: 500;
     }
 `;
 
+const ClickableListItem = styled.button`
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: 0.975em; /* Match ListItem */
+    line-height: 1.5; /* Match ListItem */
+    color: ${(props) =>
+        props.theme.colors.accentBlue}; /* Make it look like a link */
+    cursor: pointer;
+    text-align: left;
+    display: block; /* Make it take full width if needed, or inline */
+    width: 100%; /* If you want the whole line clickable */
+    margin-bottom: ${(props) => props.theme.spacing.s}; /* Match ListItem */
+
+    &:hover {
+        text-decoration: underline;
+        color: ${(props) => props.theme.colors.accentBlueHover};
+    }
+    &:focus,
+    &:focus-visible {
+        outline: 1px dotted ${(props) => props.theme.colors.accentBlue};
+        outline-offset: 2px;
+        border-radius: ${(props) => props.theme.borderRadius.small};
+    }
+`;
+
+// ... (PreformattedText, CollapsibleSectionHeader, ToggleArrow, ArrowIcon, CollapsibleContent remain the same)
 const PreformattedText = styled.pre`
     background-color: ${(props) => props.theme.colors.codeBackground};
     border: 1px solid ${(props) => props.theme.colors.codeBorder};
@@ -352,10 +381,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     categoriesOrder,
     onClose,
     isVisible,
+    onNavigateToNode, // Use new prop
 }) => {
-    const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(true); // Collapsed by default
+    const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(true);
 
-    // Reset collapse state when selectedNode changes
     useEffect(() => {
         if (selectedNode) {
             setIsRankingsCollapsed(true);
@@ -366,23 +395,34 @@ const Sidebar: React.FC<SidebarProps> = ({
         return <SidebarContainer isVisible={false} />;
     }
 
-    const { labelOriginal, goodTagsDisplay, badTagsDisplay } = selectedNode;
+    const {
+        id: currentSelectedNodeId,
+        labelOriginal,
+        goodTagsDisplay,
+        badTagsDisplay,
+    } = selectedNode;
 
-    const incomingEdges = edgesDataSet.get({
-        filter: (edge: InfluenceEdge) => edge.to === selectedNode.id,
-    });
-    const influencedBy: string[] = incomingEdges
-        .map(
-            (edge: InfluenceEdge) => nodesDataSet.get(edge.from)?.labelOriginal
-        )
-        .filter(Boolean) as string[];
+    // Find IDs for influencedBy and influences languages
+    const influencedByNodes: { id: IdType; label: string }[] = edgesDataSet
+        .get({
+            filter: (edge: InfluenceEdge) => edge.to === currentSelectedNodeId,
+        })
+        .map((edge: InfluenceEdge) => {
+            const node = nodesDataSet.get(edge.from);
+            return node ? { id: node.id, label: node.labelOriginal } : null;
+        })
+        .filter(Boolean) as { id: IdType; label: string }[];
 
-    const outgoingEdges = edgesDataSet.get({
-        filter: (edge: InfluenceEdge) => edge.from === selectedNode.id,
-    });
-    const influences: string[] = outgoingEdges
-        .map((edge: InfluenceEdge) => nodesDataSet.get(edge.to)?.labelOriginal)
-        .filter(Boolean) as string[];
+    const influencesNodes: { id: IdType; label: string }[] = edgesDataSet
+        .get({
+            filter: (edge: InfluenceEdge) =>
+                edge.from === currentSelectedNodeId,
+        })
+        .map((edge: InfluenceEdge) => {
+            const node = nodesDataSet.get(edge.to);
+            return node ? { id: node.id, label: node.labelOriginal } : null;
+        })
+        .filter(Boolean) as { id: IdType; label: string }[];
 
     const langRankings = languageRankingsData[labelOriginal];
 
@@ -425,21 +465,33 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             <SectionTitle>Influenced By</SectionTitle>
             <List>
-                {influencedBy.length > 0 ? (
-                    influencedBy.map((name: string) => (
-                        <li key={name}>{name}</li>
+                {influencedByNodes.length > 0 ? (
+                    influencedByNodes.map((node) => (
+                        <ClickableListItem
+                            key={node.id}
+                            onClick={() => onNavigateToNode(node.id)}
+                        >
+                            {node.label}
+                        </ClickableListItem>
                     ))
                 ) : (
-                    <li>None in this graph</li>
+                    <ListItem>None in this graph</ListItem>
                 )}
             </List>
 
             <SectionTitle>Influences</SectionTitle>
             <List>
-                {influences.length > 0 ? (
-                    influences.map((name: string) => <li key={name}>{name}</li>)
+                {influencesNodes.length > 0 ? (
+                    influencesNodes.map((node) => (
+                        <ClickableListItem
+                            key={node.id}
+                            onClick={() => onNavigateToNode(node.id)}
+                        >
+                            {node.label}
+                        </ClickableListItem>
+                    ))
                 ) : (
-                    <li>None in this graph</li>
+                    <ListItem>None in this graph</ListItem>
                 )}
             </List>
 
@@ -461,16 +513,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                             const score = langRankings[catShort];
                             const legendText = rankLegend[score] || 'N/A';
                             return (
-                                <li key={catShort}>
+                                <ListItem key={catShort}>
                                     {categoryMap[catShort] || catShort}:{' '}
                                     <strong>{score}</strong> ({legendText})
-                                </li>
+                                </ListItem>
                             );
                         })}
                     </List>
                 ) : (
                     <List>
-                        <li>Rankings not available.</li>
+                        <ListItem>Rankings not available.</ListItem>
                     </List>
                 )}
             </CollapsibleContent>
