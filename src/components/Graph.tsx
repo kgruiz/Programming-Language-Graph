@@ -27,7 +27,7 @@ const LanguageGraphDiv = styled.div`
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    background-color: ${(props) => props.theme.colors.background};
+    background-color: ${(props) => props.theme.colors.backgroundPrimary};
     position: relative;
 `;
 

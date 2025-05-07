@@ -58,7 +58,7 @@ const MainContent = styled.div`
     flex: 1;
     min-height: 0;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; /* Important for containing absolute positioned children like Sidebar */
 `;
 
 interface GroupOptionsExtended extends NodeOptions {
@@ -79,43 +79,58 @@ interface GraphOptionsExtended extends Options {
 }
 
 const graphOptionsBase: GraphOptionsExtended = {
-    autoResize: true, // Explicitly true
-    width: '100%', // Tell vis.js to use container width
-    height: '100%', // Tell vis.js to use container height
+    autoResize: true,
+    width: '100%',
+    height: '100%',
     layout: {
         hierarchical: {
             enabled: true,
             direction: 'UD',
             sortMethod: 'directed',
-            levelSeparation: 180,
-            nodeSpacing: 160,
-            treeSpacing: 240,
+            levelSeparation: 190, // Increased
+            nodeSpacing: 170, // Increased
+            treeSpacing: 250, // Increased
         },
     },
     nodes: {
         shape: 'box',
         font: {
             face: theme.fonts.main,
-            size: 13,
-            color: theme.colors.text,
+            size: 14,
+            color: theme.colors.nodeText,
+            strokeWidth: 0,
         },
-        borderWidth: 0.8,
-        borderWidthSelected: 1.8,
-        shapeProperties: { borderRadius: 8 },
-        margin: { top: 12, right: 18, bottom: 12, left: 18 },
+        borderWidth: 1.5,
+        borderWidthSelected: 3, // Thicker selection border
+        shapeProperties: {
+            borderRadius: parseInt(theme.borderRadius.medium, 10),
+        },
+        margin: { top: 14, right: 22, bottom: 14, left: 22 }, // Increased margin
         shadow: {
             enabled: true,
-            color: 'rgba(0, 0, 0, 0.3)',
-            size: 7,
-            x: 2,
-            y: 3,
+            color: theme.colors.nodeShadow,
+            size: 10, // Softer, larger shadow
+            x: 4,
+            y: 5,
+        },
+        color: {
+            background: theme.colors.nodeBackground,
+            border: theme.colors.nodeBorder,
+            highlight: {
+                background: theme.colors.nodeBackground,
+                border: theme.colors.accentBlue,
+            },
+            hover: {
+                background: theme.colors.backgroundTertiary,
+                border: theme.colors.nodeBorder,
+            },
         },
     },
     edges: {
         arrows: {
             to: {
                 enabled: true,
-                scaleFactor: 0.6,
+                scaleFactor: 0.7,
                 type: 'arrow',
             },
         },
@@ -123,75 +138,55 @@ const graphOptionsBase: GraphOptionsExtended = {
             enabled: true,
             type: 'cubicBezier',
             forceDirection: 'vertical',
-            roundness: 0.4,
+            roundness: 0.45, // Slightly more curve
         },
         color: {
-            color: '#505053',
-            highlight: '#8a8a8e',
-            hover: '#6a6a6e',
+            color: theme.colors.separator,
+            highlight: theme.colors.accentBlue,
+            hover: theme.colors.contentTertiary,
             inherit: false,
-            opacity: 0.85,
+            opacity: 1,
         },
-        width: 0.9,
-        hoverWidth: 1.3,
-        selectionWidth: 1.6,
+        width: 1.3, // Slightly thicker edges
+        hoverWidth: 2,
+        selectionWidth: 2.5,
     },
     physics: { enabled: false },
     interaction: {
-        dragNodes: false,
+        dragNodes: true,
         dragView: true,
         zoomView: true,
-        tooltipDelay: 200,
+        tooltipDelay: 250, // Slightly longer delay
         navigationButtons: true,
         keyboard: true,
         selectConnectedEdges: false,
     },
     groups: {
-        c_syntax_algol: {
-            color: { background: 'rgba(40, 45, 55, 0.9)', border: '#4a5568' },
-        },
-        c_syntax_core: {
-            color: { background: 'rgba(45, 50, 60, 0.9)', border: '#5a6578' },
-        },
-        c_syntax_jvm: {
-            color: { background: 'rgba(50, 45, 65, 0.9)', border: '#6b5f8a' },
-        },
+        // Muted, more uniform group colors for Apple style
+        c_syntax_algol: { color: { background: '#3A424D', border: '#555E6B' } },
+        c_syntax_core: { color: { background: '#3D3D44', border: '#585860' } },
+        c_syntax_jvm: { color: { background: '#423C4A', border: '#5D5765' } },
         c_syntax_modern: {
-            color: { background: 'rgba(40, 55, 50, 0.9)', border: '#486a5f' },
+            color: { background: '#384440', border: '#525E5A' },
         },
         c_syntax_script: {
-            color: { background: 'rgba(40, 55, 55, 0.9)', border: '#4a6b6b' },
+            color: { background: '#384444', border: '#525E5E' },
         },
-        lisp: {
-            color: { background: 'rgba(60, 50, 40, 0.9)', border: '#8a705b' },
-        },
-        ml: {
-            color: { background: 'rgba(40, 60, 50, 0.9)', border: '#4a7565' },
-        },
-        smalltalk: {
-            color: { background: 'rgba(60, 40, 45, 0.9)', border: '#8a5b65' },
-        },
-        stats: {
-            color: { background: 'rgba(55, 45, 60, 0.9)', border: '#7a608a' },
-        },
-        array: {
-            color: { background: 'rgba(60, 45, 55, 0.9)', border: '#8a607a' },
-        },
-        shell: {
-            color: { background: 'rgba(45, 50, 65, 0.9)', border: '#5a658a' },
-        },
-        pascal_like: {
-            color: { background: 'rgba(65, 50, 40, 0.9)', border: '#9a705b' },
-        },
-        logic: {
-            color: { background: 'rgba(55, 45, 65, 0.9)', border: '#7a609a' },
-        },
+        lisp: { color: { background: '#4A423D', border: '#655D58' } },
+        ml: { color: { background: '#3D4A42', border: '#58655D' } },
+        smalltalk: { color: { background: '#4A3D41', border: '#65585C' } },
+        stats: { color: { background: '#473D4A', border: '#625865' } },
+        array: { color: { background: '#4A3D47', border: '#655862' } },
+        shell: { color: { background: '#3D4452', border: '#585E6D' } },
+        pascal_like: { color: { background: '#52423D', border: '#6D5D58' } },
+        logic: { color: { background: '#473D52', border: '#62586D' } },
         misc: {
-            color: { background: 'rgba(55, 55, 55, 0.9)', border: '#777777' },
+            color: {
+                background: theme.colors.nodeBackground,
+                border: theme.colors.nodeBorder,
+            },
         },
-        intermediate: {
-            color: { background: 'rgba(65, 65, 65, 0.9)', border: '#888888' },
-        },
+        intermediate: { color: { background: '#4F4F4F', border: '#6A6A6A' } },
     },
 };
 
@@ -204,12 +199,18 @@ if (graphOptionsBase.groups) {
                     border?: string;
                 };
                 group.color.highlight = {
-                    background: baseColor.border,
-                    border: baseColor.border,
+                    background:
+                        baseColor.background || theme.colors.nodeBackground,
+                    border: theme.colors.accentBlue,
                 };
+                // More subtle hover for groups
                 group.color.hover = {
-                    background: baseColor.background,
-                    border: baseColor.border,
+                    background:
+                        baseColor.background || theme.colors.nodeBackground,
+                    // Example of slightly lightening a border color if you had tinycolor or similar:
+                    // border: baseColor.border ? tinycolor(baseColor.border).lighten(5).toString() : theme.colors.nodeBorder,
+                    // For now, just use a predefined hover border or the existing border
+                    border: theme.colors.controlHoverBorder, // Or baseColor.border
                 };
             }
         }
@@ -249,9 +250,7 @@ const HomePage: React.FC = () => {
                 );
                 return;
             }
-            console.log(
-                'Data initialization useEffect: vis script IS loaded and window.vis.DataSet IS available. Processing data...'
-            );
+            // console.log('Data initialization useEffect: vis script IS loaded and window.vis.DataSet IS available. Processing data...');
 
             const processedNodes: LanguageNode[] = rawNodes.map((node) => {
                 const originalLabel = node.label;
@@ -298,22 +297,22 @@ const HomePage: React.FC = () => {
 
             setNodesDataSet(newNodesDataSet);
             setEdgesDataSet(newEdgesDataSet);
-            console.log(
-                'Data initialization useEffect: DataSets created and set to state'
-            );
+            // console.log('Data initialization useEffect: DataSets created and set to state');
 
             const tempStyles = new Map<string, VisNodeStyle>();
             newNodesDataSet.forEach((node: LanguageNode) => {
                 const groupSettings = graphOptionsBase.groups?.[node.group];
+                const defaultNodeStyle = graphOptionsBase.nodes?.color as
+                    | Color
+                    | undefined;
+                const defaultNodeFont = graphOptionsBase.nodes?.font as
+                    | Font
+                    | undefined;
+
                 let bg =
-                    (graphOptionsBase.nodes?.color as Color)?.background ||
-                    'rgba(55, 55, 55, 0.9)';
-                let bd =
-                    (graphOptionsBase.nodes?.color as Color)?.border ||
-                    '#777777';
-                let fontColor =
-                    (graphOptionsBase.nodes?.font as Font)?.color ||
-                    theme.colors.text;
+                    defaultNodeStyle?.background || theme.colors.nodeBackground;
+                let bd = defaultNodeStyle?.border || theme.colors.nodeBorder;
+                let fontColor = defaultNodeFont?.color || theme.colors.nodeText;
 
                 if (
                     groupSettings?.color &&
@@ -329,37 +328,58 @@ const HomePage: React.FC = () => {
                 tempStyles.set(node.id as string, {
                     color: { background: bg, border: bd },
                     font: { color: fontColor },
-                    borderWidth: graphOptionsBase.nodes?.borderWidth || 0.8,
+                    borderWidth: graphOptionsBase.nodes?.borderWidth || 1.5,
                     label: node.labelOriginal,
                 });
             });
             allNodesOriginalStylesRef.current = tempStyles;
-            console.log(
-                'Data initialization useEffect: Original styles stored'
-            );
+            // console.log('Data initialization useEffect: Original styles stored');
             setAreDataSetsInitialized(true);
-            console.log(
-                'Data initialization useEffect: setAreDataSetsInitialized(true)'
-            );
+            // console.log('Data initialization useEffect: setAreDataSetsInitialized(true)');
         } else {
-            console.log(
-                'Data initialization useEffect: isVisScriptLoaded is false. Waiting...'
-            );
+            // console.log('Data initialization useEffect: isVisScriptLoaded is false. Waiting...');
         }
     }, [isVisScriptLoaded]);
 
-    const handleNodeClick = useCallback((nodeId: string | null) => {
-        setSelectedNodeId(nodeId);
-    }, []);
+    const handleNodeClick = useCallback(
+        (nodeId: string | null) => {
+            setSelectedNodeId(nodeId);
+            // Optionally, if a node is clicked, reset highlights if it's not part of the current highlight
+            if (nodeId && activeHighlightType) {
+                const node = nodesDataSet?.get(
+                    nodeId as IdType
+                ) as LanguageNode | null;
+                if (node) {
+                    const langRankings =
+                        languageRankingsData[node.labelOriginal];
+                    let isMatch = false;
+                    if (
+                        langRankings &&
+                        langRankings[selectedHighlightCategory] !== undefined
+                    ) {
+                        const score = langRankings[selectedHighlightCategory];
+                        if (activeHighlightType === 'good' && score >= 4)
+                            isMatch = true;
+                        if (activeHighlightType === 'bad' && score <= 2)
+                            isMatch = true;
+                    }
+                    if (!isMatch) {
+                        // If the clicked node is not part of the highlight, reset highlights
+                        // This is an opinionated UX choice.
+                        // resetNodeHighlights();
+                    }
+                }
+            }
+        },
+        [activeHighlightType, selectedHighlightCategory, nodesDataSet]
+    );
 
     const handleCloseSidebar = useCallback(() => {
         setSelectedNodeId(null);
     }, []);
 
     const handleStabilizationDone = useCallback(() => {
-        console.log(
-            'HomePage: stabilizationIterationsDone received by HomePage'
-        );
+        // console.log('HomePage: stabilizationIterationsDone received by HomePage');
     }, []);
 
     const setNetwork = useCallback((network: any | null) => {
@@ -401,13 +421,24 @@ const HomePage: React.FC = () => {
                         color: {
                             border:
                                 type === 'good'
-                                    ? theme.colors.highlightGood
-                                    : theme.colors.highlightBad,
+                                    ? theme.colors.accentGreen
+                                    : theme.colors.accentRed,
                             background: (originalStyle.color as Color)
                                 .background,
                         },
-                        borderWidth: 2.5,
-                        font: { color: (originalStyle.font as Font).color },
+                        borderWidth: 2.8, // Emphasize highlighted nodes more
+                        font: { color: (originalStyle.font as Font).color }, // Keep original font color unless specified
+                        shadow: {
+                            // Optionally enhance shadow for highlighted nodes
+                            enabled: true,
+                            color:
+                                type === 'good'
+                                    ? `${theme.colors.accentGreen}80`
+                                    : `${theme.colors.accentRed}80`,
+                            size: 12,
+                            x: 0,
+                            y: 0, // Halo effect
+                        },
                     };
                 } else {
                     newStyle = {
@@ -418,6 +449,7 @@ const HomePage: React.FC = () => {
                         },
                         borderWidth: originalStyle.borderWidth,
                         font: { color: theme.colors.dimmedNodeText },
+                        shadow: { enabled: false }, // Remove shadow for dimmed nodes for more focus
                     };
                 }
                 updates.push(newStyle);
@@ -449,6 +481,7 @@ const HomePage: React.FC = () => {
                     color: originalStyle.color,
                     font: originalStyle.font,
                     borderWidth: originalStyle.borderWidth,
+                    shadow: graphOptionsBase.nodes?.shadow, // Reset to default shadow options
                 });
             }
         });
@@ -475,6 +508,13 @@ const HomePage: React.FC = () => {
         }
     };
 
+    // Effect to re-apply highlights when category changes while a highlight type is active
+    useEffect(() => {
+        if (activeHighlightType && selectedHighlightCategory) {
+            highlightNodes(selectedHighlightCategory, activeHighlightType);
+        }
+    }, [selectedHighlightCategory, activeHighlightType, highlightNodes]);
+
     const selectedNodeDetails =
         selectedNodeId && nodesDataSet
             ? (nodesDataSet.get(selectedNodeId as IdType) as LanguageNode)
@@ -493,17 +533,26 @@ const HomePage: React.FC = () => {
                     sidebarElement &&
                     !sidebarElement.contains(event.target as Node) &&
                     graphElement &&
-                    graphElement.contains(event.target as Node) &&
-                    typeof networkInstanceRef.current.getNodeAt ===
-                        'function' &&
-                    !networkInstanceRef.current.getNodeAt(
-                        (event as any).pointer?.canvas || {
-                            x: event.clientX,
-                            y: event.clientY,
-                        }
-                    )
+                    graphElement.contains(event.target as Node)
                 ) {
-                    handleCloseSidebar();
+                    const pointerCoords = (event as any).pointer?.canvas || {
+                        x: event.clientX,
+                        y: event.clientY,
+                    };
+                    const clickedNodeId =
+                        networkInstanceRef.current.getNodeAt(pointerCoords);
+                    if (!clickedNodeId) {
+                        // Clicked on graph canvas, but not on a node
+                        handleCloseSidebar();
+                    }
+                } else if (
+                    sidebarElement &&
+                    !sidebarElement.contains(event.target as Node) &&
+                    (!graphElement ||
+                        !graphElement.contains(event.target as Node))
+                ) {
+                    // Clicked outside both sidebar and graph (e.g. on Controls)
+                    // Do nothing, or decide if sidebar should close
                 }
             }
         };
@@ -536,15 +585,13 @@ const HomePage: React.FC = () => {
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
                 strategy="afterInteractive"
                 onLoad={() => {
-                    console.log('vis-network SCRIPT onLoad: Fired.');
+                    // console.log('vis-network SCRIPT onLoad: Fired.');
                     if (
                         window.vis &&
                         typeof window.vis.DataSet === 'function' &&
                         typeof window.vis.Network === 'function'
                     ) {
-                        console.log(
-                            'vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE functions.'
-                        );
+                        // console.log('vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE functions.');
                         setIsVisScriptLoaded(true);
                     } else {
                         console.error(

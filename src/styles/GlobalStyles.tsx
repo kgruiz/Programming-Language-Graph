@@ -1,5 +1,5 @@
 import { Global, css } from '@emotion/react';
-import theme from './theme'; // Adjust path if necessary
+import theme from './theme';
 
 const GlobalStyles = () => (
     <Global
@@ -11,18 +11,21 @@ const GlobalStyles = () => (
                 height: 100%;
                 font-family: ${theme.fonts.main};
                 overflow: hidden;
-                background-color: ${theme.colors.background};
-                color: ${theme.colors.text};
+                background-color: ${theme.colors.backgroundPrimary};
+                color: ${theme.colors.contentPrimary};
                 display: flex;
                 flex-direction: column;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
             }
 
             body > div:first-of-type,
             body > div:first-of-type > div {
-                // For Next.js wrapper
+                /* For Next.js wrapper */
                 height: 100%;
                 display: flex;
                 flex-direction: column;
+                flex: 1; /* Ensure it takes full height */
             }
 
             * {
@@ -33,43 +36,79 @@ const GlobalStyles = () => (
             .vis-navigation .vis-button {
                 background-color: ${theme.colors.visNavButtonBackground};
                 border: 1px solid ${theme.colors.visNavButtonBorder};
-                border-radius: 8px;
+                border-radius: ${theme.borderRadius.medium};
                 box-shadow: ${theme.shadows.control};
                 color: ${theme.colors.visNavButtonText};
                 font-size: 18px;
-                width: 32px;
-                height: 32px;
+                width: 34px;
+                height: 34px;
                 padding: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: background-color 0.15s ease-in-out;
-            }
-            .vis-navigation .vis-button:hover {
-                background-color: ${theme.colors.visNavButtonHoverBackground};
+                transition: background-color 0.2s ease-in-out,
+                    box-shadow 0.2s ease-in-out;
+
+                &:hover {
+                    background-color: ${theme.colors
+                        .visNavButtonHoverBackground};
+                    box-shadow: ${theme.shadows.control},
+                        0 0 0 1px ${theme.colors.controlHoverBorder};
+                }
             }
             .vis-navigation {
                 position: absolute;
-                bottom: 20px;
-                left: 101px; /* Adjusted from 91px to 101px */
+                bottom: ${theme.spacing.m};
+                left: ${theme.spacing.m};
                 z-index: 5;
+                background-color: ${theme.colors
+                    .backgroundSecondary}99; // Semi-transparent
+                border-radius: ${theme.borderRadius
+                    .large}; // Slightly larger radius for the container
+                padding: ${theme.spacing.s};
+                backdrop-filter: blur(8px) saturate(180%);
+                -webkit-backdrop-filter: blur(8px) saturate(180%);
+                box-shadow: ${theme.shadows.sidebar};
             }
             .vis-zoomExtends {
-                display: none !important; /* Original style was display: none, but screenshot shows it. vis.js might override. */
+                /* display: none !important; // Keep if original intention was to hide */
             }
 
-            /* For custom select arrow */
+            /* Custom select arrow */
             select {
-                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3e%3cpath fill='${encodeURIComponent(
-                    theme.colors.labelLight
-                )}' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e");
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='${encodeURIComponent(
+                    theme.colors.contentTertiary
+                )}' class='bi bi-chevron-expand' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M3.646 9.146a.5.5 0 0 1 .708 0L8 12.793l3.646-3.647a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 0-.708zm0-2.292a.5.5 0 0 0 .708 0L8 3.207l3.646 3.647a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 0 0 0 .708z'/%3E%3C/svg%3E");
                 background-repeat: no-repeat;
-                background-position: right 0.7em top 50%;
-                background-size: 0.65em auto;
+                background-position: right ${theme.spacing.s} center;
+                background-size: 0.9em auto;
                 -webkit-appearance: none;
                 -moz-appearance: none;
                 appearance: none;
-                padding-right: 2.5em; /* Space for arrow */
+                padding-right: calc(
+                    ${theme.spacing.s} + 1em + ${theme.spacing.m}
+                ); /* Adjusted padding */
+            }
+
+            /* Scrollbar styling (WebKit) */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent; /* Cleaner track */
+            }
+            ::-webkit-scrollbar-thumb {
+                background: ${theme.colors.backgroundTertiary};
+                border-radius: ${theme.borderRadius.large};
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: ${theme.colors.contentTertiary};
+            }
+            /* For Firefox */
+            html {
+                scrollbar-width: thin;
+                scrollbar-color: ${theme.colors.backgroundTertiary} transparent;
             }
         `}
     />
