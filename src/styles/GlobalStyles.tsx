@@ -51,11 +51,11 @@ const GlobalStyles = () => (
             .vis-navigation {
                 position: absolute;
                 bottom: 20px;
-                left: 20px;
+                left: 101px; /* Adjusted from 91px to 101px */
                 z-index: 5;
             }
             .vis-zoomExtends {
-                display: none !important; /* Original style was display: none */
+                display: none !important; /* Original style was display: none, but screenshot shows it. vis.js might override. */
             }
 
             /* For custom select arrow */
