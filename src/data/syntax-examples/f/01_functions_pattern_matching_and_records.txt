@@ -1,12 +1,26 @@
 type Person = { Name: string; Age: int }
+
 let greet person =
     match person with
-    | { Name = name; Age = age } when age < 18 -> sprintf "Hi %s, youre young at %d!" name age
-    | { Name = name; Age = age } -> sprintf "Hello %s, who is %d years old." name age
-let describeNumber x = match x with | 0 -> "Zero" | n when n % 2 = 0 -> sprintf "%d is Even" n | n -> sprintf "%d is Odd" n
+    | { Name = name; Age = age } when age < 18 ->
+        sprintf "Hi %s, you're young at %d!" name age
+    | { Name = name; Age = age } ->
+        sprintf "Hello %s, who is %d years old." name age
+
+let describeNumber x =
+    match x with
+    | 0 -> "Zero"
+    | n when n % 2 = 0 -> sprintf "%d is Even" n
+    | n -> sprintf "%d is Odd" n
+
 [<EntryPoint>]
 let main argv =
     let alice = { Name = "Alice"; Age = 30 }
+    let bob = { Name = "Bob"; Age = 15 }
+
     printfn "%s" (greet alice)
-    for i in 0..3 do printfn "%s" (describeNumber i)
-    0
+    printfn "%s" (greet bob)
+
+    for i in 0..3 do
+        printfn "%s" (describeNumber i)
+    0 // Return an integer exit code

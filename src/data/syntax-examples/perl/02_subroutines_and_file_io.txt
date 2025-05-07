@@ -1,0 +1,31 @@
+use strict;
+use warnings;
+
+sub calculate_sum {
+    my @numbers = @_; # Arguments passed to subroutine
+    my $sum = 0;
+    foreach my $num (@numbers) {
+        $sum += $num;
+    }
+    return $sum;
+}
+
+my $total = calculate_sum(1, 2, 3, 4, 5);
+print "Sum: $total\n";
+
+# File writing
+my $filename = "perl_example.txt";
+open(my $fh_out, '>', $filename) or die "Could not open file '$filename' $!";
+print $fh_out "First line from Perl.\n";
+print $fh_out "Sum calculated: $total\n";
+close $fh_out;
+print "Data written to $filename\n";
+
+# File reading
+open(my $fh_in, '<', $filename) or die "Could not open file '$filename' $!";
+print "Contents of $filename:\n";
+while (my $row = <$fh_in>) {
+    chomp $row;
+    print "$row\n";
+}
+close $fh_in;

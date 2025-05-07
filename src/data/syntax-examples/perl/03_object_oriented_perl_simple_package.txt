@@ -1,0 +1,27 @@
+package MyCounter;
+use strict;
+use warnings;
+
+sub new {
+    my $class = shift;
+    my $self = { count => 0 }; # Anonymous hash for instance data
+    bless $self, $class;       # Make $self an object of $class
+    return $self;
+}
+
+sub increment {
+    my $self = shift;
+    $self->{count}++;
+}
+
+sub get_count {
+    my $self = shift;
+    return $self->{count};
+}
+
+# To use this package from another script or later in the same file:
+# package main; # Switch back to main package if needed
+# my $counter1 = MyCounter->new();
+# $counter1->increment();
+# print "Counter 1: " . $counter1->get_count() . "\n";
+1; # Required for packages to be 'require'able by other Perl scripts

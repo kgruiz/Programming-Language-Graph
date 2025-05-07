@@ -1,0 +1,21 @@
+use strict;
+use warnings;
+
+my $name = "Perl User";
+my %user_data = (
+    email => "user@example.com",
+    id    => 123,
+    role  => "developer"
+);
+
+print "Hello, $name!\n";
+print "Email: $user_data{email}, Role: $user_data{role}\n";
+
+my $text = "The quick brown fox jumps over the lazy dog.";
+if ($text =~ /brown (fox|cat)/) {
+    print "Found '$1' after 'brown'.\n"; # $1 contains the matched group
+}
+
+# Substitute 'lazy' with 'active'
+$text =~ s/lazy/active/g;
+print "Modified text: $text\n";

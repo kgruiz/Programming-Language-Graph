@@ -2,7 +2,6 @@ import { LanguageSyntax } from '@/types';
 
 // --- Import raw text content for each snippet ---
 // --- ORDER ALPHABETICALLY BY LANGUAGE FOR MAINTAINABILITY ---
-// --- ENSURE DIRECTORY AND FILE NAMES MATCH THE SHELL SCRIPT OUTPUT ---
 
 // ABC
 // @ts-ignore
@@ -174,11 +173,11 @@ import erlang_03_list_comprehensions_guards from './syntax-examples/erlang/03_li
 
 // F#
 // @ts-ignore
-import fsharp_01_functions_records from './syntax-examples/f_/01_functions_pattern_matching_and_records.txt';
+import fsharp_01_functions_records from './syntax-examples/f/01_functions_pattern_matching_and_records.txt'; // CORRECTED PATH
 // @ts-ignore
-import fsharp_02_async_workflows from './syntax-examples/f_/02_async_workflows.txt';
+import fsharp_02_async_workflows from './syntax-examples/f/02_async_workflows.txt'; // CORRECTED PATH
 // @ts-ignore
-import fsharp_03_sequences_hof from './syntax-examples/f_/03_sequence_expressions_and_higher_order_functions.txt';
+import fsharp_03_sequences_hof from './syntax-examples/f/03_sequence_expressions_and_higher_order_functions.txt'; // CORRECTED PATH
 
 // Fortran
 // @ts-ignore
@@ -342,11 +341,11 @@ import pascal_03_pointers_dynamic from './syntax-examples/pascal/03_pointers_and
 
 // Perl
 // @ts-ignore
-import perl_01_vars_hashes_regex from './syntax-examples/perl/01_variables_hashes_and_regular_expressions.txt';
+import perl_01_vars_hashes_regex from './syntax-examples/perl/01_variables_hashes_and_regular_expressions.txt'; // Path should be correct if files exist
 // @ts-ignore
-import perl_02_subroutines_fileio from './syntax-examples/perl/02_subroutines_and_file_io.txt';
+import perl_02_subroutines_fileio from './syntax-examples/perl/02_subroutines_and_file_io.txt'; // Path should be correct if files exist
 // @ts-ignore
-import perl_03_oo_package from './syntax-examples/perl/03_object_oriented_perl_simple_package.txt';
+import perl_03_oo_package from './syntax-examples/perl/03_object_oriented_perl_simple_package.txt'; // Path should be correct if files exist
 
 // PHP
 // @ts-ignore

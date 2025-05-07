@@ -1,4 +1,6 @@
 open System.Net.Http
+open System.Threading.Tasks
+
 let fetchUrlAsync (url: string) =
     async {
         use client = new HttpClient()
@@ -7,12 +9,17 @@ let fetchUrlAsync (url: string) =
         let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
         return content
     }
-let processDataAsync = async {
-    try
-        printfn "Fetching data..."
-        let! data = fetchUrlAsync "https://jsonplaceholder.typicode.com/todos/1"
-        printfn "Data (first 100): %s..." (data.Substring(0, min data.Length 100))
-    with ex -> printfn "Error: %s" ex.Message
-}
+
+let processDataAsync =
+    async {
+        try
+            printfn "Fetching data..."
+            let! data = fetchUrlAsync "https://jsonplaceholder.typicode.com/todos/1"
+            printfn "Data (first 100 chars): %s..." (data.Substring(0, min data.Length 100))
+        with
+        | ex -> printfn "Error fetching data: %s" ex.Message
+    }
+
+// To run (e.g., in F# Interactive or a compiled app):
 // Async.RunSynchronously processDataAsync
-printfn "Async example defined."
+printfn "Async example defined. Call Async.RunSynchronously to execute."
