@@ -32,82 +32,6 @@ const GlobalStyles = () => (
                 box-sizing: border-box;
             }
 
-            /* Vis Network Customizations */
-            .vis-navigation {
-                position: absolute;
-                bottom: ${theme.spacing.l};
-                right: ${theme.spacing.l}; /* Moved to bottom-right */
-                left: auto; /* Reset left */
-                z-index: 10;
-                background-color: ${theme.colors.visNavButtonBackground};
-                border: 1px solid ${theme.colors.visNavButtonBorder};
-                border-radius: ${theme.borderRadius.large};
-                padding: ${theme.spacing.s};
-                backdrop-filter: blur(12px) saturate(180%);
-                -webkit-backdrop-filter: blur(12px) saturate(180%);
-                box-shadow: ${theme.shadows.navigationControls};
-                display: flex;
-                flex-direction: column; /* Stack buttons vertically for compactness */
-                gap: ${theme.spacing.xs};
-            }
-
-            .vis-navigation .vis-button {
-                background-color: transparent;
-                border: none;
-                border-radius: ${theme.borderRadius.medium};
-                color: ${theme.colors.visNavButtonText};
-                font-size: 18px;
-                width: 38px;
-                height: 38px;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background-color 0.2s ease-in-out,
-                    color 0.2s ease-in-out;
-                cursor: pointer;
-
-                &:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    color: ${theme.colors.contentPrimary};
-                }
-                &:active {
-                    background-color: rgba(255, 255, 255, 0.15);
-                }
-                &:focus,
-                &:focus-visible {
-                    outline: 2px solid ${theme.colors.accentBlue}66;
-                    outline-offset: 1px;
-                }
-                /* Hide default images, use pseudo-elements for icons */
-                background-image: none !important;
-                font-family: ${theme.fonts.main}; /* Ensure consistent font */
-            }
-
-            /* Vis.js Icons - using text/symbols for simplicity */
-            /* You can replace these with SVG data URLs or an icon font for better icons */
-            .vis-zoomIn::before {
-                content: '+';
-                font-weight: bold;
-            }
-            .vis-zoomOut::before {
-                content: '−';
-                font-weight: bold;
-            } /* Use minus sign */
-            .vis-zoomExtends::before {
-                content: '⤧';
-                font-size: 1.3em;
-                line-height: 1;
-            } /* Fit icon */
-
-            /* Hide directional buttons as they are less common in this style of graph nav */
-            .vis-up,
-            .vis-down,
-            .vis-left,
-            .vis-right {
-                display: none !important;
-            }
-
             /* Custom select arrow */
             select {
                 background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='${encodeURIComponent(
@@ -143,6 +67,11 @@ const GlobalStyles = () => (
             html {
                 scrollbar-width: thin;
                 scrollbar-color: ${theme.colors.backgroundTertiary} transparent;
+            }
+
+            /* Vis.js specific CSS for network canvas - can be kept if needed */
+            .vis-network {
+                /* outline: none; */ /* If you want to remove the default blue outline on canvas focus */
             }
         `}
     />
