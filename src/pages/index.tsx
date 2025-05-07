@@ -17,6 +17,7 @@ import type {
 import ControlsComponent from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
 import LoadingIndicator from '@/components/LoadingIndicator';
+import NavigationControls from '@/components/NavigationControls';
 
 import {
     initialNodesData as rawNodes,
@@ -72,7 +73,6 @@ const MainContent = styled.div`
     overflow: hidden;
 `;
 
-// ... (graphOptionsBase and other constants remain the same) ...
 interface GroupOptionsExtended extends NodeOptions {
     color?:
         | NodeOptions['color']
@@ -169,7 +169,7 @@ const graphOptionsBase: GraphOptionsExtended = {
         dragView: true,
         zoomView: true,
         tooltipDelay: 300,
-        navigationButtons: true,
+        navigationButtons: false,
         keyboard: true,
         selectConnectedEdges: false,
     },
@@ -732,7 +732,6 @@ const HomePage: React.FC = () => {
         ]
     );
 
-    // New callback for sidebar navigation
     const handleNavigateToNodeFromSidebar = useCallback(
         (nodeId: IdType) => {
             if (networkInstanceRef.current && nodesDataSet?.get(nodeId)) {
@@ -740,11 +739,10 @@ const HomePage: React.FC = () => {
                 highlightNodeLineage(nodeId as string);
                 setActiveHighlightType(null);
 
-                // Focus on the node in the graph
                 networkInstanceRef.current.focus(nodeId, {
-                    scale: 1.2, // Zoom in a bit
+                    scale: 1.2,
                     animation: {
-                        duration: 800, // Animation duration in ms
+                        duration: 800,
                         easingFunction: 'easeInOutQuad',
                     },
                 });
@@ -799,6 +797,20 @@ const HomePage: React.FC = () => {
         activeHighlightType,
         highlightCategoryNodes,
     ]);
+
+    // Navigation callbacks for custom buttons
+    const handleZoomIn = useCallback(() => {
+        // Corrected: Access view methods via network.view
+        networkInstanceRef.current?.view?.zoomIn();
+    }, []);
+    const handleZoomOut = useCallback(() => {
+        // Corrected: Access view methods via network.view
+        networkInstanceRef.current?.view?.zoomOut();
+    }, []);
+    const handleFit = useCallback(() => {
+        // Corrected: Access view methods via network.view
+        networkInstanceRef.current?.view?.fit();
+    }, []);
 
     const selectedNodeDetails =
         selectedNodeId && nodesDataSet
@@ -878,7 +890,15 @@ const HomePage: React.FC = () => {
                             categoriesOrder={categoriesOrder}
                             onClose={handleCloseSidebar}
                             isVisible={!!selectedNodeId}
-                            onNavigateToNode={handleNavigateToNodeFromSidebar} // Pass the new handler
+                            onNavigateToNode={handleNavigateToNodeFromSidebar}
+                        />
+                    )}
+                    {isVisScriptLoaded && areDataSetsInitialized && (
+                        <NavigationControls
+                            onZoomIn={handleZoomIn}
+                            onZoomOut={handleZoomOut}
+                            onFit={handleFit}
+                            isNetworkReady={!!networkInstanceRef.current}
                         />
                     )}
                 </MainContent>
