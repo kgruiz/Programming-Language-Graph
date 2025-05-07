@@ -1,0 +1,23 @@
+// CPL (Combined Programming Language) - Conceptual Example
+// Syntax is illustrative, based on its known features and influence.
+
+// Function definition (Algol-like block structure)
+DEFINE FUNCTION Factorial(n) = VALOF $(
+  IF n < 0 THEN RESULTIS 0 // Error
+  IF n = 0 THEN RESULTIS 1
+  RESULTIS n * Factorial(n - 1)
+$)
+
+// Main part of the program
+$(
+  LET i = 1
+  WHILE i <= 5 DO $(
+    PRINT("Factorial of ")
+    PRINTVALUE(i)
+    PRINT(" is ")
+    PRINTVALUE(Factorial(i))
+    NEWLINE()
+    i := i + 1
+  $)
+  PRINT("CPL example finished.")
+$)

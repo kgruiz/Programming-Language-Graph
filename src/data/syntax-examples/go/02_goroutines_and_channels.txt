@@ -1,0 +1,18 @@
+package main
+import ("fmt"; "time")
+
+func worker(id int, jobs <-chan int, results chan<- string) {
+	for j := range jobs {
+		fmt.Printf("Worker %d started job %d\n", id, j)
+		time.Sleep(time.Millisecond * 100)
+		results <- fmt.Sprintf("Worker %d finished job %d", id, j)
+	}
+}
+func main() {
+	numJobs := 5; jobs := make(chan int, numJobs); results := make(chan string, numJobs)
+	for w := 1; w <= 2; w++ { go worker(w, jobs, results) }
+	for j := 1; j <= numJobs; j++ { jobs <- j }
+	close(jobs)
+	for a := 1; a <= numJobs; a++ { fmt.Println(<-results) }
+	fmt.Println("All jobs done.")
+}

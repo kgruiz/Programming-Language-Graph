@@ -1,0 +1,24 @@
+// Carbon Language (Experimental - Conceptual)
+package Geometry api;
+
+class Point {
+  var x: f64;
+  var y: f64;
+
+  fn New(x_coord: f64, y_coord: f64) -> Point {
+    return {.x = x_coord, .y = y_coord};
+  }
+
+  fn DistanceToOrigin[addr self: Point*]() -> f64 {
+    // Assuming Sqrt and Pow are available, possibly from Math package
+    // Syntax for method calls and member access is still evolving.
+    return Math.Sqrt(Math.Pow(self->x, 2) + Math.Pow(self->y, 2));
+  }
+}
+
+fn Main() -> i32 {
+  var p1: Point = Point.New(3.0, 4.0);
+  Print("Point p1: ({0}, {1})", p1.x, p1.y);
+  // Print("Distance from origin: {0}", p1.DistanceToOrigin()); // Method call syntax might change
+  return 0;
+}

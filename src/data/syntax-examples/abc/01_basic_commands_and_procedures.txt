@@ -1,0 +1,6 @@
+HOW TO RETURN GREET name:
+   WRITE "Hello, ", name, "!" /
+
+WRITE "Enter your name: "
+READ name TXT
+GREET name

@@ -29,6 +29,17 @@ export interface InfluenceEdge extends Edge {
     to: IdType;
 }
 
+// New structure for syntax examples
+export interface SyntaxSnippet {
+    title: string;
+    code: string;
+    languageAlias?: string; // Optional: override main language for this snippet
+}
+
+export interface LanguageSyntax {
+    [language: string]: SyntaxSnippet[];
+}
+// Old type, can be removed if LanguageSyntax is used everywhere
 export interface SyntaxData {
     [language: string]: string;
 }
@@ -81,6 +92,12 @@ export type VisDataSetNodes = InstanceType<
 export type VisDataSetEdges = InstanceType<
     typeof VisDataSetConstructor<InfluenceEdge, 'id'>
 >;
+
+// Highlighted node info for sidebar
+export interface HighlightedNodeInfo {
+    id: IdType;
+    label: string;
+}
 
 declare global {
     interface Window {

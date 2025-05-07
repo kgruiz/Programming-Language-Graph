@@ -1,0 +1,11 @@
+package main
+import "core:fmt"
+My_Context :: struct { user_id: int }
+do_something_with_context :: proc "contextless" () {
+    fmt.printf("Doing something for user %d\n", context.user_id)
+}
+main :: proc() {
+    my_ctx := My_Context{ user_id = 123 }; context = my_ctx
+    do_something_with_context()
+    fmt.println("Context example finished.")
+}

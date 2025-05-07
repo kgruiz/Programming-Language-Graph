@@ -1,0 +1,18 @@
+(define-condition my-custom-error (error)
+  ((text :initarg :text :reader text)))
+
+(defun risky-operation (x)
+  (cond ((< x 0) (error my-custom-error :text "Input cannot be negative."))
+        ((= x 0) (warn "Input is zero, proceeding with caution."))
+        (t (/ 100 x))))
+
+(defun safe-call-risky (val)
+  (handler-case (let ((result (risky-operation val)))
+                  (format t "Result of risky op with ~a: ~a~%" val result))
+    (my-custom-error (e) (format t "Caught my-custom-error: ~a~%" (text e)))
+    (division-by-zero (e) (format t "Caught division by zero: ~a~%" e))
+    (warning (w) (format t "Caught warning: ~a~%" w) (muffle-warning w))))
+
+(safe-call-risky 10)
+(safe-call-risky 0)
+(safe-call-risky -5)

@@ -1,0 +1,22 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+
+void write_lines_to_file(const std::string& filename, const std::vector<std::string>& lines) {
+    std::ofstream outfile(filename);
+    if (!outfile.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+    for (const auto& line : lines) {
+        outfile << line << std::endl;
+    }
+    std::cout << "Lines written to " << filename << std::endl;
+}
+
+int main() {
+    std::vector<std::string> my_data = {"Line 1", "Line 2: C++", "Line 3: RAII"};
+    write_lines_to_file("cpp_example.txt", my_data);
+    return 0;
+}

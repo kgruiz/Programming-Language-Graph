@@ -1,0 +1,6 @@
+fun square x = x*x; val nums = [1,2,3,4];
+val sq_nums = List.map square nums;
+val prod = List.foldl (op *) 1 nums;
+fun printLInt [] = print "\n" | printLInt (x::xs) = (print(Int.toString x ^ " "); printLInt xs);
+val () = print "Sq Nums: "; val () = printLInt sq_nums;
+val () = print ("Prod: " ^ Int.toString prod ^ "\n");

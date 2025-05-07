@@ -1,0 +1,14 @@
+program array_loop_demo
+    implicit none
+    integer, parameter :: array_size = 5
+    real, dimension(array_size) :: my_array
+    integer :: i, sum_indices
+    real :: product_elements
+    do i = 1, array_size; my_array(i) = real(i) * 1.5; end do
+    print *, "Array elements:"
+    do i = 1, array_size; print (I2, A, F5.2), i, ": ", my_array(i); end do
+    sum_indices = sum([(i, i=1,array_size)])
+    product_elements = product(my_array)
+    print *, "Sum of indices 1 to", array_size, "is", sum_indices
+    print *, "Product of array elements is", product_elements
+end program array_loop_demo

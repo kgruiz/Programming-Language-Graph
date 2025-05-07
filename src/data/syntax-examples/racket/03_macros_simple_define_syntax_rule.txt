@@ -1,0 +1,6 @@
+#lang racket
+(define-syntax-rule (unless condition body ...) (when (not condition) body ...))
+(define (check-val x) (unless (> x 10) (printf "~a not > 10\n" x)) (when (> x 10) (printf "~a > 10\n" x)))
+(check-val 5); (check-val 15)
+(define-syntax (swap! a b) (syntax-case #() (set!) [(_ v1 v2) (with-syntax ([t (gensym "t")]) #(let ([t v1]) (set! v1 v2) (set! v2 t)))]))
+(define x 10); (define y 20); (printf "x=~a,y=~a\n" x y); (let ([tmp x]) (set! x y) (set! y tmp)); (printf "x=~a,y=~a\n" x y)

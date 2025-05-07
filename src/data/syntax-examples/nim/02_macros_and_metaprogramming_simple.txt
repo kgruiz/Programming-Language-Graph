@@ -1,0 +1,6 @@
+import macros
+macro debugPrint(x: untyped): untyped =
+  result = newNimNode(nnkStmtList)
+  result.add newCall(bindSym"echo", newLit(x.repr & " = "))
+  result.add newCall(bindSym"echo", x)
+var a=10; let b="Nim macro"; debugPrint(a*2+5); debugPrint(b)

@@ -1,0 +1,32 @@
+section .data
+    num1 dd 10      ; dword (32-bit integer)
+    num2 dd 20
+    ; result_msg db Result: , 0 (Printing numbers is complex)
+
+section .bss
+    sum_val resd 1 ; reserve dword for sum
+
+section .text
+    global _start
+
+add_numbers: ; edi = first number, esi = second number. Returns sum in eax.
+    push rbp
+    mov rbp, rsp
+    mov eax, edi
+    add eax, esi
+    pop rbp
+    ret
+
+_start:
+    mov edi, [num1]
+    mov esi, [num2]
+    call add_numbers  ; sum will be in eax
+
+    mov [sum_val], eax ; store sum
+
+    ; Printing sum_val requires int-to-string conversion, then syscall.
+    ; For simplicity, we just exit.
+
+    mov rax, 60
+    xor rdi, rdi
+    syscall

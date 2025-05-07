@@ -1,0 +1,8 @@
+# Mojo 🔥
+# from python import Python
+# fn use_numpy():
+#     try:
+#         let np = Python.import_module("numpy")
+#         let arr = np.array([1,2,3,4]); print("Numpy arr:", arr); print("Sum:", np.sum(arr))
+#     except e: print("Error importing numpy:", e)
+fn main(): print("Mojo can call Python. Conceptual numpy use in comments.")

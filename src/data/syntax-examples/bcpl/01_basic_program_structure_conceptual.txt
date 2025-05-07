@@ -1,0 +1,23 @@
+// BCPL Example (Conceptual - based on its features)
+// BCPL is typeless, all values are machine words.
+
+GET "libhdr.h" // Include standard library header
+
+LET START () BE // Main function
+$(
+  WRITES("Hello, BCPL User!*N") // WRITES for string, *N for newline
+
+  LET X = 10
+  LET Y = 20
+  LET Z = X + Y
+
+  WRITES("Sum of 10 and 20 is: ")
+  WRITEN(Z) // WRITEN for number (integer)
+  WRITES("*N")
+
+  // Conditional
+  IF Z > 25 THEN
+    WRITES("Sum is greater than 25*N")
+  ELSE
+    WRITES("Sum is not greater than 25*N")
+$)

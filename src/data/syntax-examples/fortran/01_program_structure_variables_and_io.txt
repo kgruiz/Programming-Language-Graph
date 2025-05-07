@@ -1,0 +1,15 @@
+program hello_fortran
+    implicit none
+    character(len=30) :: user_name
+    integer :: age
+    real :: pi_val
+    pi_val = 3.14159265
+    print *, "Hello from Fortran!"
+    print *, "Enter your name:"
+    read (*, (A)) user_name
+    print *, "Enter your age:"
+    read (*, *) age
+    print *, "Hello, ", trim(user_name), "!"
+    print *, "You are ", age, " years old."
+    print (A, F8.5), "Value of PI is approximately: ", pi_val
+end program hello_fortran

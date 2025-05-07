@@ -1,0 +1,2 @@
+trait Speak{fn speak(&self)->String;} struct Dog{n:String} impl Speak for Dog{fn speak(&self)->String{format!("{} Woof!",self.n)}} struct Cat{n:String} impl Speak for Cat{fn speak(&self)->String{format!("{} Meow!",self.n)}}
+fn animal_speak<T:Speak>(a:&T){println!("{}",a.speak());} fn main(){let d=Dog{n:"Buddy".to_string()};let c=Cat{n:"Whiskers".to_string()};animal_speak(&d);animal_speak(&c);}

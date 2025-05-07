@@ -1,0 +1,14 @@
+data Shape = Circle Float | Rectangle Float Float deriving (Show)
+area :: Shape -> Float
+area (Circle r) = pi * r * r; area (Rectangle w h) = w * h
+class Describable a where describe :: a -> String
+instance Describable Shape where
+    describe (Circle r) = "A circle with radius " ++ show r
+    describe (Rectangle w h) = "A " ++ show w ++ "x" ++ show h ++ " rectangle"
+instance Describable Int where describe n = "The integer " ++ show n
+main :: IO ()
+main = do
+    let c = Circle 5.0; let r = Rectangle 3.0 4.0
+    putStrLn $ describe c ++ ", Area: " ++ show (area c)
+    putStrLn $ describe r ++ ", Area: " ++ show (area r)
+    putStrLn $ describe (42 :: Int)

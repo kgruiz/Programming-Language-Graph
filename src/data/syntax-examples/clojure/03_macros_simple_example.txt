@@ -1,0 +1,13 @@
+(defmacro unless [condition & body]
+  `(if (not ~condition)
+     (do ~@body)))
+
+(defn check-value [x]
+  (unless (< x 0)
+    (println x "is not negative.")
+    (println "Processing positive value..."))
+  (when (< x 0)
+    (println x "is negative.")))
+
+(check-value 10)
+(check-value -5)

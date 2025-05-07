@@ -1,0 +1,5 @@
+"Smalltalk: Blocks & Collections" |nums evenSq sum| nums:=#(1 2 3 4 5 6).
+Transcript show:Original: ;show:nums;cr.
+evenSq:=(nums select:[:e|e even])collect:[:e|e squared]. Transcript show:EvenSq: ;show:evenSq;cr.
+sum:=nums inject:0 into:[:cur :e|cur+e]. Transcript show:Sum: ;show:sum;cr.
+nums do:[:i|Transcript show:Item: ;show:i;cr].

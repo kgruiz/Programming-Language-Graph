@@ -1,0 +1,15 @@
+# S/R: Data Frame Example
+names <- c("Alice", "Bob", "Charles")
+age <- c(25, 30, 22)
+score <- c(8.5, 9.0, 7.8)
+my_data_frame <- data.frame(Name=names, Age=age, Score=score)
+print("Original Data Frame:")
+print(my_data_frame)
+# Add a new column
+my_data_frame$Eligible <- my_data_frame$Age > 23
+print("With Eligible Column:")
+print(my_data_frame)
+# Subset
+seniors <- subset(my_data_frame, Age >= 30)
+print("Seniors:")
+print(seniors)

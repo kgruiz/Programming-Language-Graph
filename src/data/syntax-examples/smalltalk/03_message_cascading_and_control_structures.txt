@@ -1,0 +1,14 @@
+"Smalltalk: Cascading and Control"
+|aPoint|
+aPoint := Point new. "Assume Point class exists"
+aPoint x: 10; y: 20; yourself. "Cascading messages with ; yourself returns receiver"
+Transcript show: Point: ; show: aPoint; cr.
+
+1 to: 5 do: [ :i |
+  Transcript show: Loop iteration: ; show: i; cr.
+  (i > 3) ifTrue: [ Transcript show:   (greater than 3); cr ].
+].
+
+(Array new: 3) at: 1 put: apple; at: 2 put: banana; at: 3 put: cherry; yourself.
+"The array is created and populated, then returned by yourself"
+Transcript show: Array created with cascading puts.; cr.

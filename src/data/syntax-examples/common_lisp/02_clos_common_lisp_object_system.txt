@@ -1,0 +1,20 @@
+(defclass shape ()
+  ((color :initarg :color :accessor shape-color :initform "unknown")))
+
+(defclass circle (shape)
+  ((radius :initarg :radius :accessor circle-radius)))
+
+(defmethod area ((c circle))
+  (* pi (expt (circle-radius c) 2)))
+
+(defmethod describe-object ((s shape)) ; Changed from describe to avoid conflict
+  (format nil "A ~a shape." (shape-color s)))
+
+(defmethod describe-object ((c circle))
+  (format nil "A ~a circle with radius ~,2f and area ~,2f."
+          (shape-color c)
+          (circle-radius c)
+          (area c)))
+
+(let ((my-circle (make-instance circle :radius 5.0 :color "red")))
+  (print (describe-object my-circle)))

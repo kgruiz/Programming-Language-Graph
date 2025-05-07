@@ -1,0 +1,10 @@
+% MATLAB Script calling a function
+%{
+% function [meanVal, stdVal] = calculateStats(dataVector)
+%   meanVal = mean(dataVector); stdVal = std(dataVector);
+% end
+%}
+data = [10,15,12,18,13]; disp("Data:"); disp(data);
+% [avg, stdev] = calculateStats(data); % Assuming calculateStats.m exists
+% fprintf("Mean: %.2f, StdDev: %.2f\\n", avg, stdev);
+disp("Mean (manual):"); disp(mean(data));

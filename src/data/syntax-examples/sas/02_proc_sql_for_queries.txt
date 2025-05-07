@@ -1,0 +1,6 @@
+* SAS Example: PROC SQL;
+PROC SQL; CREATE TABLE work.high_scorers AS
+SELECT Name, Score, AgeGroup FROM work.mydata WHERE Score > 80 ORDER BY Score DESC; QUIT;
+PROC PRINT DATA=work.high_scorers; TITLE "High Scorers"; RUN;
+PROC SQL; SELECT AgeGroup, AVG(Score) AS AvgScore, COUNT(*) AS NumPeople
+FROM work.mydata GROUP BY AgeGroup; QUIT;

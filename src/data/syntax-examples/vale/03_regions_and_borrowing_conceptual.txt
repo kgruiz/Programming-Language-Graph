@@ -1,0 +1,17 @@
+// Vale Regions and Borrowing (Highly Conceptual)
+// Vale uses regions to manage memory and ensure safety without a GC or complex lifetimes.
+// func process_data(data: ®ionA MyData, other_data: ®ionB OtherData) {
+//   // ... operations on data ...
+//   // Compiler checks that borrows do not outlive their regions
+//   // and that references across regions are handled safely.
+// }
+// exported func main() {
+//   regionA {
+//     d = MyData(...);
+//     regionB {
+//       od = OtherData(...);
+//       process_data(&d, &od);
+//     } // od is deallocated here
+//   } // d is deallocated here
+// }
+println("Vale regions provide memory safety (conceptual example).");

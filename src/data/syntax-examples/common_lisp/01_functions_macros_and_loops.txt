@@ -1,0 +1,19 @@
+(defun factorial (n)
+  (if (<= n 1)
+      1
+      (* n (factorial (- n 1)))))
+
+(defmacro with-gensyms ((&rest names) &body body)
+  `(let ,(loop for n in names collect `(,n (gensym)))
+     ,@body))
+
+(defun demo-loop (limit)
+  (loop for i from 1 to limit
+        do (format t "Number: ~a, Factorial: ~a~%" i (factorial i)))
+  (format t "Loop finished.~%"))
+
+(format t "Hello from Common Lisp!~%")
+(demo-loop 5)
+
+(with-gensyms (x y)
+  (format t "Generated symbols: ~a, ~a~%" x y))

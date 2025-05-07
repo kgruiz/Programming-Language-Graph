@@ -1,0 +1,16 @@
+function max(a, b) {
+    return (a > b) ? a : b
+}
+
+function format_user(username, score, level) {
+    return sprintf("User: %-10s | Score: %5d | Level: %d", username, score, level)
+}
+
+BEGIN {
+    num1 = 10
+    num2 = 20
+    print "Max of", num1, "and", num2, "is", max(num1, num2)
+
+    print format_user("Player1", 1500, 5)
+    print format_user("SuperUser", 99999, 99)
+}

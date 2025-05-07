@@ -1,0 +1,30 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Product { public string Name { get; set; } public double Price { get; set; } }
+
+public class LinqDemo
+{
+    public static void Main(string[] args)
+    {
+        List<Product> products = new List<Product>
+        {
+            new Product { Name = "Laptop", Price = 1200.00 },
+            new Product { Name = "Mouse", Price = 25.00 },
+            new Product { Name = "Keyboard", Price = 75.00 },
+            new Product { Name = "Monitor", Price = 300.00 }
+        };
+
+        var expensiveProducts = from p in products
+                                where p.Price > 100.00
+                                orderby p.Name
+                                select new { p.Name, DiscountPrice = p.Price * 0.9 };
+
+        Console.WriteLine("Expensive Products (with 10% discount):");
+        foreach (var product in expensiveProducts)
+        {
+            Console.WriteLine($"  {product.Name}: ${product.DiscountPrice:F2}");
+        }
+    }
+}

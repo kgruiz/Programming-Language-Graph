@@ -1,0 +1,7 @@
+import asyncio
+async def fetch_data(src, delay): print(f"Fetch {src}..."); await asyncio.sleep(delay); return f"Data from {src}"
+async def main_async():
+    t1=asyncio.create_task(fetch_data("API1",0.2)); t2=asyncio.create_task(fetch_data("API2",0.1))
+    d1=await t1; d2=await t2; print(d1); print(d2)
+# asyncio.run(main_async())
+print("Async example defined. Call asyncio.run(main_async())")

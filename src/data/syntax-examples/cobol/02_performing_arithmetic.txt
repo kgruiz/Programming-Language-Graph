@@ -1,0 +1,25 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ARITHMETICDEMO.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01 NUM1               PIC 9(4) VALUE 1234.
+       01 NUM2               PIC 9(4) VALUE 5678.
+       01 SUM-RESULT         PIC 9(5).
+       01 PRODUCT-RESULT     PIC 9(8).
+       01 DISPLAY-SUM        PIC ZZZZ9.
+       01 DISPLAY-PRODUCT    PIC ZZZ,ZZZ,ZZ9.
+
+       PROCEDURE DIVISION.
+       CALCULATE-VALUES.
+           COMPUTE SUM-RESULT = NUM1 + NUM2.
+           MULTIPLY NUM1 BY NUM2 GIVING PRODUCT-RESULT.
+
+           MOVE SUM-RESULT TO DISPLAY-SUM.
+           MOVE PRODUCT-RESULT TO DISPLAY-PRODUCT.
+
+           DISPLAY "Number 1: " NUM1.
+           DISPLAY "Number 2: " NUM2.
+           DISPLAY "Sum: " DISPLAY-SUM.
+           DISPLAY "Product: " DISPLAY-PRODUCT.
+
+           STOP RUN.

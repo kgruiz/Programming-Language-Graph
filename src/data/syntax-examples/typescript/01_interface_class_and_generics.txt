@@ -1,0 +1,4 @@
+interface Box<T> { content: T; } interface GreeterOpts { name: string; punct?: string; }
+class Greeter { private name:string; private punct:string; constructor(opt:GreeterOpts){this.name=opt.name;this.punct=opt.punct||"!";}
+  greet(loud=false):string{const msg=loud?`HELLO, ${this.name.toUpperCase()}${this.punct}`:`Hello, ${this.name}${this.punct}`;console.log(msg);return msg;}
+} const g=new Greeter({name:"TS User"});g.greet(); let nBox:Box<number>={content:42};console.log(nBox.content);

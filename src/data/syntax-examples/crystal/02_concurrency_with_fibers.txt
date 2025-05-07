@@ -1,0 +1,19 @@
+# Requires "fiber"
+ch = Channel(String).new # Unbuffered channel
+
+spawn do
+  puts "Fiber 1: Starting work..."
+  sleep 1.second
+  ch.send "Data from Fiber 1"
+  puts "Fiber 1: Sent data."
+end
+
+spawn do
+  puts "Fiber 2: Waiting for data..."
+  message = ch.receive
+  puts "Fiber 2: Received #{message}"
+end
+
+puts "Main: Fibers spawned."
+sleep 2.seconds # Allow fibers to run
+puts "Main: Done."

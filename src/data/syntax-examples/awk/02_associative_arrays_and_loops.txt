@@ -1,0 +1,15 @@
+# Count word frequencies
+# Input: one word per line or space-separated words
+
+{
+    for (i = 1; i <= NF; i++) { # NF is Number of Fields
+        word_counts[$i]++
+    }
+}
+
+END {
+    print "Word Frequencies:"
+    for (word in word_counts) {
+        printf "%s: %d\n", word, word_counts[word]
+    }
+}

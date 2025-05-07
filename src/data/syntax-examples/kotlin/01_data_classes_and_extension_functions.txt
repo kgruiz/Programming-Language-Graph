@@ -1,0 +1,8 @@
+data class User(val name: String, val age: Int)
+fun String.shout(): String = this.uppercase() + "!!!"
+fun main() {
+    val user1 = User("Alice", 30); val user2 = user1.copy(name = "Alicia")
+    println(user1); println(user2)
+    println("Kotlin".shout())
+    val (name, age) = user1; println("Destructured: Name = $name, Age = $age")
+}

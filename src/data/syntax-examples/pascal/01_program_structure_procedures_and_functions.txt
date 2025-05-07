@@ -1,0 +1,10 @@
+program HelloPascal;
+uses Crt;
+var userName: string; userAge: integer;
+procedure GreetUser(name: string; age: integer); begin WriteLn(Hello, , name, ! You are , age,  years old.); end;
+function CalculateBirthYear(currentYear: integer; age: integer): integer; begin CalculateBirthYear := currentYear - age; end;
+begin ClrScr; Write(Name: ); ReadLn(userName); Write(Age: ); ReadLn(userAge);
+  GreetUser(userName, userAge);
+  WriteLn(Born around: , CalculateBirthYear(2024, userAge));
+  WriteLn(Press key...); ReadKey;
+end.

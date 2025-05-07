@@ -1,0 +1,3 @@
+protocol Desc{func d()->String} extension Int:Desc{func d()->String{return"Num \(self)"}}
+struct Prod:Desc{var n:String;var p:Double;func d()->String{return"\(n)-$\(p)"}}
+let items:[Desc]=[5,Prod(n:"Lap",p:1200)]; for i in items{print(i.d())}

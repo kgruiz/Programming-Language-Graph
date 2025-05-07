@@ -1,0 +1,9 @@
+% Facts: parent(Parent, Child). male(Person). female(Person).
+parent(john, mary). parent(john, tom). female(susan). parent(susan, mary).
+male(john). male(tom). female(mary).
+% Rules
+grandparent(GP, GC) :- parent(GP, P), parent(P, GC).
+father(F, C) :- parent(F, C), male(F).
+% Queries (in Prolog interpreter):
+% ?- grandparent(john, X).
+% ?- father(john, mary).

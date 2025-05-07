@@ -1,0 +1,8 @@
+⍝ Define a function to average a vector
+⍝ Function name: Avg
+⍝ Argument: V (a vector)
+Avg ← { (+/⍵) ÷ (⍴⍵)[0] } ⍝ ⍵ is right argument, [0] for first element of shape if multi-dim
+
+MY_DATA ← 10 20 30 40
+RESULT ← Avg MY_DATA
+RESULT ⍝ Output: 25

@@ -1,0 +1,15 @@
+<?php
+namespace App\\Utils;
+
+class Greeter {
+    private string $name;
+    public function __construct(string $name) { $this->name = $name; }
+    public function greet(bool $loud = false): string {
+        $message = "Hello, {$this->name} from PHP!";
+        return $loud ? strtoupper($message) : $message;
+    }
+}
+$g = new Greeter("PHP User");
+echo $g->greet() . "\n";
+echo $g->greet(true) . "\n";
+?>

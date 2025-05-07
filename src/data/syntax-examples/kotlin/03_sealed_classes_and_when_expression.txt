@@ -1,0 +1,15 @@
+sealed class NetworkResult {
+    data class Success(val data: String) : NetworkResult()
+    data class Error(val code: Int, val message: String) : NetworkResult()
+    object Loading : NetworkResult()
+}
+fun handleResult(result: NetworkResult): String = when (result) {
+    is NetworkResult.Success -> "Success! Data: ${result.data}"
+    is NetworkResult.Error -> "Error ${result.code}: ${result.message}"
+    NetworkResult.Loading -> "Loading data..."
+}
+fun main() {
+    println(handleResult(NetworkResult.Success("User data")))
+    println(handleResult(NetworkResult.Error(404, "Not found")))
+    println(handleResult(NetworkResult.Loading))
+}

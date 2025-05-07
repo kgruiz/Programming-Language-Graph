@@ -1,0 +1,15 @@
+⍝ APL Example (using textual representation for glyphs)
+⍝ Assign a vector
+VEC ← 1 2 3 4 5
+
+⍝ Sum of vector (glyph: +/)
+SUM_VEC ← +/VEC
+SUM_VEC  ⍝ Output: 15 (in APL environment)
+
+⍝ Shape of vector (glyph: ρ)
+SHAPE_VEC ← ⍴VEC
+SHAPE_VEC ⍝ Output: 5
+
+⍝ Reverse vector (glyph: ⌽)
+REV_VEC ← ⌽VEC
+REV_VEC ⍝ Output: 5 4 3 2 1

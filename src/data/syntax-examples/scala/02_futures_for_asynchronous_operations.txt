@@ -1,0 +1,8 @@
+import scala.concurrent._; import ExecutionContext.Implicits.global; import scala.concurrent.duration._; import scala.util._
+object FutureDemo extends App {
+  def fetchData(src:String,delay:Long):Future[String]=Future{Thread.sleep(delay);if(src=="bad")throw new Exception("API Err!");s"Data $src"}
+  val f1=fetchData("A",100); val f2=fetchData("B",50); val fb=fetchData("bad",20)
+  val combo=for{d1<-f1;d2<-f2}yield s"$d1 & $d2"; combo.onComplete{case Success(r)=>println(s"Res: $r") case Failure(ex)=>println(s"Fail: ${ex.getMessage}")}
+  fb.recover{case e:Exception=>s"Recovered: ${e.getMessage}"}.foreach(r=>println(s"Bad API res: $r"))
+  Await.result(Future.sequence(List(combo.recover{case _=>""},fb.recover{case _=>""})),2.seconds); println("App fin.")
+}

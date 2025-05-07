@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+# _mycommand() { local -a cmds; cmds=(start:Start stop:Stop); _describe cmd cmds }
+# compdef _mycommand mycommand
+# To test: mycommand <TAB>
+echo "Zsh completion definition example (conceptual)."

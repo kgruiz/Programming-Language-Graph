@@ -1,0 +1,2 @@
+[1,2,3].each { |n| puts "Num: #{n*2}" }; ts=Proc.new{|x|x*2}; puts "Proc: #{ts.call(10)}"; gr=->(n){"Hi, #{n}!"}; puts "Lambda: #{gr.call("Rubyist")}"
+def apply(a,b,op) op.call(a,b) end; sum=->(x,y){x+y}; puts "Apply: #{apply(5,3,sum)}"

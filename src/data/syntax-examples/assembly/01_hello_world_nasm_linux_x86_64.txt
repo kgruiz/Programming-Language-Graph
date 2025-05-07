@@ -1,0 +1,19 @@
+section .data
+    hello_msg db Hello, Assembly!, 0Ah ; 0Ah is newline
+    hello_len equ $ - hello_msg
+
+section .text
+    global _start
+
+_start:
+    ; write(stdout, message, length)
+    mov rax, 1        ; syscall number for sys_write
+    mov rdi, 1        ; file descriptor 1 (stdout)
+    mov rsi, hello_msg ; pointer to message
+    mov rdx, hello_len ; message length
+    syscall           ; call kernel
+
+    ; exit(0)
+    mov rax, 60       ; syscall number for sys_exit
+    xor rdi, rdi      ; exit code 0
+    syscall           ; call kernel

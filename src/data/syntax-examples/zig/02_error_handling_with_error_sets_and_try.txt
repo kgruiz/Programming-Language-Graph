@@ -1,0 +1,5 @@
+const std=@import("std");
+const FileOpenError=error{AccessDenied,FileNotFound,SystemResources}; const DataProcessError=error{InvalidFormat,CalculationError}||FileOpenError;
+fn readFile(a:std.mem.Allocator,p:[]const u8)DataProcessError![]const u8{if(std.mem.eql(u8,p,"bad.txt")){return FileOpenError.FileNotFound;};const d=try a.dupe(u8,"OkData");if(std.mem.indexOf(u8,d,"inv")){return DataProcessError.InvalidFormat;};return d;}
+pub fn main()!void{var gpa=std.heap.GeneralPurposeAllocator(.{}){};defer _=gpa.deinit();const alloc=gpa.allocator();const stdout=std.io.getStdOut().writer();
+const paths=[_][]const u8{"good.txt","bad.txt","data_inv.txt"};for(paths)|pth|{const res=readFile(alloc,pth)catch|err|{try stdout.print("Err {s}:{s}\n",.{pth,@errorName(err)});continue;};try stdout.print("OK {s}:{s}\n",.{pth,res});alloc.free(res);}}

@@ -1,0 +1,23 @@
+begin
+    comment Jensens Device example for sum;
+    real procedure sum(i, lower, upper, term);
+        value lower, upper; comment i and term are by name;
+        integer i, lower, upper;
+        real term;
+    begin
+        real temp_sum;
+        temp_sum := 0;
+        for i := lower step 1 until upper do
+            temp_sum := temp_sum + term;
+        sum := temp_sum;
+    end sum;
+
+    real array A[1:5];
+    integer k;
+    A[1] := 1.0; A[2] := 2.5; A[3] := 3.0; A[4] := 1.5; A[5] := 4.0;
+
+    outreal(1, sum(k, 1, 5, A[k])); comment Sums elements of A;
+    newline(1);
+    outreal(1, sum(k, 1, 3, k*k)); comment Sums squares 1*1 + 2*2 + 3*3;
+    newline(1);
+end

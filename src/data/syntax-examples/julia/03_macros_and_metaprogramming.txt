@@ -1,0 +1,9 @@
+macro debug_expr(expr)
+    return esc(quote
+        local val = $(expr)
+        println("Expr: ", $(string(expr)), ", Type: ", typeof(val), ", Val: ", val)
+        val
+    end)
+end
+function calculation(a,b) x=a+b; y=@debug_expr x*2; z=@debug_expr sin(y/(a+0.001)); return z; end
+calculation(5,3)

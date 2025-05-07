@@ -1,0 +1,6 @@
+;; Common Lisp style macro
+(defmacro unless (condition &body body) `(if (not ,condition) (progn ,@body)))
+(defun check-number (x)
+  (unless (> x 0) (format t "~a is not positive.~%" x))
+  (when (> x 0) (format t "~a is positive.~%" x)))
+(check-number 10) (check-number -5)

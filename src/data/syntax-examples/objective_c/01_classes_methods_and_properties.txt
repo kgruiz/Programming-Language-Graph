@@ -1,0 +1,15 @@
+#import <Foundation/Foundation.h>
+@interface Greeter : NSObject
+@property (nonatomic, strong) NSString *name;
+- (instancetype)initWithName:(NSString *)name; - (void)greetLoudly:(BOOL)loud;
+@end
+@implementation Greeter
+- (instancetype)initWithName:(NSString *)name { self = [super init]; if (self) { _name = name; } return self; }
+- (void)greetLoudly:(BOOL)loud {
+    NSString *greeting = loud ? [NSString stringWithFormat:@"HELLO, %@!", [self.name uppercaseString]] : [NSString stringWithFormat:@"Hello, %@!", self.name];
+    NSLog(@"%@", greeting);
+} @end
+int main(int argc, const char * argv[]) { @autoreleasepool {
+    Greeter *g = [[Greeter alloc] initWithName:@"Obj-C User"]; [g greetLoudly:NO]; [g greetLoudly:YES];
+    g.name = @"ObjC Fan"; NSLog(@"Name: %@", g.name);
+} return 0; }

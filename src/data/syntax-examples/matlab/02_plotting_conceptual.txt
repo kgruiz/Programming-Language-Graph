@@ -1,0 +1,5 @@
+% MATLAB Plotting Example (Conceptual)
+x = 0:0.1:2*pi; y1 = sin(x); y2 = cos(x);
+% figure; plot(x,y1,"r-",x,y2,"b--");
+% title("Sine and Cosine"); xlabel("x"); ylabel("y"); legend("sin(x)","cos(x)"); grid on;
+disp("Plotting commands defined (visual output in MATLAB).");

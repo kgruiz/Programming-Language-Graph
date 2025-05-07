@@ -1,0 +1,31 @@
+package Counter_Package is
+   task type Counter_Task is
+      entry Increment;
+      entry Get_Value (Value : out Integer);
+   end Counter_Task;
+end Counter_Package;
+
+package body Counter_Package is
+   task body Counter_Task is
+      Current_Value : Integer := 0;
+   begin
+      loop
+         select
+            accept Increment do
+               Current_Value := Current_Value + 1;
+            end Increment;
+         or
+            accept Get_Value (Value : out Integer) do
+               Value := Current_Value;
+            end Get_Value;
+         or
+            terminate;
+         end select;
+      end loop;
+   end Counter_Task;
+end Counter_Package;
+
+-- Usage (conceptual, needs a main procedure)
+-- with Counter_Package; use Counter_Package;
+-- My_Counter : Counter_Task;
+-- My_Counter.Increment;

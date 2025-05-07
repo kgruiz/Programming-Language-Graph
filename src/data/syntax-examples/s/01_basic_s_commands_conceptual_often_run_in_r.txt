@@ -1,0 +1,7 @@
+# S Language Example (often compatible with R)
+x <- c(1, 2, 3, 4, 5); y <- x * 2
+print("Vector x:"); print(x); print("Vector y (x*2):"); print(y)
+mean_x <- mean(x); sum_y <- sum(y)
+cat("Mean of x:", mean_x, "\n"); cat("Sum of y:", sum_y, "\n")
+my_function <- function(arg1, arg2=10) { result <- arg1 + arg2*2; return(result) }
+print(my_function(5)); print(my_function(5, 3))

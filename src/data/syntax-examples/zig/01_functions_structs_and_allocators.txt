@@ -1,0 +1,5 @@
+const std=@import("std");
+const Point=struct{x:i32,y:i32,pub fn init(xv:i32,yv:i32)Point{return Point{.x=xv,.y=yv};} pub fn print(s:Point,w:anytype)!void{try w.print("P(x:{},y:{})\n",.{s.x,s.y});}};
+pub fn main()!void{var gpa=std.heap.GeneralPurposeAllocator(.{}){};defer _=gpa.deinit();const alloc=gpa.allocator();
+var p1=try alloc.create(Point);defer alloc.destroy(p1);p1.*=Point.init(10,20);
+const stdout=std.io.getStdOut().writer();try p1.print(stdout);var p2=Point.init(3,4);try p2.print(stdout);}

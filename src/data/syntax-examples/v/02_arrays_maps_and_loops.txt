@@ -1,0 +1,4 @@
+module main
+fn main(){ mut nums:=[1,2,3,4,5]; println("Nums: ${nums}"); nums<<6; mut sum:=0; for num in nums{sum+=num}; println("Sum: ${sum}")
+  mut ages:=map[string]int{}; ages["Alice"]=30; ages["Bob"]=24; println("Ages: ${ages}"); for name,age in ages{println("${name} is ${age}")}
+}

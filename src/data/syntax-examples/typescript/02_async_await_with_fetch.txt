@@ -1,0 +1,2 @@
+async function fetchTodoTitle(id:number):Promise<string|null>{try{const r=await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`);if(!r.ok)throw new Error(`HTTP ${r.status}`);const t=await r.json()as{title:string};return t.title;}catch(e){console.error("Fail:",e);return null;}}
+async function main(){const title=await fetchTodoTitle(1);if(title)console.log("Todo 1:",title);} main();

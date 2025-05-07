@@ -1,0 +1,12 @@
+# Thompson Shell Control Flow (Highly Conceptual)
+# Original shell had very basic control flow, often using goto.
+# This is a modern interpretation of what might have been.
+
+# if (condition) command
+# goto label
+
+# : label
+# command
+
+echo "Thompson shell control flow was rudimentary."
+echo "Modern shells offer much more sophisticated structures."

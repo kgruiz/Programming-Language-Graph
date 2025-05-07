@@ -1,0 +1,13 @@
+# Process a CSV-like string: name,age,city
+# Input data (can be piped or from a file)
+# Alice,30,New York
+# Bob,24,London
+
+BEGIN { FS=","; OFS="\t"; print "Name", "Age", "City (Processed)" }
+{
+    name = $1
+    age = $2
+    city = $3
+    printf "%s\t%d\t%s (lives in %s)\n", name, age, city, city
+}
+END { print "--- End of report ---" }

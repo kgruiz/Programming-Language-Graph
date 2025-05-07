@@ -1,0 +1,5 @@
+function createCounter() local count = 0; return function() count = count + 1; return count end end
+local c1 = createCounter(); local c2 = createCounter()
+print("C1:", c1(), c1()); print("C2:", c2())
+function greet(name, formatter) formatter = formatter or function(n) return "Hello, "..n.."!" end; print(formatter(name)) end
+greet("World"); greet("Lua", function(n) return string.upper(n).." ROCKS!" end)

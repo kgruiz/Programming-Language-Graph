@@ -1,0 +1,22 @@
+/* B Language Example (Conceptual - based on C) */
+/* B was typeless, variables were machine words. */
+
+extrn putstr; /* External function to print string */
+extrn putchar; /* External function to print char */
+/* extrn tonum;   Hypothetical string to number */
+
+main() {
+  auto name[20]; /* Auto variable on stack */
+  /* auto age_str[5]; */
+  /* auto age_val; */
+
+  putstr("Enter your name: ");
+  /* gets(name); hypothetical input function */
+  name = "B User"; /* String assignment was complex, this is simplified */
+
+  putstr("Hello, ");
+  putstr(name);
+  putchar(*n); /* Newline character */
+
+  putstr("Age is (conceptually): 30*n");
+}

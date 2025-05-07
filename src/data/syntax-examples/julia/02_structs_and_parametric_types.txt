@@ -1,0 +1,7 @@
+struct Point{T<:Real} x::T; y::T; end
+function distance_from_origin(p::Point) sqrt(p.x^2 + p.y^2) end
+function add_points(p1::Point{T}, p2::Point{T}) where T Point(p1.x+p2.x, p1.y+p2.y) end
+p1_int = Point(3,4); p2_float = Point(1.0, 2.5)
+println("P1 Int: $p1_int, Dist: $(distance_from_origin(p1_int))")
+p3_int = Point(1,1); p_sum_int = add_points(p1_int, p3_int)
+println("Sum P1 & P3: $p_sum_int")

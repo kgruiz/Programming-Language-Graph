@@ -1,0 +1,10 @@
+<?php
+$fruits = ["apple", "banana", "cherry"];
+$assoc_array = ["name" => "PHP Dev", "skills" => ["PHP", "SQL"], "exp" => 5];
+echo "First fruit: " . $fruits[0] . "\n";
+echo "User name: " . $assoc_array["name"] . "\n";
+$json_output = json_encode($assoc_array, JSON_PRETTY_PRINT);
+echo "JSON output:\n" . $json_output . "\n";
+$json_input = {"city":"New York"}; $decoded = json_decode($json_input, true);
+echo "Decoded city: " . $decoded["city"] . "\n";
+?>

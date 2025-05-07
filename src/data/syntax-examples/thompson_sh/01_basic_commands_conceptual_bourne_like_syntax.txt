@@ -1,0 +1,6 @@
+# Thompson Shell (Conceptual, using modern Bourne-like syntax)
+ls
+echo "Hello from Thompson Shell (conceptually)"
+# ls > file_list.txt
+# ls | wc -l
+# Variable assignment was not like modern shells.

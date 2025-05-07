@@ -1,0 +1,13 @@
+defmodule MyMath do
+  def add(a, b), do: a + b
+  def square(x), do: x * x
+end
+defmodule Greeter do
+  def greet(name, loud \\ false) do
+    message = "Hello, #{name}!"
+    if loud, do: String.upcase(message), else: message
+  end
+end
+IO.puts Greeter.greet("Elixir User")
+result = 5 |> MyMath.add(3) |> MyMath.square() |> (&("Final: #{&1}")).()
+IO.puts result

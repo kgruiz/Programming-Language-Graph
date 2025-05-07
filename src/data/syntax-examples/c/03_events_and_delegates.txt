@@ -1,0 +1,37 @@
+using System;
+
+public class EventPublisher
+{
+    public delegate void ValueChangedEventHandler(object sender, ValueChangedEventArgs e);
+    public event ValueChangedEventHandler ValueChanged;
+
+    private int _value;
+    public int Value
+    {
+        get { return _value; }
+        set {
+            if (_value != value) {
+                _value = value;
+                OnValueChanged(new ValueChangedEventArgs(_value));
+            }
+        }
+    }
+    protected virtual void OnValueChanged(ValueChangedEventArgs e) {
+        ValueChanged?.Invoke(this, e);
+    }
+}
+public class ValueChangedEventArgs : EventArgs { public int NewValue { get; } public ValueChangedEventArgs(int val) { NewValue = val; } }
+
+public class EventSubscriber { public void HandleValueChanged(object sender, ValueChangedEventArgs e) { Console.WriteLine($"Subscriber: Value changed to {e.NewValue}"); } }
+
+public class EventDemo {
+    public static void Main() {
+        var publisher = new EventPublisher();
+        var subscriber = new EventSubscriber();
+        publisher.ValueChanged += subscriber.HandleValueChanged;
+        publisher.Value = 10;
+        publisher.Value = 20;
+        publisher.ValueChanged -= subscriber.HandleValueChanged;
+        publisher.Value = 30;
+    }
+}

@@ -1,0 +1,9 @@
+func fetchData(from urlStr: String) async throws -> Data {
+    guard let url = URL(string: urlStr) else { throw URLError(.badURL) }
+    let (data, resp) = try await URLSession.shared.data(from: url)
+    guard (resp as? HTTPURLResponse)?.statusCode==200 else {throw URLError(.badServerResponse)}
+    return data
+}
+Task { do { let d = try await fetchData(from:"https://jsonplaceholder.typicode.com/todos/1")
+    if let js=String(data:d,encoding:.utf8){print("Fetched(100):\(js.prefix(100))...")}}
+    catch{print("Err:\(error)")}}

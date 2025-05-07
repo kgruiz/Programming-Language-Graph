@@ -1,0 +1,8 @@
+* Stata Example: Generating variables and regression
+* sysuse auto, clear
+* generate weight_thou = weight / 1000
+* label variable weight_thou "Weight (1000s lbs)"
+* regress price mpg weight_thou
+* estimates store mymodel
+* estimates table mymodel, b(%9.3f) se(%9.3f) t(%9.2f) p(%9.3f) stats(N r2_a)
+display "Stata: generate, regress (conceptual)."

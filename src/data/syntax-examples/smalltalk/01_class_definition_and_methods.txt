@@ -1,0 +1,6 @@
+"Smalltalk Example: Class and Methods"
+Object subclass: #Greeter instanceVariableNames: name classVariableNames:  poolDictionaries:  category: MyExamples
+Greeter methodsFor: init! initializeWithName:aS name:=aS !!
+Greeter methodsFor: actions! greetLoud:loud |msg| msg:=Hello, ,name, from Smalltalk!. loud ifTrue:[msg:=msg asUppercase]. Transcript show:msg;cr !!
+Greeter class methodsFor: creation! withName:aS ^self new initializeWithName:aS !!
+|g| g:=Greeter withName:ST User. g greetLoud:false. g greetLoud:true.

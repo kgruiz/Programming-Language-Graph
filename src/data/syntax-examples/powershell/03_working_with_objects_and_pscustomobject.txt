@@ -1,0 +1,5 @@
+$services = Get-Service | Where-Object {$_.Status -eq "Running"} | Select-Object -First 2
+Write-Host "Running Services:"; $services | ForEach-Object { Write-Host ("  Name: {0}" -f $_.Name) }
+$customUser = [PSCustomObject]@{ UserID="usr123"; UserName="Sample"; Roles=@("Reader"); LastLogin=(Get-Date).AddDays(-1) }
+Write-Host "\nCustom User:"; $customUser | Format-List *
+Write-Host ("User {0} roles: {1}" -f $customUser.UserName, ($customUser.Roles -join ", "))

@@ -1,0 +1,19 @@
+class Greeter
+  getter name : String
+
+  def initialize(@name : String)
+  end
+
+  def greet(loud : Bool = false)
+    if loud
+      puts "HELLO, #{@name.upcase}!"
+    else
+      puts "Hello, #{@name}"
+    end
+  end
+end
+
+g = Greeter.new("Crystal User")
+g.greet
+g.greet(loud: true)
+puts "My name is: #{g.name}"

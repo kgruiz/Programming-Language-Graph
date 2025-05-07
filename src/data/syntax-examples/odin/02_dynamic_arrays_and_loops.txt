@@ -1,0 +1,8 @@
+package main
+import "core:fmt"
+main :: proc() {
+    numbers: [5]int; for i in 0..<len(numbers) { numbers[i] = (i+1)*10 }
+    fmt.println("Numbers array:"); for &num in numbers { fmt.printf("%d ", num) } fmt.println()
+    slice_of_numbers := numbers[1:4]; fmt.println("Slice (numbers[1:4]):")
+    for &val in slice_of_numbers { fmt.printf("%d ", val) } fmt.println()
+}

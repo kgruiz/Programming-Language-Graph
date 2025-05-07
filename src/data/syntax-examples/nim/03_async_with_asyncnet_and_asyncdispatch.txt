@@ -1,0 +1,10 @@
+import asyncnet, asyncdispatch, net, uri
+proc fetchUrlContent(url: string): Future[string] {.async.} =
+  var client = newAsyncHttpClient(); defer: client.close()
+  try:
+    let resp = await client.request(url, HttpGet)
+    if resp.code == Http200: return await resp.body()
+    else: raise newException(OSError, "Failed: " & $resp.code)
+  except CatchableError as e: echo "Error: ", e.msg; return "Error: " & e.msg
+# To run: waitFor fetchUrlContent("https://api.ipify.org?format=json")
+echo "Async HTTP GET example defined."

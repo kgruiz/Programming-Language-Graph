@@ -1,0 +1,21 @@
+MODULE DynamicList;
+FROM Storage IMPORT ALLOCATE, DEALLOCATE;
+FROM InOut IMPORT WriteString, WriteInt, WriteLn;
+TYPE NodePtr = POINTER TO Node;
+     Node = RECORD data: INTEGER; next: NodePtr; END;
+VAR head, newNode: NodePtr; i: INTEGER;
+BEGIN
+  head := NIL;
+  FOR i := 1 TO 3 DO
+    NEW(newNode); (* ALLOCATE(newNode, TSIZE(Node)); *)
+    newNode^.data := i * 10;
+    newNode^.next := head;
+    head := newNode;
+  END;
+  newNode := head;
+  WHILE newNode # NIL DO
+    WriteString("Node data: "); WriteInt(newNode^.data, 0); WriteLn;
+    head := newNode; newNode := newNode^.next;
+    DISPOSE(head); (* DEALLOCATE(head, TSIZE(Node)); *)
+  END;
+END DynamicList.

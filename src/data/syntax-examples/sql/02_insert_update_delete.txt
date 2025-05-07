@@ -1,0 +1,5 @@
+-- SQL Example: DML Operations
+-- INSERT INTO Employees (EmpID, Name, DeptID, Salary) VALUES (103, Eve, 2, 70000);
+-- UPDATE Employees SET Salary = Salary * 1.10 WHERE EmpID = 101;
+-- DELETE FROM Employees WHERE EmpID = 102;
+-- SELECT * FROM Employees;

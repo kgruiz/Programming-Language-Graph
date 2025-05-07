@@ -1,0 +1,8 @@
+NB. J Language Example
+numbers =: 1 2 3 4 5
+sum_numbers =: +/ numbers
+echo sum_numbers  NB. Output: 15
+average =: +/ % #
+echo average numbers NB. Output: 3
+squares =: *: numbers
+echo squares NB. Output: 1 4 9 16 25

@@ -12,16 +12,18 @@ import type {
     Font,
     IdType,
     ArrowHead,
+    HighlightedNodeInfo,
 } from '@/types';
 
 import ControlsComponent from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
 import LoadingIndicator from '@/components/LoadingIndicator';
+import NavigationControls from '@/components/NavigationControls';
 
 import {
     initialNodesData as rawNodes,
     edgeData as rawEdges,
-    syntaxData,
+    syntaxData, // This will now be LanguageSyntax type
     languageRankingsData,
     rankLegend,
     categoryShortToFullName,
@@ -38,6 +40,7 @@ import {
     VisDataSetNodes,
     VisDataSetEdges,
     CategoryShortToFullName as CategoryShortToFullNameType,
+    LanguageSyntax, // Import LanguageSyntax
 } from '@/types';
 import theme from '@/styles/theme';
 
@@ -227,6 +230,7 @@ if (graphOptionsBase.groups) {
 const HomePage: React.FC = () => {
     const [isVisScriptLoaded, setIsVisScriptLoaded] = useState(false);
     const [areDataSetsInitialized, setAreDataSetsInitialized] = useState(false);
+    const [isNetworkReady, setIsNetworkReady] = useState(false);
 
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
     const [selectedHighlightCategory, setSelectedHighlightCategory] =
@@ -234,6 +238,8 @@ const HomePage: React.FC = () => {
     const [activeHighlightType, setActiveHighlightType] = useState<
         'good' | 'bad' | null
     >(null);
+    const [highlightedCategoryNodesList, setHighlightedCategoryNodesList] =
+        useState<HighlightedNodeInfo[] | null>(null);
 
     const [nodesDataSet, setNodesDataSet] = useState<VisDataSetNodes | null>(
         null
@@ -371,6 +377,7 @@ const HomePage: React.FC = () => {
         if (edgeUpdates.length > 0) edgesDataSet.update(edgeUpdates);
 
         setActiveHighlightType(null);
+        setHighlightedCategoryNodesList(null);
     }, [nodesDataSet, edgesDataSet, areDataSetsInitialized]);
 
     const highlightNodeLineage = useCallback(
@@ -525,6 +532,7 @@ const HomePage: React.FC = () => {
 
             const nodeUpdates: Partial<LanguageNode>[] = [];
             const edgeUpdates: Partial<InfluenceEdge>[] = [];
+            const matchedNodesForSidebar: HighlightedNodeInfo[] = [];
 
             allEdgesOriginalStylesRef.current.forEach((origStyle, id) => {
                 edgeUpdates.push({
@@ -577,6 +585,10 @@ const HomePage: React.FC = () => {
                             y: 0,
                         },
                     });
+                    matchedNodesForSidebar.push({
+                        id: node.id,
+                        label: node.labelOriginal,
+                    });
                 } else {
                     nodeUpdates.push({
                         id: node.id,
@@ -593,6 +605,9 @@ const HomePage: React.FC = () => {
             if (nodeUpdates.length > 0) nodesDataSet.update(nodeUpdates);
             if (edgeUpdates.length > 0 && edgesDataSet)
                 edgesDataSet.update(edgeUpdates);
+
+            setHighlightedCategoryNodesList(matchedNodesForSidebar);
+            setSelectedNodeId(null);
         },
         [
             nodesDataSet,
@@ -612,12 +627,14 @@ const HomePage: React.FC = () => {
                 setSelectedNodeId(id as string);
                 highlightNodeLineage(id as string);
                 setActiveHighlightType(null);
+                setHighlightedCategoryNodesList(null);
             } else if (type === 'edge' && id && edgesDataSet && nodesDataSet) {
                 const clickedEdgeId = id;
                 const edge = edgesDataSet.get(clickedEdgeId) as InfluenceEdge;
                 if (edge) {
                     resetAllGraphElementsToOriginalStyle();
                     setActiveHighlightType(null);
+                    setHighlightedCategoryNodesList(null);
 
                     const nodeUpdates: Partial<LanguageNode>[] = [];
                     const edgeUpdates: Partial<InfluenceEdge>[] = [];
@@ -714,7 +731,6 @@ const HomePage: React.FC = () => {
                         edgesDataSet.update(edgeUpdates);
 
                     setSelectedNodeId(null);
-                    setActiveHighlightType(null);
                 }
             } else if (type === 'background') {
                 setSelectedNodeId(null);
@@ -726,6 +742,7 @@ const HomePage: React.FC = () => {
             resetAllGraphElementsToOriginalStyle,
             setSelectedNodeId,
             setActiveHighlightType,
+            setHighlightedCategoryNodesList,
             nodesDataSet,
             edgesDataSet,
         ]
@@ -737,9 +754,10 @@ const HomePage: React.FC = () => {
                 setSelectedNodeId(nodeId as string);
                 highlightNodeLineage(nodeId as string);
                 setActiveHighlightType(null);
+                setHighlightedCategoryNodesList(null);
 
                 networkInstanceRef.current.focus(nodeId, {
-                    scale: 1.2,
+                    scale: networkInstanceRef.current.getScale(),
                     animation: {
                         duration: 800,
                         easingFunction: 'easeInOutQuad',
@@ -751,17 +769,30 @@ const HomePage: React.FC = () => {
             highlightNodeLineage,
             setSelectedNodeId,
             setActiveHighlightType,
+            setHighlightedCategoryNodesList,
             nodesDataSet,
         ]
     );
 
     const handleCloseSidebar = useCallback(() => {
         setSelectedNodeId(null);
+        resetAllGraphElementsToOriginalStyle();
+    }, [resetAllGraphElementsToOriginalStyle]);
+
+    const handleStabilizationDone = useCallback(() => {
+        setIsNetworkReady(true);
     }, []);
 
-    const handleStabilizationDone = useCallback(() => {}, []);
     const setNetwork = useCallback((network: any | null) => {
         networkInstanceRef.current = network;
+        if (network) {
+            const physicsEnabled = network.options?.physics?.enabled !== false;
+            if (!physicsEnabled) {
+                setIsNetworkReady(true);
+            }
+        } else {
+            setIsNetworkReady(false);
+        }
     }, []);
 
     const handleHighlightGood = () => {
@@ -797,25 +828,40 @@ const HomePage: React.FC = () => {
         highlightCategoryNodes,
     ]);
 
-    // Navigation callbacks for custom buttons
     const handleZoomIn = useCallback(() => {
-        // Corrected: Access view methods via network.view
-        networkInstanceRef.current?.view?.zoomIn();
+        if (networkInstanceRef.current) {
+            const currentScale = networkInstanceRef.current.getScale();
+            networkInstanceRef.current.moveTo({
+                scale: currentScale * 1.2,
+                animation: { duration: 300, easingFunction: 'linear' },
+            });
+        }
     }, []);
     const handleZoomOut = useCallback(() => {
-        // Corrected: Access view methods via network.view
-        networkInstanceRef.current?.view?.zoomOut();
+        if (networkInstanceRef.current) {
+            const currentScale = networkInstanceRef.current.getScale();
+            networkInstanceRef.current.moveTo({
+                scale: currentScale / 1.2,
+                animation: { duration: 300, easingFunction: 'linear' },
+            });
+        }
     }, []);
     const handleFit = useCallback(() => {
-        // Corrected: Access view methods via network.view
-        networkInstanceRef.current?.view?.fit();
+        networkInstanceRef.current?.fit({
+            animation: { duration: 600, easingFunction: 'easeInOutQuad' },
+        });
     }, []);
 
     const selectedNodeDetails =
         selectedNodeId && nodesDataSet
             ? (nodesDataSet.get(selectedNodeId as IdType) as LanguageNode)
             : null;
+
     const showLoadingIndicator = !isVisScriptLoaded || !areDataSetsInitialized;
+    const sidebarVisible =
+        !!selectedNodeId ||
+        (!!highlightedCategoryNodesList &&
+            highlightedCategoryNodesList.length > 0);
 
     return (
         <>
@@ -856,7 +902,10 @@ const HomePage: React.FC = () => {
                         onCategoryChange={setSelectedHighlightCategory}
                         onHighlightGood={handleHighlightGood}
                         onHighlightBad={handleHighlightBad}
-                        onResetHighlights={resetAllGraphElementsToOriginalStyle}
+                        onResetHighlights={() => {
+                            resetAllGraphElementsToOriginalStyle();
+                            setSelectedNodeId(null);
+                        }}
                         activeHighlightType={activeHighlightType || undefined}
                     />
                 </ControlsWrapper>
@@ -866,21 +915,31 @@ const HomePage: React.FC = () => {
                         areDataSetsInitialized &&
                         nodesDataSet &&
                         edgesDataSet && (
-                            <GraphComponentWithNoSSR
-                                nodesData={nodesDataSet}
-                                edgesData={edgesDataSet}
-                                options={graphOptionsBase as Options}
-                                onGraphClick={handleGraphClick}
-                                onStabilizationDone={handleStabilizationDone}
-                                setNetworkInstance={setNetwork}
-                            />
+                            <>
+                                <GraphComponentWithNoSSR
+                                    nodesData={nodesDataSet}
+                                    edgesData={edgesDataSet}
+                                    options={graphOptionsBase as Options}
+                                    onGraphClick={handleGraphClick}
+                                    onStabilizationDone={
+                                        handleStabilizationDone
+                                    }
+                                    setNetworkInstance={setNetwork}
+                                />
+                                <NavigationControls
+                                    onZoomIn={handleZoomIn}
+                                    onZoomOut={handleZoomOut}
+                                    onFit={handleFit}
+                                    isNetworkReady={isNetworkReady}
+                                />
+                            </>
                         )}
                     {isVisScriptLoaded && areDataSetsInitialized && (
                         <Sidebar
                             selectedNode={selectedNodeDetails}
                             nodesDataSet={nodesDataSet}
                             edgesDataSet={edgesDataSet}
-                            syntaxData={syntaxData}
+                            syntaxData={syntaxData as LanguageSyntax} // Cast to the new structured type
                             languageRankingsData={languageRankingsData}
                             rankLegend={rankLegend}
                             categoryMap={
@@ -888,8 +947,15 @@ const HomePage: React.FC = () => {
                             }
                             categoriesOrder={categoriesOrder}
                             onClose={handleCloseSidebar}
-                            isVisible={!!selectedNodeId}
+                            isVisible={sidebarVisible}
                             onNavigateToNode={handleNavigateToNodeFromSidebar}
+                            highlightedCategoryNodes={
+                                highlightedCategoryNodesList
+                            }
+                            activeHighlightType={activeHighlightType}
+                            selectedHighlightCategory={
+                                selectedHighlightCategory
+                            }
                         />
                     )}
                 </MainContent>

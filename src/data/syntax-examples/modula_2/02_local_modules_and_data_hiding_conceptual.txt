@@ -1,0 +1,14 @@
+MODULE CounterDemo;
+FROM InOut IMPORT WriteString, WriteInt, WriteLn;
+  MODULE Counter;
+  IMPORT WriteString, WriteInt, WriteLn;
+  EXPORT Increment, GetValue;
+    VAR currentValue : INTEGER;
+    PROCEDURE Increment; BEGIN currentValue := currentValue + 1; END Increment;
+    PROCEDURE GetValue() : INTEGER; BEGIN RETURN currentValue; END GetValue;
+  BEGIN currentValue := 0; WriteString("Counter Initialized."); WriteLn;
+  END Counter;
+BEGIN
+  Counter.Increment; Counter.Increment;
+  WriteString("Counter Value: "); WriteInt(Counter.GetValue(), 0); WriteLn;
+END CounterDemo.

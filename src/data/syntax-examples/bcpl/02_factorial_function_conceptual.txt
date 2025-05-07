@@ -1,0 +1,16 @@
+// Factorial in BCPL (Conceptual)
+GET "libhdr.h"
+
+LET FACT(N) = VALOF // VALOF indicates function returns a value
+$(
+  IF N < 0 RESULTIS 0 // Error case
+  IF N = 0 RESULTIS 1
+  RESULTIS N * FACT(N - 1)
+$)
+
+LET MAIN () BE
+$(
+  LET I = 5
+  LET RES = FACT(I)
+  WRITES("Factorial of ") WRITEN(I) WRITES(" is ") WRITEN(RES) WRITES("*N")
+$)

@@ -1,0 +1,9 @@
+import strutils
+template shout(s: string): string = s.toUpperAscii() & "!!!"
+proc greet(name: string, loud = false) =
+  var message = "Hello, " & name & " from Nim!"
+  if loud: echo shout(message)
+  else: echo message
+greet("Nim User"); greet("Nim Fan", loud = true)
+let numbers = @[1,2,3,4,5]
+echo "Evens: ", numbers.filter(proc (x:int):bool = x mod 2 == 0).len

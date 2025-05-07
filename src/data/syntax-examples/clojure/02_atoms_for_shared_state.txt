@@ -1,0 +1,12 @@
+(def counter (atom 0))
+
+(defn increment-counter []
+  (swap! counter inc))
+
+(defn get-counter-value []
+  @counter)
+
+(println "Initial counter:" (get-counter-value))
+(increment-counter)
+(increment-counter)
+(println "After two increments:" (get-counter-value))

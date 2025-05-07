@@ -1,0 +1,14 @@
+# Thompson Shell Redirection and Pipes (Conceptual)
+# These features were pioneered here but were simpler.
+
+# Output redirection
+# command > outputfile
+
+# Input redirection
+# command < inputfile
+
+# Pipe
+# command1 | command2
+
+echo "Redirection and pipes were foundational."
+echo "Example: ls > files.txt or who | wc -l"

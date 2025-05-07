@@ -1,0 +1,15 @@
+MODULE HelloOberon;
+IMPORT Out, Texts, Oberon;
+PROCEDURE GreetUser*;
+  VAR w: Texts.Writer; name: ARRAY 32 OF CHAR;
+BEGIN
+  Texts.OpenWriter(w); Texts.WriteString(w, "Enter name: "); Texts.WriteLn(w);
+  Texts.Append(Oberon.Log, w.buf);
+  Oberon.ReadLine(name); (* Simplified *)
+  IF name[0] = 0X THEN Texts.WriteString(w, "Hello, Oberon User!")
+  ELSE Texts.WriteString(w, "Hello, "); Texts.WriteString(w, name); Texts.WriteString(w, "!")
+  END;
+  Texts.WriteLn(w); Texts.Append(Oberon.Log, w.buf);
+END GreetUser;
+BEGIN Out.String("HelloOberon loaded. Call GreetUser."); Out.Ln;
+END HelloOberon.

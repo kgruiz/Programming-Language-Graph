@@ -1,0 +1,7 @@
+// logger.js (Conceptual)
+// export function logMessage(message) { console.log(`[LOG]: ${message}`); }
+// export const APP_VERSION = "1.0.0";
+// main.js (Conceptual)
+// import { logMessage, APP_VERSION } from "./logger.js";
+// logMessage(`App version ${APP_VERSION} starting...`);
+console.log("ESM Module example structure defined.");

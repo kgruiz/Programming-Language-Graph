@@ -1,0 +1,18 @@
+open System.Net.Http
+let fetchUrlAsync (url: string) =
+    async {
+        use client = new HttpClient()
+        let! response = client.GetAsync(url) |> Async.AwaitTask
+        response.EnsureSuccessStatusCode() |> ignore
+        let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+        return content
+    }
+let processDataAsync = async {
+    try
+        printfn "Fetching data..."
+        let! data = fetchUrlAsync "https://jsonplaceholder.typicode.com/todos/1"
+        printfn "Data (first 100): %s..." (data.Substring(0, min data.Length 100))
+    with ex -> printfn "Error: %s" ex.Message
+}
+// Async.RunSynchronously processDataAsync
+printfn "Async example defined."

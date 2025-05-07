@@ -1,0 +1,6 @@
+(define (square x) (* x x)) (define (even? n) (zero? (modulo n 2)))
+(define my-list (1 2 3 4 5 6 7 8)) (display "Orig: ") (write my-list) (newline)
+(define sq-list (map square my-list)) (display "Sq: ") (write sq-list) (newline)
+(define evens (filter even? my-list)) (display "Evens: ") (write evens) (newline)
+(define sum-sq-evens (fold-left + 0 (map square (filter even? my-list))))
+(display "SumSqEvens: ") (write sum-sq-evens) (newline)

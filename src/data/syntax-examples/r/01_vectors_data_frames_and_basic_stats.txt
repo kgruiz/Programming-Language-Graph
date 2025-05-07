@@ -1,0 +1,6 @@
+heights <- c(170,182,165); weights <- c(65,78,58); names <- c("Alice","Bob","Charlie")
+people_df <- data.frame(Name=names, Height_cm=heights, Weight_kg=weights)
+print("People Data Frame:"); print(people_df)
+mean_height <- mean(people_df$Height_cm); cat("\nMean Height:", mean_height, "cm\n")
+people_df$BMI <- people_df$Weight_kg / (people_df$Height_cm/100)^2
+print("\nData Frame with BMI:"); print(people_df)

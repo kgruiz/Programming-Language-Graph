@@ -1,0 +1,12 @@
+#!/bin/bash
+
+files=("file1.txt" "image.jpg" "document.pdf")
+echo "First file: ${files[0]}"
+echo "All files: ${files[*]}"
+echo "Number of files: ${#files[@]}"
+
+current_date=$(date +"%Y-%m-%d %H:%M:%S")
+echo "Current date and time: $current_date"
+
+echo "Files in . (first 5):"
+ls -A | head -n 5

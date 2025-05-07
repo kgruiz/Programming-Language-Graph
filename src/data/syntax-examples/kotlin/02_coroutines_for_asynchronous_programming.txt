@@ -1,0 +1,11 @@
+import kotlinx.coroutines.*
+suspend fun fetchData(source: String, delayMs: Long): String {
+    println("Fetching from $source..."); delay(delayMs)
+    return "Data from $source"
+}
+fun main() = runBlocking {
+    val job1 = launch { val data = fetchData("API_1", 100); println(data) }
+    val deferredData2: Deferred<String> = async { fetchData("API_2", 50) }
+    println("Main continues..."); println(deferredData2.await()); job1.join()
+    println("All tasks finished.")
+}

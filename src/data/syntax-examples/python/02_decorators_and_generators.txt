@@ -1,0 +1,9 @@
+def debug_args(func):
+    def wrapper(*args, **kwargs): print(f"Call {func.__name__}({args}, {kwargs})"); return func(*args, **kwargs)
+    return wrapper
+@debug_args
+def add(a,b): return a+b
+print(add(10,20))
+def fib_seq(n): a,b=0,1; for _ in range(n): yield a; a,b=b,a+b
+for num in fib_seq(5): print(num, end=" ")
+print()

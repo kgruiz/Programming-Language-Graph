@@ -1,0 +1,14 @@
+program PointerDemo;
+uses Crt;
+type IntPtr = ^Integer; StudentPtr = ^StudentRec;
+     StudentRec = record name: String[20]; grade: Integer; next: StudentPtr; end;
+var pNum: IntPtr; head, current: StudentPtr; i: Integer;
+begin ClrScr;
+  New(pNum); pNum^ := 123; WriteLn(Dynamic Integer: , pNum^); Dispose(pNum);
+  head := NIL;
+  for i := 1 to 2 do begin New(current); current^.name := Student+Chr(Ord(A)+i-1); current^.grade := 90+i; current^.next := head; head := current; end;
+  current := head;
+  while current <> NIL do begin WriteLn(current^.name, : , current^.grade); current := current^.next; end;
+  while head <> NIL do begin current := head; head := head^.next; Dispose(current); end; (* Cleanup *)
+  ReadKey;
+end.

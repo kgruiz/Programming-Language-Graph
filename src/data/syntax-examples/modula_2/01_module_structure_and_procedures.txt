@@ -1,0 +1,9 @@
+MODULE HelloModula2;
+FROM InOut IMPORT WriteString, WriteLn, ReadString, WriteInt;
+VAR name : ARRAY[0..29] OF CHAR; age  : INTEGER;
+BEGIN
+  WriteString("Enter name: "); ReadString(name);
+  WriteString("Hello, "); WriteString(name); WriteString("!"); WriteLn;
+  WriteString("Enter age: "); ReadInt(age); (* Simplified *)
+  WriteString("You are "); WriteInt(age, 0); WriteString(" years old."); WriteLn;
+END HelloModula2.

@@ -1,0 +1,15 @@
+#include <stdio.h>
+
+int add(int a, int b) { return a + b; }
+int subtract(int a, int b) { return a - b; }
+typedef int (*math_operation_t)(int, int);
+
+void calculate(int x, int y, math_operation_t op, const char* op_name) {
+    printf("%s(%d, %d) = %d\n", op_name, x, y, op(x, y));
+}
+
+int main() {
+    calculate(20, 7, add, "Add");
+    calculate(20, 7, subtract, "Subtract");
+    return 0;
+}

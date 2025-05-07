@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+// Use CJS import for style to potentially avoid build issues with Next.js
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+
 import {
     LanguageNode,
     InfluenceEdge,
-    SyntaxData,
+    LanguageSyntax, // Changed from SyntaxData
     LanguageRankings,
     RankLegend,
     CategoryShortToFullName as CategoryShortToFullNameType,
     VisDataSetNodes,
     VisDataSetEdges,
-    IdType, // Import IdType
+    IdType,
+    HighlightedNodeInfo,
+    SyntaxSnippet, // Import new type
 } from '@/types';
 import theme from '@/styles/theme';
 
-// ... (Icon components remain the same) ...
 const IconWrapperSmall = styled.span`
     display: inline-flex;
     align-items: center;
@@ -80,17 +85,19 @@ interface SidebarProps {
     selectedNode: LanguageNode | null;
     nodesDataSet: VisDataSetNodes | null;
     edgesDataSet: VisDataSetEdges | null;
-    syntaxData: SyntaxData;
+    syntaxData: LanguageSyntax; // Changed
     languageRankingsData: LanguageRankings;
     rankLegend: RankLegend;
     categoryMap: CategoryShortToFullNameType;
     categoriesOrder: string[];
     onClose: () => void;
     isVisible: boolean;
-    onNavigateToNode: (nodeId: IdType) => void; // New prop
+    onNavigateToNode: (nodeId: IdType) => void;
+    highlightedCategoryNodes: HighlightedNodeInfo[] | null;
+    activeHighlightType: 'good' | 'bad' | null;
+    selectedHighlightCategory: string | null;
 }
 
-// ... (SidebarContainer, CloseButton, SidebarTitle, LanguageTagsList, SectionTitle remain the same)
 interface SidebarContainerStyleProps {
     isVisible: boolean;
 }
@@ -216,6 +223,14 @@ const SectionTitle = styled.h3`
     letter-spacing: 0.05em;
 `;
 
+const SyntaxSnippetTitle = styled.h4`
+    margin-top: ${(props) => props.theme.spacing.m};
+    margin-bottom: ${(props) => props.theme.spacing.xs};
+    font-size: 0.95em;
+    color: ${(props) => props.theme.colors.contentSecondary};
+    font-weight: 500;
+`;
+
 const List = styled.ul`
     list-style: none;
     padding: 0;
@@ -262,34 +277,38 @@ const ClickableListItem = styled.button`
     }
 `;
 
-// ... (PreformattedText, CollapsibleSectionHeader, ToggleArrow, ArrowIcon, CollapsibleContent remain the same)
-const PreformattedText = styled.pre`
-    background-color: ${(props) => props.theme.colors.codeBackground};
-    border: 1px solid ${(props) => props.theme.colors.codeBorder};
+const SyntaxHighlighterWrapper = styled.div`
+    margin-bottom: ${(props) =>
+        props.theme.spacing.m}; // Space between snippets
     border-radius: ${(props) => props.theme.borderRadius.medium};
-    padding: ${(props) => props.theme.spacing.m};
-    font-family: ${(props) => props.theme.fonts.mono};
-    font-size: 0.875em;
-    color: ${(props) => props.theme.colors.codeText};
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    line-height: 1.6;
-    max-height: 280px;
-    overflow-y: auto;
+    overflow: hidden;
+    border: 1px solid ${(props) => props.theme.colors.codeBorder};
 
-    &::-webkit-scrollbar {
-        width: 6px;
+    pre {
+        margin: 0 !important;
+        padding: ${(props) => props.theme.spacing.m} !important;
+        background-color: ${(props) =>
+            props.theme.colors.codeBackground} !important;
+        font-size: 0.85em !important; // Slightly smaller for more content
+        line-height: 1.5 !important; // Adjusted line height
+        max-height: 280px; // Max height per snippet
+        overflow-y: auto !important;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: ${(props) => props.theme.colors.contentTertiary}4D;
+            border-radius: ${(props) => props.theme.borderRadius.large};
+        }
+        &::-webkit-scrollbar-thumb:hover {
+            background: ${(props) => props.theme.colors.contentTertiary}80;
+        }
+        scrollbar-width: thin;
+        scrollbar-color: ${(props) => props.theme.colors.contentTertiary}4D
+            transparent;
     }
-    &::-webkit-scrollbar-thumb {
-        background: ${(props) => props.theme.colors.contentTertiary}4D;
-        border-radius: ${(props) => props.theme.borderRadius.large};
-    }
-    &::-webkit-scrollbar-thumb:hover {
-        background: ${(props) => props.theme.colors.contentTertiary}80;
-    }
-    scrollbar-width: thin;
-    scrollbar-color: ${(props) => props.theme.colors.contentTertiary}4D
-        transparent;
 `;
 
 const CollapsibleSectionHeader = styled(SectionTitle)`
@@ -358,7 +377,8 @@ interface CollapsibleContentProps {
 }
 const CollapsibleContent = styled.div<CollapsibleContentProps>`
     overflow: hidden;
-    max-height: ${(props) => (props.isCollapsed ? '0' : '600px')};
+    max-height: ${(props) =>
+        props.isCollapsed ? '0' : '1000px'}; // Increased max-height
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -369,6 +389,81 @@ const CollapsibleContent = styled.div<CollapsibleContentProps>`
         props.isCollapsed ? '0' : props.theme.spacing.s};
     opacity: ${(props) => (props.isCollapsed ? 0 : 1)};
 `;
+
+const getSyntaxHighlighterLanguage = (
+    languageName: string | undefined
+): string => {
+    if (!languageName) return 'plaintext';
+    const map: { [key: string]: string } = {
+        'c++': 'cpp',
+        'c#': 'csharp',
+        'objective-c': 'objectivec',
+        'f#': 'fsharp',
+        'standard ml': 'sml', // Standard ML
+        ml: 'sml', // ML often implies SML family syntax for highlighters
+        'common lisp': 'lisp',
+        'bourne sh': 'bash', // Bash is a superset and common for shell script highlighting
+        'thompson sh': 'bash',
+        zsh: 'bash',
+        assembly: 'asm6502', // A common generic assembly; specific ones: 'nasm', 'masm'
+        powershell: 'powershell',
+        svelte: 'svelte',
+        typescript: 'typescript',
+        javascript: 'javascript',
+        python: 'python',
+        ruby: 'ruby',
+        go: 'go',
+        rust: 'rust',
+        java: 'java',
+        kotlin: 'kotlin',
+        scala: 'scala',
+        php: 'php',
+        haskell: 'haskell',
+        perl: 'perl',
+        lua: 'lua',
+        dart: 'dart',
+        elixir: 'elixir',
+        clojure: 'clojure',
+        erlang: 'erlang',
+        julia: 'julia',
+        nim: 'nim',
+        crystal: 'crystal',
+        pascal: 'pascal',
+        ada: 'ada',
+        ocaml: 'ocaml',
+        r: 'r',
+        sql: 'sql',
+        swift: 'swift',
+        zig: 'zig', // May need to check react-syntax-highlighter for Zig support
+        odin: 'plaintext', // Odin support likely not standard
+        v: 'vbnet', // 'v' is ambiguous, V lang may not be supported, using a common 'v' as placeholder
+        d: 'd',
+        awk: 'awk',
+        fortran: 'fortran',
+        matlab: 'matlab',
+        sas: 'sas',
+        stata: 'plaintext', // Stata likely not supported
+        apl: 'apl',
+        j: 'j',
+        cpl: 'plaintext',
+        bcpl: 'plaintext',
+        b: 'c', // B is C-like
+        vale: 'rust', // Vale has Rust-like syntax aspects
+        carbon: 'cpp', // Carbon aims to interop with C++
+        mojo: 'python', // Mojo is Python-superset
+        cobol: 'cobol',
+        'modula-2': 'pascal',
+        abc: 'python', // ABC influenced Python
+        oberon: 'pascal',
+        scheme: 'scheme', // or 'lisp'
+        racket: 'racket', // or 'lisp'
+        simula: 'java', // Simula influenced OOP in Java/C++
+        smalltalk: 'smalltalk',
+        prolog: 'prolog',
+    };
+    const lowerName = languageName.toLowerCase();
+    return map[lowerName] || lowerName; // Fallback to lowercase name if no specific alias
+};
 
 const Sidebar: React.FC<SidebarProps> = ({
     selectedNode,
@@ -381,156 +476,296 @@ const Sidebar: React.FC<SidebarProps> = ({
     categoriesOrder,
     onClose,
     isVisible,
-    onNavigateToNode, // Use new prop
+    onNavigateToNode,
+    highlightedCategoryNodes,
+    activeHighlightType,
+    selectedHighlightCategory,
 }) => {
     const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(true);
+    const [isSyntaxCollapsed, setIsSyntaxCollapsed] = useState(false);
+    const sidebarRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (selectedNode) {
-            setIsRankingsCollapsed(true);
+        if (isVisible && sidebarRef.current) {
+            sidebarRef.current.scrollTop = 0;
         }
-    }, [selectedNode]);
+        setIsRankingsCollapsed(true);
+        setIsSyntaxCollapsed(false);
+    }, [selectedNode, isVisible, highlightedCategoryNodes]);
 
-    if (!selectedNode || !nodesDataSet || !edgesDataSet) {
-        return <SidebarContainer isVisible={false} />;
+    const renderNodeDetails = (node: LanguageNode) => {
+        const {
+            id: currentSelectedNodeId,
+            labelOriginal,
+            goodTagsDisplay,
+            badTagsDisplay,
+        } = node;
+
+        const influencedByNodes: HighlightedNodeInfo[] = (
+            edgesDataSet?.get({
+                filter: (edge: InfluenceEdge) =>
+                    edge.to === currentSelectedNodeId,
+            }) || []
+        )
+            .map((edge: InfluenceEdge) => {
+                const sourceNode = nodesDataSet?.get(edge.from) as
+                    | LanguageNode
+                    | undefined;
+                return sourceNode
+                    ? { id: sourceNode.id, label: sourceNode.labelOriginal }
+                    : null;
+            })
+            .filter(Boolean) as HighlightedNodeInfo[];
+
+        const influencesNodes: HighlightedNodeInfo[] = (
+            edgesDataSet?.get({
+                filter: (edge: InfluenceEdge) =>
+                    edge.from === currentSelectedNodeId,
+            }) || []
+        )
+            .map((edge: InfluenceEdge) => {
+                const targetNode = nodesDataSet?.get(edge.to) as
+                    | LanguageNode
+                    | undefined;
+                return targetNode
+                    ? { id: targetNode.id, label: targetNode.labelOriginal }
+                    : null;
+            })
+            .filter(Boolean) as HighlightedNodeInfo[];
+
+        const langRankings = languageRankingsData[labelOriginal];
+        const langSyntaxSnippets =
+            syntaxData[labelOriginal] || syntaxData['default'] || [];
+        const mainHighlighterLang = getSyntaxHighlighterLanguage(labelOriginal);
+
+        return (
+            <>
+                <SidebarTitle>{labelOriginal}</SidebarTitle>
+
+                {(goodTagsDisplay.length > 0 || badTagsDisplay.length > 0) && (
+                    <LanguageTagsList>
+                        {goodTagsDisplay.map((tag: string) => (
+                            <li
+                                key={`good-${tag}`}
+                                style={{
+                                    backgroundColor: `${theme.colors.accentGreen}E6`,
+                                    border: `1px solid ${theme.colors.accentGreen}`,
+                                }}
+                            >
+                                <ThumbUpIconSmall /> {tag}
+                            </li>
+                        ))}
+                        {badTagsDisplay.map((tag: string) => (
+                            <li
+                                key={`bad-${tag}`}
+                                style={{
+                                    backgroundColor: `${theme.colors.accentRed}E6`,
+                                    border: `1px solid ${theme.colors.accentRed}`,
+                                }}
+                            >
+                                <ThumbDownIconSmall /> {tag}
+                            </li>
+                        ))}
+                    </LanguageTagsList>
+                )}
+
+                <SectionTitle>Influenced By</SectionTitle>
+                <List>
+                    {influencedByNodes.length > 0 ? (
+                        influencedByNodes.map((n) => (
+                            <ClickableListItem
+                                key={n.id}
+                                onClick={() => onNavigateToNode(n.id)}
+                            >
+                                {n.label}
+                            </ClickableListItem>
+                        ))
+                    ) : (
+                        <ListItem>None in this graph</ListItem>
+                    )}
+                </List>
+
+                <SectionTitle>Influences</SectionTitle>
+                <List>
+                    {influencesNodes.length > 0 ? (
+                        influencesNodes.map((n) => (
+                            <ClickableListItem
+                                key={n.id}
+                                onClick={() => onNavigateToNode(n.id)}
+                            >
+                                {n.label}
+                            </ClickableListItem>
+                        ))
+                    ) : (
+                        <ListItem>None in this graph</ListItem>
+                    )}
+                </List>
+
+                <CollapsibleSectionHeader
+                    onClick={() => setIsRankingsCollapsed(!isRankingsCollapsed)}
+                    aria-expanded={!isRankingsCollapsed}
+                >
+                    Category Rankings
+                    <ToggleArrow isCollapsed={isRankingsCollapsed}>
+                        <ArrowIcon isCollapsed={isRankingsCollapsed} />
+                    </ToggleArrow>
+                </CollapsibleSectionHeader>
+                <CollapsibleContent isCollapsed={isRankingsCollapsed}>
+                    {langRankings ? (
+                        <List>
+                            {categoriesOrder.map((catShort: string) => {
+                                if (langRankings[catShort] === undefined)
+                                    return null;
+                                const score = langRankings[catShort];
+                                const legendText = rankLegend[score] || 'N/A';
+                                return (
+                                    <ListItem key={catShort}>
+                                        {categoryMap[catShort] || catShort}:{' '}
+                                        <strong>{score}</strong> ({legendText})
+                                    </ListItem>
+                                );
+                            })}
+                        </List>
+                    ) : (
+                        <List>
+                            <ListItem>Rankings not available.</ListItem>
+                        </List>
+                    )}
+                </CollapsibleContent>
+
+                <CollapsibleSectionHeader
+                    onClick={() => setIsSyntaxCollapsed(!isSyntaxCollapsed)}
+                    aria-expanded={!isSyntaxCollapsed}
+                >
+                    Syntax Examples
+                    <ToggleArrow isCollapsed={isSyntaxCollapsed}>
+                        <ArrowIcon isCollapsed={isSyntaxCollapsed} />
+                    </ToggleArrow>
+                </CollapsibleSectionHeader>
+                <CollapsibleContent isCollapsed={isSyntaxCollapsed}>
+                    {langSyntaxSnippets.map(
+                        (snippet: SyntaxSnippet, index: number) => (
+                            <React.Fragment
+                                key={`${labelOriginal}-syntax-${index}`}
+                            >
+                                <SyntaxSnippetTitle>
+                                    {snippet.title}
+                                </SyntaxSnippetTitle>
+                                <SyntaxHighlighterWrapper>
+                                    <SyntaxHighlighter
+                                        language={
+                                            snippet.languageAlias
+                                                ? getSyntaxHighlighterLanguage(
+                                                      snippet.languageAlias
+                                                  )
+                                                : mainHighlighterLang
+                                        }
+                                        style={vscDarkPlus} // Use the imported style object
+                                        showLineNumbers={true}
+                                        wrapLines={true}
+                                        lineNumberStyle={{
+                                            color: theme.colors.contentTertiary,
+                                            fontSize: '0.8em',
+                                            userSelect: 'none',
+                                        }}
+                                        customStyle={{
+                                            borderRadius:
+                                                theme.borderRadius.medium, // Already handled by wrapper, but can be here
+                                            border: 'none', // Already handled by wrapper
+                                        }}
+                                        codeTagProps={{
+                                            style: {
+                                                fontFamily: theme.fonts.mono,
+                                            },
+                                        }}
+                                    >
+                                        {snippet.code}
+                                    </SyntaxHighlighter>
+                                </SyntaxHighlighterWrapper>
+                            </React.Fragment>
+                        )
+                    )}
+                </CollapsibleContent>
+            </>
+        );
+    };
+
+    const renderHighlightedCategoryNodes = () => {
+        if (
+            !highlightedCategoryNodes ||
+            !activeHighlightType ||
+            !selectedHighlightCategory
+        )
+            return null;
+
+        const categoryFullName =
+            categoryMap[selectedHighlightCategory] || selectedHighlightCategory;
+        const titlePrefix =
+            activeHighlightType === 'good' ? 'Good at' : 'Bad at';
+
+        return (
+            <>
+                <SidebarTitle>{`${titlePrefix}: ${categoryFullName}`}</SidebarTitle>
+                <List>
+                    {highlightedCategoryNodes.length > 0 ? (
+                        highlightedCategoryNodes.map((node) => (
+                            <ClickableListItem
+                                key={node.id}
+                                onClick={() => onNavigateToNode(node.id)}
+                            >
+                                {node.label}
+                            </ClickableListItem>
+                        ))
+                    ) : (
+                        <ListItem>
+                            No languages match this criteria in the graph.
+                        </ListItem>
+                    )}
+                </List>
+            </>
+        );
+    };
+
+    if (!isVisible) {
+        return (
+            <SidebarContainer
+                ref={sidebarRef}
+                isVisible={false}
+            />
+        );
     }
 
-    const {
-        id: currentSelectedNodeId,
-        labelOriginal,
-        goodTagsDisplay,
-        badTagsDisplay,
-    } = selectedNode;
-
-    // Find IDs for influencedBy and influences languages
-    const influencedByNodes: { id: IdType; label: string }[] = edgesDataSet
-        .get({
-            filter: (edge: InfluenceEdge) => edge.to === currentSelectedNodeId,
-        })
-        .map((edge: InfluenceEdge) => {
-            const node = nodesDataSet.get(edge.from);
-            return node ? { id: node.id, label: node.labelOriginal } : null;
-        })
-        .filter(Boolean) as { id: IdType; label: string }[];
-
-    const influencesNodes: { id: IdType; label: string }[] = edgesDataSet
-        .get({
-            filter: (edge: InfluenceEdge) =>
-                edge.from === currentSelectedNodeId,
-        })
-        .map((edge: InfluenceEdge) => {
-            const node = nodesDataSet.get(edge.to);
-            return node ? { id: node.id, label: node.labelOriginal } : null;
-        })
-        .filter(Boolean) as { id: IdType; label: string }[];
-
-    const langRankings = languageRankingsData[labelOriginal];
+    let content = null;
+    if (
+        highlightedCategoryNodes &&
+        highlightedCategoryNodes.length > 0 &&
+        activeHighlightType &&
+        selectedHighlightCategory
+    ) {
+        content = renderHighlightedCategoryNodes();
+    } else if (selectedNode && nodesDataSet && edgesDataSet) {
+        content = renderNodeDetails(selectedNode);
+    } else {
+        return (
+            <SidebarContainer
+                ref={sidebarRef}
+                isVisible={false}
+            />
+        );
+    }
 
     return (
-        <SidebarContainer isVisible={isVisible}>
+        <SidebarContainer
+            ref={sidebarRef}
+            isVisible={isVisible}
+        >
             <CloseButton
                 onClick={onClose}
                 aria-label="Close details panel"
             >
                 <CloseIcon />
             </CloseButton>
-            <SidebarTitle>{labelOriginal}</SidebarTitle>
-
-            {(goodTagsDisplay.length > 0 || badTagsDisplay.length > 0) && (
-                <LanguageTagsList>
-                    {goodTagsDisplay.map((tag: string) => (
-                        <li
-                            key={`good-${tag}`}
-                            style={{
-                                backgroundColor: `${theme.colors.accentGreen}E6`,
-                                border: `1px solid ${theme.colors.accentGreen}`,
-                            }}
-                        >
-                            <ThumbUpIconSmall /> {tag}
-                        </li>
-                    ))}
-                    {badTagsDisplay.map((tag: string) => (
-                        <li
-                            key={`bad-${tag}`}
-                            style={{
-                                backgroundColor: `${theme.colors.accentRed}E6`,
-                                border: `1px solid ${theme.colors.accentRed}`,
-                            }}
-                        >
-                            <ThumbDownIconSmall /> {tag}
-                        </li>
-                    ))}
-                </LanguageTagsList>
-            )}
-
-            <SectionTitle>Influenced By</SectionTitle>
-            <List>
-                {influencedByNodes.length > 0 ? (
-                    influencedByNodes.map((node) => (
-                        <ClickableListItem
-                            key={node.id}
-                            onClick={() => onNavigateToNode(node.id)}
-                        >
-                            {node.label}
-                        </ClickableListItem>
-                    ))
-                ) : (
-                    <ListItem>None in this graph</ListItem>
-                )}
-            </List>
-
-            <SectionTitle>Influences</SectionTitle>
-            <List>
-                {influencesNodes.length > 0 ? (
-                    influencesNodes.map((node) => (
-                        <ClickableListItem
-                            key={node.id}
-                            onClick={() => onNavigateToNode(node.id)}
-                        >
-                            {node.label}
-                        </ClickableListItem>
-                    ))
-                ) : (
-                    <ListItem>None in this graph</ListItem>
-                )}
-            </List>
-
-            <CollapsibleSectionHeader
-                onClick={() => setIsRankingsCollapsed(!isRankingsCollapsed)}
-                aria-expanded={!isRankingsCollapsed}
-            >
-                Category Rankings
-                <ToggleArrow isCollapsed={isRankingsCollapsed}>
-                    <ArrowIcon isCollapsed={isRankingsCollapsed} />
-                </ToggleArrow>
-            </CollapsibleSectionHeader>
-            <CollapsibleContent isCollapsed={isRankingsCollapsed}>
-                {langRankings ? (
-                    <List>
-                        {categoriesOrder.map((catShort: string) => {
-                            if (langRankings[catShort] === undefined)
-                                return null;
-                            const score = langRankings[catShort];
-                            const legendText = rankLegend[score] || 'N/A';
-                            return (
-                                <ListItem key={catShort}>
-                                    {categoryMap[catShort] || catShort}:{' '}
-                                    <strong>{score}</strong> ({legendText})
-                                </ListItem>
-                            );
-                        })}
-                    </List>
-                ) : (
-                    <List>
-                        <ListItem>Rankings not available.</ListItem>
-                    </List>
-                )}
-            </CollapsibleContent>
-
-            <SectionTitle>Basic Syntax Example</SectionTitle>
-            <PreformattedText>
-                {syntaxData[labelOriginal] || 'Syntax example not available.'}
-            </PreformattedText>
+            {content}
         </SidebarContainer>
     );
 };

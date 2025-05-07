@@ -1,0 +1,9 @@
+% my_length(List, Length)
+my_length([], 0). my_length([_|T], N) :- my_length(T, N1), N is N1 + 1.
+% my_member(Element, List)
+my_member(X, [X|_]). my_member(X, [_|T]) :- my_member(X, T).
+% my_append(List1, List2, ResultList)
+my_append([], L, L). my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
+% Queries:
+% ?- my_length([a,b,c], L).
+% ?- my_member(b, [a,b,c]).

@@ -1,0 +1,9 @@
+<script>
+  import { onMount } from svelte;
+  // import { writable } from svelte/store;
+  // export let prop = "default"; const time = writable(new Date());
+  onMount(() => { console.log("Mounted!"); /* const t = setInterval(()=>time.set(new Date()),1000); return ()=>clearInterval(t); */ });
+</script>
+<!-- <div>Prop: {prop}</div> -->
+<!-- <div>StoreTime: {$time.toLocaleTimeString()}</div> -->
+<div>Lifecycle & store concepts.</div>

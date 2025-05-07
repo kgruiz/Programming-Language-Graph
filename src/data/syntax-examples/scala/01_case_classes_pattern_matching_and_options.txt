@@ -1,0 +1,5 @@
+sealed trait Shape; case class Circle(r:Double) extends Shape; case class Rect(w:Double,h:Double) extends Shape
+object Geo{ def area(s:Shape):Double=s match {case Circle(r)=>math.Pi*r*r case Rect(w,h)=>w*h}}
+object Main extends App { val c=Circle(5.0); println(s"Area c: ${Geo.area(c)}");
+  def desc(sOpt:Option[Shape]):String=sOpt match {case Some(Circle(r))=>s"Circ r$r" case _=>"None"}
+  println(desc(Some(c))); println(desc(None)) }

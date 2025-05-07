@@ -1,0 +1,10 @@
+package main
+import "core:fmt"; import "core:os"
+Vector2 :: struct { x, y: f32 }
+print_vector :: proc(v: Vector2) { fmt.printf("Vector2(%.2f, %.2f)\n", v.x, v.y) }
+add_vectors :: proc(a,b: Vector2) -> Vector2 { return Vector2{a.x+b.x, a.y+b.y} }
+main :: proc() {
+    fmt.println("Hello from Odin!"); p1 := Vector2{1.5,2.5}; p2 := Vector2{3.0,-0.5}
+    print_vector(p1); sum_vec := add_vectors(p1,p2); fmt.print("Sum: "); print_vector(sum_vec)
+    os.write_string(os.stdout, "Direct write.\n")
+}

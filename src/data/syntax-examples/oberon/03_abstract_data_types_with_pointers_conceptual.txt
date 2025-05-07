@@ -1,0 +1,20 @@
+MODULE ListADT;
+IMPORT Out, SYSTEM;
+TYPE NodePtr* = POINTER TO Node;
+     Node* = RECORD data*: INTEGER; next*: NodePtr; END;
+PROCEDURE AddToList*(VAR head: NodePtr; value: INTEGER);
+  VAR newNode: NodePtr;
+BEGIN
+  NEW(newNode);
+  newNode.data := value; newNode.next := head; head := newNode;
+END AddToList;
+PROCEDURE PrintList*(head: NodePtr);
+  VAR current: NodePtr;
+BEGIN current := head;
+  WHILE current # NIL DO
+    Out.Int(current.data, 5); Out.Ln; current := current.next;
+  END;
+END PrintList;
+VAR myList: NodePtr;
+BEGIN myList := NIL; AddToList(myList, 10); AddToList(myList, 20); PrintList(myList);
+END ListADT.

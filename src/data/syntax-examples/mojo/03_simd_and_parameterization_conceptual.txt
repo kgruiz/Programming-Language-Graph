@@ -1,0 +1,7 @@
+# Mojo 🔥 (Conceptual SIMD usage)
+from unittype import Unit; from vector import Vec
+# fn mojo_vector_add[DType: Unit, SIMDWidth: Int](a: Vec[DType,SIMDWidth], b: Vec[DType,SIMDWidth]) -> Vec[DType,SIMDWidth]: return a+b
+fn main():
+    # let v1 = Vec[Float32,4](1.0,2.0,3.0,4.0); let v2 = Vec[Float32,4](5.0,6.0,7.0,8.0)
+    # let v_sum = mojo_vector_add(v1,v2); print("Vec sum (conceptual):", v_sum)
+    print("SIMD and compile-time params are key Mojo features.")

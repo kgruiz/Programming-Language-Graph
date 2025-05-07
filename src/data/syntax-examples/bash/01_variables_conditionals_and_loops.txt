@@ -1,0 +1,21 @@
+#!/bin/bash
+
+NAME="Bash User"
+COUNT=5
+
+if [ "$NAME" == "Bash User" ]; then
+  echo "Hello, $NAME!"
+else
+  echo "Hello, stranger!"
+fi
+
+echo "Counting to $COUNT:"
+for i in $(seq 1 $COUNT); do
+  echo "Number: ${i}"
+done
+
+c=0
+while [ $c -lt 3 ]; do
+  echo "While loop iteration: ${c}"
+  c=$((c+1))
+done

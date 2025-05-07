@@ -1,0 +1,22 @@
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+public class AsyncDemo
+{
+    static readonly HttpClient client = new HttpClient();
+
+    public static async Task Main(string[] args)
+    {
+        try
+        {
+            string responseBody = await client.GetStringAsync("https://jsonplaceholder.typicode.com/todos/1");
+            Console.WriteLine("Fetched Data:");
+            Console.WriteLine(responseBody.Substring(0, Math.Min(responseBody.Length, 100)) + "...");
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine($"\nException Caught: {e.Message}");
+        }
+    }
+}

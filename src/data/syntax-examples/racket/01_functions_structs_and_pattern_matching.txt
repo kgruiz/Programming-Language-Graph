@@ -1,0 +1,6 @@
+#lang racket
+(struct point (x y) #:transparent)
+(define (describe-shape s) (match s [(point x y) (string-append "Pt(" (number->string x) "," (number->string y) ")")] [(list circle r) (string-append "Circ r=" (number->string r))] [_ "Unknown"]))
+(define (area s) (match s [(point _ _) 0] [(list circle r) (* pi r r)] [(list rect w h) (* w h)]))
+(define p1 (point 10 20)); (define c1 (list circle 5))
+(displayln (describe-shape p1)); (displayln (string-append "Area c1: " (~a (area c1))))

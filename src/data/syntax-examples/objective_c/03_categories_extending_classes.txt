@@ -1,0 +1,11 @@
+#import <Foundation/Foundation.h>
+@interface NSString (MyAdditions) - (NSString *)reversedString; @end
+@implementation NSString (MyAdditions)
+- (NSString *)reversedString {
+    NSMutableString *rev = [NSMutableString string];
+    for (NSInteger i=[self length]-1; i>=0; i--) { [rev appendFormat:@"%C",[self characterAtIndex:i]]; } return rev;
+} @end
+int main(int argc, const char * argv[]) { @autoreleasepool {
+    NSString *orig = @"Objective-C"; NSString *rev = [orig reversedString];
+    NSLog(@"Original: %@, Reversed: %@", orig, rev);
+} return 0; }

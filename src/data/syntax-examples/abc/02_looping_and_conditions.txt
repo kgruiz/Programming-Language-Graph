@@ -1,0 +1,8 @@
+HOW TO COUNT.TO limit:
+   PUT 1 IN counter
+   WHILE counter <= limit:
+      WRITE counter /
+      PUT counter + 1 IN counter
+   WRITE "Done counting." /
+
+COUNT.TO 5

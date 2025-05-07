@@ -1,0 +1,7 @@
+const user = { id: 1, name: "Alice", email: "a@ex.com", settings: { theme: "dark" } };
+const { name, email, settings: { theme } } = user;
+console.log(`User: ${name}, Email: ${email}, Theme: ${theme}`);
+const arr1 = [1,2,3]; const arr2 = [4,5,6]; const combined = [...arr1,0,...arr2];
+console.log("Combined array:", combined);
+function printConfig({ host="localhost", port=8080 }={}) { console.log(`Server: http://${host}:${port}`); }
+printConfig({ port: 3000 }); printConfig();

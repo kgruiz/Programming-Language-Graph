@@ -1,0 +1,6 @@
+<script>
+  let name = "Svelte User"; let loud = false; let count = 0;
+  function greet() { const G = loud ? `HELLO, ${name.toUpperCase()}!` : `Hello, ${name}`; alert(G); }
+  const nums = [1,2,3,4,5]; $: sqEvens = nums.filter(n=>n%2===0).map(n=>n*n);
+</script>
+<!-- Markup in next snippet -->

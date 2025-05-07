@@ -1,0 +1,5 @@
+const std=@import("std");
+fn genTable(comptime N:usize)[N]i32{var t:[N]i32=undefined;comptime{for(&t,0..)|*e,i|{e.*=@as(i32,@intCast(i*i));}}return t;}
+const MySize=3;const ctTable=genTable(MySize);
+pub fn main()!void{const stdout=std.io.getStdOut().writer();try stdout.print("Table:\n",.{});for(ctTable,0..)|v,i|{try stdout.print("T[{}]:{}\n",.{i,v});}
+comptime{if(@import("builtin").os.tag==.linux){std.debug.print("Linux\n",.{});}else{std.debug.print("OtherOS\n",.{});}}}

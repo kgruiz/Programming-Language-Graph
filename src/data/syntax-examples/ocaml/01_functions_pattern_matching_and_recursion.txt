@@ -1,0 +1,5 @@
+let rec factorial n = match n with | 0 -> 1 | x when x < 0 -> failwith "Negative" | x -> x * factorial (x-1)
+let rec fib n = match n with | 0->0 | 1->1 | x->fib(x-1)+fib(x-2)
+let () = Printf.printf "Fact 5: %d\n" (factorial 5); Printf.printf "Fib 10: %d\n" (fib 10)
+let greet name = match name with | "Alice" -> "Hello, Alice!" | _ -> "Hello, stranger."
+let () = print_endline (greet "Alice"); print_endline (greet "Bob")

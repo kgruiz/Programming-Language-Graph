@@ -1,0 +1,5 @@
+local colors = {"red", "green", "blue"}; print("First:", colors[1])
+for i, color in ipairs(colors) do print(i, color) end
+local person = { name = "Lua User", age = 25, occupation = "Scripter" }
+print(person.name .. " is a " .. person.occupation)
+for key, value in pairs(person) do print(key .. ":", value) end

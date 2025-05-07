@@ -1,0 +1,12 @@
+function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+async function processOrder(orderId) {
+    console.log(`Processing order: ${orderId}`); await delay(100);
+    console.log(`Fetching details for order: ${orderId}`); await delay(50);
+    const orderDetails = { id: orderId, item: "Book", status: "Fetched" };
+    console.log(`Order ${orderId} details: `, orderDetails); return orderDetails;
+}
+async function handleOrders() {
+    const order1 = await processOrder(101); const order2 = await processOrder(102);
+    console.log("All orders processed:", [order1, order2]);
+}
+handleOrders().catch(err => console.error("Error:", err));

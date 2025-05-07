@@ -1,0 +1,7 @@
+# S/R: Basic Plotting (Conceptual - output is graphical)
+x_coords <- 1:10
+y_coords <- x_coords^2
+# plot(x_coords, y_coords, type="b", col="blue", main="Square Function", xlab="X", ylab="Y=X^2")
+# text(5, 50, "A simple plot", col="red")
+# grid()
+cat("Plotting commands defined (visual output in S/R graphics device).\n")

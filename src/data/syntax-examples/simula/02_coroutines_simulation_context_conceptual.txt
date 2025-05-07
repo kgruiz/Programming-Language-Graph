@@ -1,0 +1,12 @@
+! Simula Coroutine Example - Conceptual;
+Begin Process Class Producer(ConsumerRef); Ref(Consumer) ConsumerRef; Begin Integer Item;
+  For Item := 1 Step 1 Until 3 Do Begin
+    OutText("Producer: generating "); OutInt(Item,0); OutImage; Hold(1.0);
+    ConsumerRef.Receive(Item); Activate ConsumerRef; End;
+  OutText("Producer: finished."); OutImage; End Producer;
+Process Class Consumer; Begin Integer ReceivedItem;
+  Procedure Receive(Item); Integer Item; Begin ReceivedItem := Item;
+    OutText("Consumer: received "); OutInt(ReceivedItem,0); OutImage; End Receive;
+  While True Do Begin Hold(100.0); If Current = MainProgram Then Detach; End; End Consumer;
+Ref(Producer)P; Ref(Consumer)C; C:-New Consumer; P:-New Producer(C); Activate P; Hold(10.0);
+OutText("Main finished simulation."); OutImage; End;

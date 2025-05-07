@@ -1,0 +1,13 @@
+MODULE Shapes;
+IMPORT Out;
+TYPE Point* = RECORD x*,y*: INTEGER END; Shape* = RECORD color*: INTEGER END;
+     Circle* = RECORD (Shape) center*: Point; radius*: INTEGER; END;
+PROCEDURE Draw*(s: Shape); BEGIN Out.String("Drawing shape, color: "); Out.Int(s.color,0); Out.Ln; END Draw;
+PROCEDURE DrawCircle*(c: Circle); BEGIN
+  Out.String("Circle: C=("); Out.Int(c.center.x,0); Out.String(","); Out.Int(c.center.y,0);
+  Out.String("), R="); Out.Int(c.radius,0); Out.String(", Color="); Out.Int(c.color,0); Out.Ln;
+END DrawCircle;
+VAR myCircle: Circle;
+BEGIN myCircle.color:=1; myCircle.center.x:=10; myCircle.center.y:=20; myCircle.radius:=5;
+  Draw(myCircle); DrawCircle(myCircle);
+END Shapes.

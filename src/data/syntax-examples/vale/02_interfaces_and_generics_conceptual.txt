@@ -1,0 +1,6 @@
+// Vale Language Example (Conceptual)
+interface Shape { func area(self: &Self) float; }
+struct Circle { radius: float; } impl Shape for Circle { func area(self: &Circle) float { return 3.14159*self.radius*self.radius; } }
+struct Rectangle { width: float; height: float; } impl Shape for Rectangle{ func area(self:&Rectangle)float{return self.width*self.height;}}
+func printArea<T>(s: &T) where T impl Shape { println("Area: {}", s.area()); }
+exported func main() { c=Circle(5.0); r=Rectangle(3.0,4.0); printArea(&c); printArea(&r); }

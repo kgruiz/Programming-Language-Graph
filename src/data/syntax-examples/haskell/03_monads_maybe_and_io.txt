@@ -1,0 +1,17 @@
+import Control.Monad (join)
+safeDivide :: Double -> Double -> Maybe Double
+safeDivide _ 0 = Nothing; safeDivide x y = Just (x / y)
+calculateRatio :: Double -> Double -> Double -> Maybe Double
+calculateRatio a b c = do val1 <- safeDivide a b; val2 <- safeDivide val1 c; return (val2 * 100)
+main :: IO ()
+main = do
+    putStrLn "Enter a number:"
+    inputStr <- getLine
+    let maybeNum = reads inputStr :: [(Double, String)]
+    case maybeNum of
+        [(num, "")] -> do
+            putStrLn $ "You entered: " ++ show num
+            case calculateRatio 100.0 num 2.0 of
+                Just result -> putStrLn $ "Calculated ratio: " ++ show result
+                Nothing     -> putStrLn "Calculation failed."
+        _           -> putStrLn "Invalid input."

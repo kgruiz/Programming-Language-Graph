@@ -1,0 +1,6 @@
+$userName = "PowerShell User"; $itemCount = 3
+$items = Get-ChildItem -Path . | Sort-Object Length -Descending | Select-Object -First $itemCount
+Write-Host "Hello, $userName!"; Write-Host "Top $itemCount largest items:"
+$items | ForEach-Object { Write-Host ("  Name: {0,-20} Length: {1,10}" -f $_.Name, $_.Length) }
+$procs = Get-Process | Where-Object {$_.CPU -gt 0.5} | Select-Object Name,CPU,Id -First 3
+if ($procs) { Write-Host "\nHigh CPU Procs:"; $procs | Format-Table -AutoSize }

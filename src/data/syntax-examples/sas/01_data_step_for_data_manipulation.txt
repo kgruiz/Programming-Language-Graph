@@ -1,0 +1,5 @@
+* SAS Example: DATA Step;
+DATA work.mydata; INPUT ID Name $ Age Score; Bonus=Score*0.10;
+IF Age < 30 THEN AgeGroup="Young"; ELSE AgeGroup="Adult";
+DATALINES; 101 Alice 25 85; 102 Bob 35 92; 103 Charlie 22 78; RUN;
+PROC PRINT DATA=work.mydata; TITLE "My Dataset"; RUN;

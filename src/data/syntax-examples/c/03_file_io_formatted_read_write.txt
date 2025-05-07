@@ -1,0 +1,22 @@
+#include <stdio.h>
+
+struct Record { char name[50]; int score; };
+
+int main() {
+    FILE *fp;
+    struct Record rec_out = {"PlayerOne", 1000};
+    struct Record rec_in;
+
+    fp = fopen("c_game_data.txt", "w");
+    if (fp == NULL) { perror("Write error"); return 1; }
+    fprintf(fp, "%s %d\n", rec_out.name, rec_out.score);
+    fclose(fp);
+
+    fp = fopen("c_game_data.txt", "r");
+    if (fp == NULL) { perror("Read error"); return 1; }
+    if (fscanf(fp, "%49s %d", rec_in.name, &rec_in.score) == 2) {
+         printf("Read: Name=%s, Score=%d\n", rec_in.name, rec_in.score);
+    }
+    fclose(fp);
+    return 0;
+}

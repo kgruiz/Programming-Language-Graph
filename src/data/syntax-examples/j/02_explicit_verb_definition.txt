@@ -1,0 +1,8 @@
+NB. Explicit verb definition for hypotenuse
+hypotenuse =: verb define
+  NB. x is first arg, y is second arg
+  NB. *: squares, + adds, %: square roots
+  %:( (*:x) + (*:y) )
+)
+echo 3 hypotenuse 4  NB. Output: 5
+echo 5 hypotenuse 12 NB. Output: 13

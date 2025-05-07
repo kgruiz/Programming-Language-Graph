@@ -1,0 +1,6 @@
+#lang racket
+(define nums (list 1 2 3 4 5 6))
+(define evens (filter even? nums)); (displayln (~a evens))
+(define sq_evens (map (λ(x) (* x x)) evens)); (displayln (~a sq_evens))
+(define sum_sq_evens (foldl + 0 sq_evens)); (displayln (~a sum_sq_evens))
+(define odd-cubes (for/list ([n nums] #:when (odd? n)) (* n n n))); (displayln (~a odd-cubes))

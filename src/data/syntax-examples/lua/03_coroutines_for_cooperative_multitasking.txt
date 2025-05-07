@@ -1,0 +1,3 @@
+function producer(co_consumer) local i=1; while true do print("Prod: sending",i); coroutine.yield(i); if coroutine.status(co_consumer)=="dead" then break end; i=i+1; if i>3 then coroutine.resume(co_consumer,"stop"); break end end print("Prod: finished") end
+function consumer(co_producer) while true do local s,v=coroutine.resume(co_producer); if not s or v=="stop" then print("Cons: stopping:",v or "err"); break end; print("Cons: received",v) end print("Cons: finished") end
+local co_p=coroutine.create(producer); local co_c=coroutine.create(consumer); coroutine.resume(co_c,co_p)

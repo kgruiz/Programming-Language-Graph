@@ -1,0 +1,4 @@
+(define (describe-number n)
+  (let ((parity (if (even? n) "even" "odd")) (sign (cond ((> n 0) "pos") ((< n 0) "neg") (else "zero"))))
+    (string-append (number->string n) " is " sign (if (not (string=? sign "zero")) (string-append " and " parity) ""))))
+(display (describe-number 10)) (newline) (display (describe-number -7)) (newline)

@@ -1,0 +1,6 @@
+datatype color = Red | Green | Blue | RGB of int*int*int;
+fun descClr c = case c of Red=>"Red"|Green=>"Green"|Blue=>"Blue"|RGB(r,g,b)=>"RGB("^Int.toString r^","^Int.toString g^","^Int.toString b^")";
+fun sumList [] = 0 | sumList (x::xs) = x + sumList xs;
+val myList = [1,2,3]; val myColor = RGB(128,0,255);
+val () = print("Sum: " ^ Int.toString(sumList myList) ^ "\n");
+val () = print(descClr myColor ^ "\n");

@@ -1,0 +1,14 @@
+<?php
+$filename = "php_example.txt";
+try {
+    $fw = fopen($filename, "w");
+    if (!$fw) { throw new Exception("Cannot open for writing: {$filename}"); }
+    fwrite($fw, "Line by PHP.\nDate: " . date("Y-m-d H:i:s") . "\n");
+    fclose($fw); echo "Data written to {$filename}\n";
+    $fr = fopen($filename, "r");
+    if (!$fr) { throw new Exception("Cannot open for reading: {$filename}"); }
+    echo "Contents of {$filename}:\n";
+    while (($line = fgets($fr)) !== false) { echo $line; }
+    fclose($fr);
+} catch (Exception $e) { echo "Error: " . $e->getMessage() . "\n"; }
+?>

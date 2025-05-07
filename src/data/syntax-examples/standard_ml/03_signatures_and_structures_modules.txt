@@ -1,0 +1,5 @@
+signature QUEUE=sig type a q;exception E;val mt:a q;val isMt:a q->bool;val enq:a*a q->a q;val deq:a q->a*a q end;
+structure LQ:>QUEUE=struct type a q=a list*a list;exception E;val mt=([],[]);fun isMt ([],[])=true|isMt _=false;
+fun norm ([],r)=(List.rev r,[])|norm q=q; fun enq(x,(f,r))=norm(f,x::r); fun deq ([],[])=raise E|deq(x::f,r)=(x,norm(f,r)) end;
+val q1=LQ.enq(1,LQ.mt);val q2=LQ.enq(2,q1);val(i,q3)=LQ.deq(q2);
+val()=print("Deq:"^Int.toString i^", Q3mt? "^Bool.toString(LQ.isMt q3)^"\n");

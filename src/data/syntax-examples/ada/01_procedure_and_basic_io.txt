@@ -1,0 +1,15 @@
+with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+
+procedure Greet_User is
+   Name : String(1..80);
+   Last : Natural;
+begin
+   Put("Enter your name: ");
+   Get_Line(Name, Last);
+   Put_Line("Hello, " & Name(1..Last) & "!");
+
+   Put("Your name has ");
+   Put(Last, Width => 0);
+   Put_Line(" characters.");
+end Greet_User;

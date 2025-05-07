@@ -1,0 +1,17 @@
+interface Shape { double getArea(); void draw(); }
+class Circle implements Shape {
+    private double radius; public Circle(double r) {this.radius=r;}
+    @Override public double getArea() { return Math.PI*radius*radius; }
+    @Override public void draw() { System.out.println("Drawing Circle r=" + radius); }
+}
+class Rectangle implements Shape {
+    private double w, h; public Rectangle(double w, double h) {this.w=w; this.h=h;}
+    @Override public double getArea() { return w*h; }
+    @Override public void draw() { System.out.println("Drawing Rectangle "+w+"x"+h); }
+}
+public class PolymorphismDemo {
+    public static void main(String[] args) {
+        Shape[] shapes = { new Circle(5.0), new Rectangle(4.0, 6.0) };
+        for (Shape s : shapes) { s.draw(); System.out.printf("Area: %.2f%n", s.getArea()); }
+    }
+}

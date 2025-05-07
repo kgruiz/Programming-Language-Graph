@@ -1,0 +1,8 @@
+module main
+struct User{name string; age int}
+fn greet(user User, loud bool)string{mut msg:="Hello, ${user.name} from V!"; if loud{msg=msg.to_upper()}; return msg}
+fn find_user(id int)?User{if id==1{return User{name:"V User",age:30}}; return none}
+fn main(){u1:=User{"Alice",25}; println(greet(u1,false)); println(greet(u1,true))
+  found_u:=find_user(1)or{println("User 1 not found");return}; println("Found: ${found_u.name}, ${found_u.age}")
+  find_user(2)or{println("User 2 not found (expected).")}
+}

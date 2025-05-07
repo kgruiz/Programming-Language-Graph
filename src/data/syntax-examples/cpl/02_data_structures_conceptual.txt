@@ -1,0 +1,24 @@
+// CPL Data Structures - Conceptual
+// CPL had arrays and allowed user-defined types (like records/structs).
+
+DEFINE TYPE Point = RECORD (Xcoord, Ycoord AS INTEGER)
+
+DEFINE FUNCTION Distance(P1, P2 AS Point) = VALOF $(
+  LET Dx = P1.Xcoord - P2.Xcoord
+  LET Dy = P1.Ycoord - P2.Ycoord
+  RESULTIS SQRT(Dx*Dx + Dy*Dy) // SQRT is hypothetical
+$)
+
+$(
+  LET MyPoint1 = Point(3, 4)
+  LET MyPoint2 = Point(0, 0)
+
+  PRINT("Point 1: (") PRINTVALUE(MyPoint1.Xcoord) PRINT(",") PRINTVALUE(MyPoint1.Ycoord) PRINT(")") NEWLINE()
+  PRINT("Distance to origin: ") PRINTVALUE(Distance(MyPoint1, MyPoint2)) NEWLINE()
+
+  // Arrays
+  LET NumberArray = ARRAY 1:5 OF INTEGER
+  NumberArray[1] := 10
+  NumberArray[2] := 20
+  PRINT("First element of array: ") PRINTVALUE(NumberArray[1]) NEWLINE()
+$)

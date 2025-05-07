@@ -1,0 +1,5 @@
+datatype suit=C|D|H|S; type rank=int; type card={suit:suit,rank:rank};
+fun cardToStr c = let fun sStr s=case s of C=>"C"|D=>"D"|H=>"H"|S=>"S"; fun rStr r=case r of 1=>"A"|11=>"J"|12=>"Q"|13=>"K"|_=>Int.toString r in rStr(#rank c)^sStr(#suit c) end;
+val deck=[{suit=H,rank=1},{suit=S,rank=13}]; val deckS=List.map cardToStr deck;
+fun printS [] = () | printS (s::ss) = (print(s^" ");printS ss);
+val()=print "Deck: "; val()=printS deckS; val()=print"\n";

@@ -1,0 +1,3 @@
+enum Compass{case n,s,e,w} struct Coords{var lat:Double;var lon:Double;var dir:Compass?}
+func desc(c:Coords){var d="Lat:\(c.lat),Lon:\(c.lon)";if let D=c.dir{d+=",Dir:\(D)"};print(d)}
+var l1=Coords(lat:34,lon:-118,dir:.n); desc(c:l1)

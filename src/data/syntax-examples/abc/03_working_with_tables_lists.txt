@@ -1,0 +1,7 @@
+PUT {} IN my.list
+PUT "apple" IN my.list[1]
+PUT "banana" IN my.list[2]
+PUT "cherry" IN my.list[3]
+
+FOR item IN my.list:
+   WRITE item /

@@ -1,0 +1,5 @@
+(* Standard ML Example *)
+fun factorial 0 = 1 | factorial n = if n < 0 then raise Fail "Negative" else n * factorial (n-1);
+fun fib 0 = 0 | fib 1 = 1 | fib n = fib(n-1) + fib(n-2);
+val () = print ("Fact 5: " ^ Int.toString(factorial 5) ^ "\n");
+val () = print ("Fib 10: " ^ Int.toString(fib 10) ^ "\n");

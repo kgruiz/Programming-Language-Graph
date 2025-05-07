@@ -1,0 +1,18 @@
+program subprogram_demo
+    implicit none
+    real :: x, y, result_add, result_mult
+    x = 10.5; y = 3.0
+    call add_numbers(x, y, result_add)
+    print *, x, " + ", y, " = ", result_add
+    result_mult = multiply_numbers(x, y)
+    print *, x, " * ", y, " = ", result_mult
+contains
+    subroutine add_numbers(a, b, sum_val)
+        real, intent(in) :: a, b; real, intent(out) :: sum_val
+        sum_val = a + b
+    end subroutine add_numbers
+    function multiply_numbers(a, b) result(product_val)
+        real, intent(in) :: a, b; real :: product_val
+        product_val = a * b
+    end function multiply_numbers
+end program subprogram_demo

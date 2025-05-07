@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+function check_file_type() { local file="$1"; if [[ ! -e "$file" ]]; then echo "No exist: $file"; return 1; fi
+  if [[ -d "$file" ]]; then echo "$file is dir."; elif [[ -f "$file" ]]; then echo "$file is file."; if [[ -x "$file" ]]; then echo "  Executable."; fi
+  else echo "$file is other."; fi; return 0; }
+check_file_type "/usr/bin/zsh"; check_file_type "/tmp"; check_file_type "/nonexistent"

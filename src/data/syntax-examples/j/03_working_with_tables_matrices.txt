@@ -1,0 +1,10 @@
+NB. Create a 2x3 table (matrix)
+table =: 2 3 $ 1 2 3 4 5 6  NB. $ is shape
+echo table
+NB. Output:
+NB. 1 2 3
+NB. 4 5 6
+transposed_table =: |: table
+echo transposed_table
+row_sums =: +/"1 table
+echo row_sums NB. Output: 6 15

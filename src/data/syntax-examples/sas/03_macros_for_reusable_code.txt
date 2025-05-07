@@ -1,0 +1,6 @@
+* SAS Example: Macro;
+%MACRO PrintDatasetInfo(dataset_name, title_text);
+  PROC PRINT DATA=&dataset_name.; TITLE "&title_text."; RUN;
+  PROC CONTENTS DATA=&dataset_name.; TITLE "Contents of &dataset_name."; RUN;
+%MEND PrintDatasetInfo;
+%PrintDatasetInfo(work.mydata, Detailed Info for MyData);

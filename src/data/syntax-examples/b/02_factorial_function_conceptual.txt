@@ -1,0 +1,17 @@
+/* Factorial in B (Conceptual) */
+extrn putstr;
+/* No explicit types, all are machine words (integers) */
+
+fact(n) {
+  if (n < 0) return (0); /* Error or specific value */
+  if (n == 0) return (1);
+  return (n * fact(n-1));
+}
+
+main() {
+  /* auto i, res; */
+  /* i = 5; */
+  /* res = fact(i); */
+  /* Printing res would require a num-to-string conversion */
+  putstr("Factorial of 5 is (conceptually): 120*n");
+}

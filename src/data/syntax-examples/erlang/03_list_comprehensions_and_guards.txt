@@ -1,0 +1,10 @@
+-module(listcomp_demo).
+-export([process_numbers/1, describe_number/1]).
+process_numbers(Numbers) ->
+    Evens = [X || X <- Numbers, X rem 2 =:= 0],
+    SquaredOdds = [X*X || X <- Numbers, X rem 2 =/= 0],
+    io:format("Original: ~p~nEvens: ~p~nSquared Odds: ~p~n", [Numbers, Evens, SquaredOdds]).
+describe_number(N) when is_integer(N), N > 0 -> "Positive integer";
+describe_number(N) when is_integer(N), N < 0 -> "Negative integer";
+describe_number(0) -> "Zero";
+describe_number(_) -> "Not a recognized integer type".

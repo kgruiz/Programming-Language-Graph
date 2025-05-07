@@ -1,0 +1,3 @@
+enum UserRole{Admin="ADMIN",Editor="EDITOR"} interface UserProfile{id:number;name:string;role:UserRole;email?:string;}
+function updateUser(id:number,upd:Partial<UserProfile>):Readonly<UserProfile>{ const cur:UserProfile={id:id,name:"test",role:UserRole.Editor}; const updated={...cur,...upd}; console.log("Updated:",updated); return Object.freeze(updated);}
+const finalP = updateUser(1,{role:UserRole.Admin,email:"a@ex.com"}); // finalP.id=2; // Error

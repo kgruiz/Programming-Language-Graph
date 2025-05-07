@@ -1,0 +1,15 @@
+begin
+    procedure counter_proc;
+    begin
+        own integer call_count; comment own makes it static;
+        call_count := call_count + 1;
+        outstring(1, "Procedure called ");
+        outinteger(1, call_count);
+        outstring(1, " times.");
+        newline(1);
+    end;
+
+    integer k;
+    for k := 1 step 1 until 3 do
+        counter_proc;
+end

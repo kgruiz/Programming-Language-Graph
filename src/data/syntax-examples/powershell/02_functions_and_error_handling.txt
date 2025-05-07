@@ -1,0 +1,7 @@
+function Get-Greeting { param([Parameter(Mandatory=$true)][string]$Name, [string]$Salutation="Hello") return "$Salutation, $Name!" }
+function Test-PathExistence { param([string]$Path)
+    try { if (Test-Path $Path -ErrorAction Stop) { Write-Host "Path $Path exists." }
+          else { Write-Warning "Path $Path does not exist." } }
+    catch { Write-Error "Error checking $Path: $_" } }
+Get-Greeting -Name "Admin" -Salutation "Greetings"
+Test-PathExistence -Path "C:\Windows"; Test-PathExistence -Path "C:\NonExistent"

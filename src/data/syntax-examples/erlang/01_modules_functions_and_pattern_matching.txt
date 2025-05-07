@@ -1,0 +1,12 @@
+-module(mymath).
+-export([add/2, square/1, factorial/1]).
+add(A, B) -> A + B. square(X) -> X * X.
+factorial(0) -> 1; factorial(N) when N > 0 -> N * factorial(N - 1).
+
+-module(greeter).
+-export([greet/1, greet/2, start/0]).
+greet(Name) -> greet(Name, false).
+greet(Name, false) -> io:format("Hello, ~s!~n", [Name]);
+greet(Name, true)  -> io:format("HELLO, ~s!~n", [string:uppercase(Name)]).
+start() -> greet("Erlang User"), greet("Erlang User", true),
+    io:format("Factorial of 5 is ~p~n", [mymath:factorial(5)]).

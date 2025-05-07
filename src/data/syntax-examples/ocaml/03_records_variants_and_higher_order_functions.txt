@@ -1,0 +1,5 @@
+type point = { x:float; y:float } type shape = | Circle of {c:point;r:float} | Rect of {tl:point;w:float;h:float}
+let area s = match s with | Circle {r;_} -> Float.pi*.r*.r | Rect {w;h;_} -> w*.h
+let scale_shape f s = match s with | Circle {c;r} -> Circle {c;r=r*.f} | Rect {tl;w;h} -> Rect {tl;w=w*.f;h=h*.f}
+let () = let shapes = [Circle{c={x=0.;y=0.};r=5.}; Rect{tl={x=1.;y=1.};w=3.;h=4.}] in
+  List.iter (fun s -> Printf.printf "Area: %.2f\n" (area s)) (List.map (scale_shape 2.0) shapes)

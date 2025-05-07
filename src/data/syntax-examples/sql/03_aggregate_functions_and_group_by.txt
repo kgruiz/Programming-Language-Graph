@@ -1,0 +1,4 @@
+-- SQL Example: Aggregate Functions
+SELECT d.DeptName, COUNT(e.EmpID) AS NumEmps, AVG(e.Salary) AS AvgSal
+FROM Employees e JOIN Departments d ON e.DeptID = d.DeptID
+GROUP BY d.DeptName HAVING COUNT(e.EmpID) > 0 ORDER BY AvgSal DESC;

@@ -1,0 +1,3 @@
+(define (factorial n) (if (<= n 1) 1 (* n (factorial (- n 1)))))
+(define (greet name) (display "Hello, ") (display name) (display " from Scheme!") (newline))
+(greet "Scheme User") (display "Fact 6: ") (display (factorial 6)) (newline)

@@ -1,0 +1,1 @@
+fn main(){let s1=String::from("hi");let s2=s1.clone();println!("s1={},s2={}",s1,s2);takes_own(s2.clone());let x=5;makes_copy(x);println!("x:{}",x);let r1=&s1;println!("{}",r1);} fn takes_own(s:String){println!("In takes:{}",s);} fn makes_copy(i:i32){println!("In makes:{}",i);}

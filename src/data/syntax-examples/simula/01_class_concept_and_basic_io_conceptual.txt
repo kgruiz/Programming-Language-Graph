@@ -1,0 +1,9 @@
+! Simula Example - Conceptual;
+Begin Class Greeter(Name); Text Name; Begin
+  Procedure GreetLoud(Loud); Boolean Loud; Begin Text Greeting;
+    Greeting :- Copy("Hello, " & Name & " from Simula!");
+    If Loud Then Greeting :- ToUpper(Greeting); ! ToUpper hypothetical;
+    OutText(Greeting); OutImage; End GreetLoud;
+End Greeter;
+Ref(Greeter) MyGreeter; MyGreeter :- New Greeter("Simula User");
+MyGreeter.GreetLoud(False); MyGreeter.GreetLoud(True); End;

@@ -1,0 +1,11 @@
+classify_number <- function(n) {
+  if (!is.numeric(n)) return("Not a number")
+  res <- if(n>0) "Positive" else if(n<0) "Negative" else "Zero"
+  if (n!=0 && n%%2==0) res<-paste(res,"and Even") else if (n!=0) res<-paste(res,"and Odd")
+  return(res)
+}
+nums <- c(10,-5,0,7.5,"text")
+for (num in nums) {
+  if(is.character(num)) cat(sprintf("Input %s: %s\n",num,classify_number(num)))
+  else cat(sprintf("Number %.1f: %s\n",num,classify_number(num)))
+}

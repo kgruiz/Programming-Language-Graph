@@ -1,0 +1,16 @@
+! Simula Virtual Procedures - Conceptual;
+Begin
+  Class Shape; Virtual: Procedure Draw;
+  Begin Procedure PrintType; Text T; Begin T :- Edit(InImage); OutText(T); OutImage; End; End;
+
+  Shape Class Circle(Radius); Real Radius;
+  Begin Procedure Draw; Begin PrintType; OutText("Circle R="); OutFix(Radius,2,6); OutImage; End; End;
+
+  Shape Class Rectangle(Width, Height); Real Width, Height;
+  Begin Procedure Draw; Begin PrintType; OutText("Rectangle W="); OutFix(Width,2,6); OutText(" H="); OutFix(Height,2,6); OutImage; End; End;
+
+  Ref(Shape) S; Ref(Circle) C; Ref(Rectangle) R;
+  C :- New Circle(5.0); R :- New Rectangle(3.0, 4.0);
+  S :- C; S.Draw;  ! Calls Circles Draw
+  S :- R; S.Draw;  ! Calls Rectangles Draw
+End;

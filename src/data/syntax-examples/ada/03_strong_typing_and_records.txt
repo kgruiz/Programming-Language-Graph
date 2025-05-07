@@ -1,0 +1,16 @@
+procedure Record_Example is
+   type Day_Of_Week is (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday);
+   type Date_Record is record
+      Day   : Day_Of_Week;
+      Month : Integer range 1 .. 12;
+      Year  : Integer range 1900 .. 2100;
+   end record;
+
+   Today : Date_Record;
+begin
+   Today := (Day => Wednesday, Month => 7, Year => 2024);
+   -- Today.Month := 13; -- This would cause a constraint error
+
+   Ada.Text_IO.Put_Line("Today is " & Day_Of_WeekImage(Today.Day));
+   Ada.Text_IO.Put_Line("Month: " & IntegerImage(Today.Month));
+end Record_Example;

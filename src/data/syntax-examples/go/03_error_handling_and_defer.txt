@@ -1,0 +1,23 @@
+package main
+import ("fmt"; "os")
+
+func readFile(filename string) ([]byte, error) {
+    file, err := os.Open(filename)
+    if err != nil { return nil, fmt.Errorf("opening file %s: %w", filename, err) }
+    defer file.Close()
+
+    stat, err := file.Stat()
+    if err != nil { return nil, fmt.Errorf("stat for %s: %w", filename, err) }
+
+    data := make([]byte, stat.Size())
+    _, err = file.Read(data)
+    if err != nil { return nil, fmt.Errorf("reading file %s: %w", filename, err) }
+    return data, nil
+}
+func main() {
+    _ = os.WriteFile("go_example.txt", []byte("Hello Go!"), 0644)
+    content, err := readFile("go_example.txt")
+    if err != nil { fmt.Println("Error:", err) } else { fmt.Printf("File content: %s\n", content) }
+    _, err = readFile("non_existent.txt")
+    if err != nil { fmt.Println("Error (expected):", err) }
+}

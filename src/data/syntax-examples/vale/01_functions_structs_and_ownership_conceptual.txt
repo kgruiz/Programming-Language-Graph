@@ -1,0 +1,10 @@
+// Vale Language Example (Conceptual)
+struct Point { x: int; y: int; }
+func createPoint(x: int, y: int) own Point { return Point(x, y); }
+func printPoint(p: &Point) { println("Point: ({}, {})", p.x, p.y); }
+func translatePoint(p: &!Point, dx: int, dy: int) { p.x = p.x + dx; p.y = p.y + dy; }
+exported func main() {
+  p1 = createPoint(10, 20); printPoint(&p1);
+  translatePoint(&!p1, 5, -5); printPoint(&p1);
+  println("Vale example finished.");
+}

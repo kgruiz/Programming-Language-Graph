@@ -1,0 +1,7 @@
+module type STACK = sig type a stack; val empty : a stack; val isEmpty : a stack -> bool; val push : a -> a stack -> a stack; val pop : a stack -> (a * a stack) option end
+module ListStack : STACK = struct
+  type a stack = a list; let empty=[] ; let isEmpty s=(s=[]); let push x s=x::s
+  let pop s = match s with | []->None | x::xs -> Some(x,xs)
+end
+let () = let open ListStack in let s0=empty in let s1=push 1 s0 in let s2=push 2 s1 in
+  match pop s2 with Some(t,r) -> Printf.printf "Pop: %d, Empty(rest): %b\n" t (isEmpty r) | None -> ()

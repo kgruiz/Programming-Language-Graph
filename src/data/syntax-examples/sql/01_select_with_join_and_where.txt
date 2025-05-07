@@ -1,0 +1,8 @@
+-- SQL Example: SELECT with JOIN
+-- CREATE TABLE Departments (DeptID INT PRIMARY KEY, DeptName VARCHAR(50));
+-- CREATE TABLE Employees (EmpID INT PRIMARY KEY, Name VARCHAR(50), DeptID INT, Salary DECIMAL(10,2));
+-- INSERT INTO Departments VALUES (1, HR), (2, Eng);
+-- INSERT INTO Employees VALUES (101, Alice, 2, 75000), (102, Bob, 1, 60000);
+SELECT e.Name, d.DeptName, e.Salary FROM Employees e
+JOIN Departments d ON e.DeptID = d.DeptID
+WHERE e.Salary > 65000 ORDER BY e.Name;

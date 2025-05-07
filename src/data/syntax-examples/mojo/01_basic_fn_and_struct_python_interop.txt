@@ -1,0 +1,11 @@
+# Mojo 🔥 (Syntax is evolving)
+fn mojo_greet(name: String, loud: Bool = False):
+    let message = "Hello, " + name + " from Mojo!"
+    if loud: print(message.upper())
+    else: print(message)
+struct Point: var x: Float64; var y: Float64
+    fn __init__(inout self, x: Float64, y: Float64): self.x=x; self.y=y
+    fn norm(self) -> Float64: return (self.x**2 + self.y**2).sqrt()
+fn main():
+    mojo_greet("Mojo User"); mojo_greet("Mojo Enthusiast", loud=True)
+    let p = Point(3.0, 4.0); print("Point p:", p.x, p.y); print("Norm:", p.norm())

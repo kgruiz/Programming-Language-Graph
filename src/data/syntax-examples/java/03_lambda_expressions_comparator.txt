@@ -1,0 +1,12 @@
+import java.util.ArrayList; import java.util.Collections; import java.util.List;
+class Person { String name; int age; public Person(String n,int a){name=n;age=a;} @Override public String toString(){return name+":"+age;} }
+public class LambdaComparatorDemo {
+    public static void main(String[] args) {
+        List<Person> people = new ArrayList<>();
+        people.add(new Person("Eve", 22)); people.add(new Person("David", 35));
+        Collections.sort(people, (p1, p2) -> Integer.compare(p1.age, p2.age));
+        System.out.println("Sorted by age: " + people);
+        people.sort((p1, p2) -> p1.name.compareTo(p2.name));
+        System.out.println("Sorted by name: " + people);
+    }
+}

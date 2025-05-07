@@ -1,0 +1,11 @@
+String? findSetting(Map<String, String> settings, String key) => settings[key];
+void main() {
+  Map<String, String> config = {theme: dark, fontSize: 16};
+  String? theme = findSetting(config, theme);
+  print(Theme: ${theme?.toUpperCase() ?? "DEFAULT"});
+  try {
+    int result = 100 ~/ 0; print(Result: $result);
+  } on UnsupportedError catch (e) { print(Caught error: $e);
+  } catch (e, s) { print(Unexpected: $e\nStack: $s); }
+  finally { print(Finally done.); }
+}

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+greet() {
+  local user_name=$1
+  local greeting_type=$2
+
+  if [ "$greeting_type" == "formal" ]; then
+    echo "Good day, $user_name."
+  else
+    echo "Hey there, ${user_name}!"
+  fi
+  return 0
+}
+
+greet "Alice" "casual"
+greet "Mr. Smith" "formal"
+
+if [ $? -eq 0 ]; then
+  echo "Greet function executed successfully."
+fi

@@ -1,0 +1,20 @@
+// Carbon Language (Experimental - Syntax may change)
+package Main api;
+
+import Math; // Assuming a Math package
+
+fn Main() -> i32 {
+  var x: auto = 10;
+  var y: i32 = 20;
+  var sum: i32 = Math.Add(x, y); // Hypothetical Math.Add
+
+  Print("Hello, Carbon!");
+  Print("Sum of {0} and {1} is {2}", x, y, sum);
+
+  if (sum > 25) {
+    Print("Sum is greater than 25.");
+  } else {
+    Print("Sum is not greater than 25.");
+  }
+  return 0;
+}

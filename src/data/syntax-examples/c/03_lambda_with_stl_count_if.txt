@@ -1,0 +1,16 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    std::vector<int> numbers = {1, -2, 3, -4, 5, 0, -6};
+
+    int positive_count = std::count_if(numbers.begin(), numbers.end(),
+                                     [](int n){ return n > 0; });
+    std::cout << "Number of positive elements: " << positive_count << std::endl;
+
+    int even_count = std::count_if(numbers.begin(), numbers.end(),
+                                 [](int n){ return n % 2 == 0; });
+    std::cout << "Number of even elements: " << even_count << std::endl;
+    return 0;
+}

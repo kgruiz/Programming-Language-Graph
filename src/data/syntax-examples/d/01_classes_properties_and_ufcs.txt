@@ -1,0 +1,19 @@
+import std.stdio;
+import std.string;
+
+class Greeter {
+    private string _name;
+    this(string name) { this._name = name; }
+    @property string name() const { return _name; }
+    @property void name(string newName) { _name = newName; }
+    void greet(bool loud = false) const {
+        if (loud) { writeln("HELLO, ", _name.toUpper(), "!"); }
+        else { writeln("Hello, ", _name); }
+    }
+}
+void main() {
+    auto g = new Greeter("D User");
+    g.greet(); g.greet(true);
+    writeln("Name: ", g.name);
+    g.name = "D Lang Fan"; g.greet();
+}

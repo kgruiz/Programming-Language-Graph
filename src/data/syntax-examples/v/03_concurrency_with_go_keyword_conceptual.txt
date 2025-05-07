@@ -1,0 +1,10 @@
+module main
+import time
+fn worker(id int) { for i:=0; i<3; i++ { println("Worker ${id}: task ${i}"); time.sleep(100*time.millisecond) } }
+fn main() {
+    go worker(1) // Launch goroutine
+    go worker(2)
+    println("Launched workers. Main thread might exit before they complete without explicit sync.")
+    time.sleep(500*time.millisecond) // Simple wait for demo
+    println("Main done.")
+}

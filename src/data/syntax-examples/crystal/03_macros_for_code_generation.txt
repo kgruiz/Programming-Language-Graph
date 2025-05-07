@@ -1,0 +1,19 @@
+# Simple macro to define getter and setter
+macro attribute(name, type)
+  getter {{name}} : {{type}}
+  setter {{name}} : {{type}}
+
+  def initialize(@{{name}} : {{type}})
+  end
+end
+
+class User
+  attribute name, String
+  attribute age, Int32
+end
+
+user = User.new("Alice", 30)
+puts "User: #{user.name}, Age: #{user.age}"
+user.name = "Alicia"
+user.age = 31
+puts "Updated User: #{user.name}, Age: #{user.age}"

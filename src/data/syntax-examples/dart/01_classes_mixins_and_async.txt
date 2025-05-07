@@ -1,0 +1,20 @@
+mixin Logger {
+  void log(String message) {
+    print(${runtimeType}: ${message});
+  }
+}
+class Greeter with Logger {
+  String name;
+  Greeter(this.name);
+  Future<String> greetAsync({bool loud = false}) async {
+    await Future.delayed(Duration(milliseconds: 100));
+    String greeting = loud ? HELLO, ${name.toUpperCase()}! : Hello, $name!;
+    log(greeting);
+    return greeting;
+  }
+}
+void main() async {
+  var g = Greeter(Dart User);
+  await g.greetAsync();
+  await g.greetAsync(loud: true);
+}

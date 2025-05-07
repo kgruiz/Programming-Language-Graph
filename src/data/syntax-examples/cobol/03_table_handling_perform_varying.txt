@@ -1,0 +1,28 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. TABLEDEMO.
+       DATA DIVISION.
+       WORKING-STORAGE SECTION.
+       01  WS-MONTH-TABLE.
+           05  WS-MONTH-ENTRIES OCCURS 3 TIMES.
+               10 WS-MONTH-NAME    PIC X(10).
+               10 WS-DAYS-IN-MONTH PIC 99.
+       01  WS-INDEX             PIC 9.
+
+       PROCEDURE DIVISION.
+       MAIN-PARA.
+           MOVE "January"   TO WS-MONTH-NAME(1).
+           MOVE 31          TO WS-DAYS-IN-MONTH(1).
+           MOVE "February"  TO WS-MONTH-NAME(2).
+           MOVE 28          TO WS-DAYS-IN-MONTH(2).
+           MOVE "March"     TO WS-MONTH-NAME(3).
+           MOVE 31          TO WS-DAYS-IN-MONTH(3).
+
+           PERFORM DISPLAY-MONTH-INFO
+               VARYING WS-INDEX FROM 1 BY 1 UNTIL WS-INDEX > 3.
+
+           STOP RUN.
+
+       DISPLAY-MONTH-INFO.
+           DISPLAY "Month: " WS-MONTH-NAME(WS-INDEX)
+                   ", Days: " WS-DAYS-IN-MONTH(WS-INDEX).
+

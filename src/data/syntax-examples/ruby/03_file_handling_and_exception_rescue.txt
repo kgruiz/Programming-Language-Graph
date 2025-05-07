@@ -1,0 +1,2 @@
+begin File.open("rb.txt","w"){|f|f.puts "Ruby line.";f.puts "Nums: #{1+2}"}; puts "Wrote."; puts "Read:\n#{File.read("rb.txt")}"
+rescue Errno::ENOENT=>e; puts "Not found: #{e}" rescue StandardError=>e; puts "Err: #{e}" end

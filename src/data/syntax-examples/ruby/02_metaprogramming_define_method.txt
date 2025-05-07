@@ -1,0 +1,3 @@
+class DynamicGreeter; def initialize(p) @p=p end; def add_greet(m,sfx) self.class.define_method(m){|n|puts "#{@p} #{n}, #{sfx}"} end end
+dg=DynamicGreeter.new("Hey"); dg.add_greet(:casual,"sup?"); dg.add_greet(:formal,"how do u do?")
+dg.casual("Dude"); dg.formal("Sir")

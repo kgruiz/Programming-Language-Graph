@@ -1,0 +1,6 @@
+* Stata Example: Loading data and basic commands
+clear all; set more off
+* sysuse auto, clear
+* For snippet, assume data is loaded.
+* describe; summarize price mpg; list in 1/5
+display "Stata: describe, summarize, list (conceptual)."

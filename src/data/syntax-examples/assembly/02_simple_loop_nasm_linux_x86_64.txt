@@ -1,0 +1,35 @@
+section .data
+    char_to_print db A
+    newline db 0Ah
+
+section .text
+    global _start
+
+_print_char: ; expects char address in rsi
+    mov rax, 1
+    mov rdi, 1
+    mov rdx, 1 ; print 1 char
+    syscall
+    ret
+
+_start:
+    mov rcx, 5      ; loop counter
+
+loop_top:
+    cmp rcx, 0
+    je loop_end     ; jump if equal (counter is 0)
+
+    mov rsi, char_to_print
+    call _print_char
+
+    mov rsi, newline
+    call _print_char
+
+    inc byte [char_to_print] ; Increment char (A -> B -> C ...)
+    dec rcx
+    jmp loop_top
+
+loop_end:
+    mov rax, 60
+    xor rdi, rdi
+    syscall
