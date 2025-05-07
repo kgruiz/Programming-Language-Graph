@@ -17,7 +17,6 @@ import type {
 import ControlsComponent from '@/components/Controls';
 import Sidebar from '@/components/Sidebar';
 import LoadingIndicator from '@/components/LoadingIndicator';
-import NavigationControls from '@/components/NavigationControls';
 
 import {
     initialNodesData as rawNodes,
@@ -891,14 +890,6 @@ const HomePage: React.FC = () => {
                             onClose={handleCloseSidebar}
                             isVisible={!!selectedNodeId}
                             onNavigateToNode={handleNavigateToNodeFromSidebar}
-                        />
-                    )}
-                    {isVisScriptLoaded && areDataSetsInitialized && (
-                        <NavigationControls
-                            onZoomIn={handleZoomIn}
-                            onZoomOut={handleZoomOut}
-                            onFit={handleFit}
-                            isNetworkReady={!!networkInstanceRef.current}
                         />
                     )}
                 </MainContent>
