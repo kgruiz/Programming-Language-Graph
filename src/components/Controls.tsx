@@ -6,10 +6,10 @@ const IconWrapper = styled.span`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 16px; // Adjusted for button text size
+    width: 16px;
     height: 16px;
     margin-right: ${(props) => props.theme.spacing.s};
-    vertical-align: -0.1em; // Fine-tune alignment
+    vertical-align: -0.1em;
     svg {
         width: 100%;
         height: 100%;
@@ -76,22 +76,32 @@ interface ControlsProps {
 }
 
 const ControlsContainer = styled.div`
-    padding: ${(props) => props.theme.spacing.m}
-        ${(props) => props.theme.spacing.l};
-    background-color: ${(props) => props.theme.colors.backgroundSecondary};
+    padding: ${(props) => props.theme.spacing.m};
+    background-color: ${(props) =>
+        props.theme.colors.backgroundSecondary}E6; // 90% opacity
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
     border-bottom: 1px solid ${(props) => props.theme.colors.separator};
     display: flex;
     flex-wrap: wrap;
     gap: ${(props) => props.theme.spacing.m};
     align-items: center;
     box-shadow: ${(props) => props.theme.shadows.controlsContainer};
-    min-height: 75px; // Ensure a consistent height
+    min-height: 75px;
+    position: relative; /* For z-indexing if needed */
+    z-index: 20; /* Ensure it's above the graph but below modals if any */
+`;
+
+const ControlGroup = styled.div`
+    display: flex;
+    align-items: center;
+    gap: ${(props) => props.theme.spacing.s};
 `;
 
 const ControlLabel = styled.label`
     font-size: 14px;
     color: ${(props) => props.theme.colors.contentTertiary};
-    margin-right: ${(props) => props.theme.spacing.s};
+    margin-right: ${(props) => props.theme.spacing.xs};
 `;
 
 const Select = styled.select`
@@ -107,7 +117,7 @@ const Select = styled.select`
     transition: background-color 0.2s ease, border-color 0.2s ease,
         box-shadow 0.2s ease;
     box-shadow: ${(props) => props.theme.shadows.control};
-    min-width: 220px;
+    min-width: 200px;
 
     &:hover {
         background-color: ${(props) =>
@@ -119,7 +129,7 @@ const Select = styled.select`
         outline: none;
         border-color: ${(props) => props.theme.colors.accentBlue};
         box-shadow: ${(props) => props.theme.shadows.control},
-            0 0 0 3px ${(props) => props.theme.colors.accentBlue}4D; // 30% opacity blue
+            0 0 0 3px ${(props) => props.theme.colors.accentBlue}4D;
     }
 `;
 
@@ -133,7 +143,7 @@ const Button = styled.button<ButtonElementProps>`
     padding: ${(props) => props.theme.spacing.s}
         ${(props) => props.theme.spacing.m};
     border-radius: ${(props) => props.theme.borderRadius.medium};
-    border: 1px solid ${(props) => props.theme.colors.controlBorder};
+    border: 1px solid transparent; /* Start with transparent for active states */
     background-color: ${(props) => props.theme.colors.controlBackground};
     color: ${(props) => props.theme.colors.controlText};
     cursor: pointer;
@@ -143,7 +153,7 @@ const Button = styled.button<ButtonElementProps>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    line-height: 1.2; // Ensure text and icon align well
+    line-height: 1.2;
     transition: background-color 0.2s ease, border-color 0.2s ease,
         box-shadow 0.2s ease, color 0.2s ease;
     box-shadow: ${(props) => props.theme.shadows.control};
@@ -151,12 +161,9 @@ const Button = styled.button<ButtonElementProps>`
     &:hover {
         background-color: ${(props) =>
             props.theme.colors.controlHoverBackground};
-        border-color: ${(props) => props.theme.colors.controlHoverBorder};
     }
     &:active {
-        background-color: ${(props) =>
-            props.theme.colors
-                .backgroundTertiary}; // Slightly darker for active
+        background-color: ${(props) => props.theme.colors.backgroundTertiary};
         box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
     }
     &:focus,
@@ -164,7 +171,7 @@ const Button = styled.button<ButtonElementProps>`
         outline: none;
         border-color: ${(props) => props.theme.colors.accentBlue};
         box-shadow: ${(props) => props.theme.shadows.control},
-            0 0 0 3px ${(props) => props.theme.colors.accentBlue}4D; // 30% opacity blue
+            0 0 0 3px ${(props) => props.theme.colors.accentBlue}4D;
     }
 
     ${(props) => (props.isActiveGood || props.isActiveBad) && ` color: #fff; `}
@@ -179,7 +186,7 @@ const Button = styled.button<ButtonElementProps>`
             border-color: ${props.theme.colors.accentGreenHover};
         }
         &:focus, &:focus-visible {
-            border-color: ${props.theme.colors.accentGreen}; // Keep green border on focus
+            border-color: ${props.theme.colors.accentGreen};
             box-shadow: 0 0 0 3px ${props.theme.colors.accentGreen}4D;
         }
     `}
@@ -194,25 +201,20 @@ const Button = styled.button<ButtonElementProps>`
             border-color: ${props.theme.colors.accentRedHover};
         }
         &:focus, &:focus-visible {
-            border-color: ${props.theme.colors.accentRed}; // Keep red border on focus
+            border-color: ${props.theme.colors.accentRed};
             box-shadow: 0 0 0 3px ${props.theme.colors.accentRed}4D;
         }
     `}
 
     ${(props) =>
-        props.isReset &&
+        props.isReset && // For Reset button
         `
-        // Standard button style, maybe a slightly different border or less prominent
-        // background-color: ${props.theme.colors.accentBlue};
-        // border-color: ${props.theme.colors.accentBlue};
-        // color: white;
-        // &:hover {
-        //     background-color: ${props.theme.colors.accentBlueHover};
-        //     border-color: ${props.theme.colors.accentBlueHover};
-        // }
-        // &:active {
-        //     background-color: ${props.theme.colors.accentBlueActive};
-        // }
+        background-color: ${props.theme.colors.controlBackground};
+        border: 1px solid ${props.theme.colors.controlBorder};
+        &:hover {
+            background-color: ${props.theme.colors.controlHoverBackground};
+            border-color: ${props.theme.colors.controlHoverBorder};
+        }
     `}
 `;
 
@@ -228,44 +230,48 @@ const Controls: React.FC<ControlsProps> = ({
 }) => {
     return (
         <ControlsContainer>
-            <ControlLabel htmlFor="categorySelect">
-                Highlight Category:
-            </ControlLabel>
-            <Select
-                id="categorySelect"
-                value={selectedCategory}
-                onChange={(e) => onCategoryChange(e.target.value)}
-            >
-                {categories.map((catShort: string) => (
-                    <option
-                        key={catShort}
-                        value={catShort}
-                    >
-                        {categoryMap[catShort] || catShort}
-                    </option>
-                ))}
-            </Select>
-            <Button
-                onClick={onHighlightGood}
-                isActiveGood={activeHighlightType === 'good'}
-                aria-pressed={activeHighlightType === 'good'}
-            >
-                <ThumbUpIcon /> Good At
-            </Button>
-            <Button
-                onClick={onHighlightBad}
-                isActiveBad={activeHighlightType === 'bad'}
-                aria-pressed={activeHighlightType === 'bad'}
-            >
-                <ThumbDownIcon /> Bad At
-            </Button>
-            <Button
-                onClick={onResetHighlights}
-                isReset // This prop could be used for different styling if needed
-                aria-label="Reset highlights"
-            >
-                <ResetIcon /> Reset All
-            </Button>
+            <ControlGroup>
+                <ControlLabel htmlFor="categorySelect">Category:</ControlLabel>
+                <Select
+                    id="categorySelect"
+                    value={selectedCategory}
+                    onChange={(e) => onCategoryChange(e.target.value)}
+                >
+                    {categories.map((catShort: string) => (
+                        <option
+                            key={catShort}
+                            value={catShort}
+                        >
+                            {categoryMap[catShort] || catShort}
+                        </option>
+                    ))}
+                </Select>
+            </ControlGroup>
+
+            <ControlGroup>
+                <ControlLabel>Highlight:</ControlLabel>
+                <Button
+                    onClick={onHighlightGood}
+                    isActiveGood={activeHighlightType === 'good'}
+                    aria-pressed={activeHighlightType === 'good'}
+                >
+                    <ThumbUpIcon /> Good At
+                </Button>
+                <Button
+                    onClick={onHighlightBad}
+                    isActiveBad={activeHighlightType === 'bad'}
+                    aria-pressed={activeHighlightType === 'bad'}
+                >
+                    <ThumbDownIcon /> Bad At
+                </Button>
+                <Button
+                    onClick={onResetHighlights}
+                    isReset
+                    aria-label="Reset highlights"
+                >
+                    <ResetIcon /> Reset
+                </Button>
+            </ControlGroup>
         </ControlsContainer>
     );
 };

@@ -1,15 +1,31 @@
 import React, { useEffect, useRef } from 'react';
-import type { Options } from '@/types';
+import type { Options, IdType } from '@/types'; // Added IdType
 import styled from '@emotion/styled';
 import { VisDataSetNodes, VisDataSetEdges } from '@/types';
 
 declare const vis: any;
 
+interface GraphClickParams {
+    // Define a type for click parameters
+    nodes: IdType[];
+    edges: IdType[];
+    event: any; // Original event
+    pointer: {
+        DOM: { x: number; y: number };
+        canvas: { x: number; y: number };
+    };
+}
+
 interface GraphProps {
     nodesData: VisDataSetNodes | null;
     edgesData: VisDataSetEdges | null;
     options: Options;
-    onNodeClick: (nodeId: string | null) => void;
+    // Replace onNodeClick with a more general onGraphClick
+    onGraphClick: (
+        type: 'node' | 'edge' | 'background',
+        id: IdType | null,
+        params: GraphClickParams
+    ) => void;
     onStabilizationDone: () => void;
     setNetworkInstance: (network: any | null) => void;
 }
@@ -35,7 +51,7 @@ const GraphComponent: React.FC<GraphProps> = ({
     nodesData,
     edgesData,
     options,
-    onNodeClick,
+    onGraphClick, // Use the new prop
     onStabilizationDone,
     setNetworkInstance,
 }) => {
@@ -44,13 +60,11 @@ const GraphComponent: React.FC<GraphProps> = ({
     const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
-        // console.log("GraphComponent useEffect: Running. nodesData available:", !!nodesData, "edgesData available:", !!edgesData, "nodesData length:", nodesData?.length);
         if (
             typeof window.vis === 'undefined' ||
             !window.vis.Network ||
             !window.vis.DataSet
         ) {
-            // console.log("GraphComponent useEffect: vis-network not loaded yet, or not fully.");
             return;
         }
 
@@ -60,15 +74,12 @@ const GraphComponent: React.FC<GraphProps> = ({
             edgesData &&
             nodesData.length > 0
         ) {
-            // console.log("GraphComponent useEffect: All conditions met, initializing network.");
             if (networkRef.current) {
-                // console.log("GraphComponent useEffect: Destroying previous network instance.");
                 networkRef.current.destroy();
             }
 
             try {
                 const currentOptions = {
-                    // Merge with defaults that might ensure proper sizing
                     ...options,
                     autoResize: true,
                     width: '100%',
@@ -78,10 +89,10 @@ const GraphComponent: React.FC<GraphProps> = ({
                 const network = new window.vis.Network(
                     graphRef.current,
                     { nodes: nodesData, edges: edgesData },
-                    currentOptions // Use the potentially modified options
+                    currentOptions
                 );
                 networkRef.current = network;
-                // console.log("GraphComponent useEffect: Network initialized successfully.");
+                setNetworkInstance(network); // Pass instance up immediately
 
                 const handleResize = () => {
                     if (resizeTimeoutRef.current) {
@@ -89,38 +100,37 @@ const GraphComponent: React.FC<GraphProps> = ({
                     }
                     resizeTimeoutRef.current = setTimeout(() => {
                         if (networkRef.current) {
-                            // console.log("GraphComponent: Resizing network (fit)");
                             networkRef.current.fit();
                         }
                     }, 150);
                 };
 
-                network.on('click', (params: any) => {
+                // Centralized click handler within GraphComponent
+                network.on('click', (params: GraphClickParams) => {
+                    console.log('GraphComponent CLICKED (internal):', params); // DEBUG
                     if (params.nodes.length > 0) {
-                        onNodeClick(params.nodes[0] as string);
+                        onGraphClick('node', params.nodes[0], params);
+                    } else if (params.edges.length > 0) {
+                        onGraphClick('edge', params.edges[0], params);
                     } else {
-                        onNodeClick(null);
+                        onGraphClick('background', null, params);
                     }
                 });
 
                 network.on('stabilizationIterationsDone', () => {
-                    // console.log("GraphComponent: stabilizationIterationsDone event - calling fit()");
                     network.fit();
                     onStabilizationDone();
                 });
 
                 setTimeout(() => {
                     if (networkRef.current) {
-                        // console.log("GraphComponent: Initial fit after short delay");
                         networkRef.current.fit();
                     }
                 }, 50);
 
                 window.addEventListener('resize', handleResize);
-                setNetworkInstance(network);
 
                 return () => {
-                    // console.log("GraphComponent cleanup: Destroying network instance and removing resize listener.");
                     window.removeEventListener('resize', handleResize);
                     if (resizeTimeoutRef.current) {
                         clearTimeout(resizeTimeoutRef.current);
@@ -129,7 +139,7 @@ const GraphComponent: React.FC<GraphProps> = ({
                         networkRef.current.destroy();
                     }
                     networkRef.current = null;
-                    setNetworkInstance(null);
+                    setNetworkInstance(null); // Clear instance on unmount
                 };
             } catch (error) {
                 console.error(
@@ -138,26 +148,21 @@ const GraphComponent: React.FC<GraphProps> = ({
                 );
             }
         } else {
-            // console.log("GraphComponent useEffect: Conditions not met for network initialization.", {
-            //     graphRefCurrent: !!graphRef.current,
-            //     hasNodesData: !!nodesData,
-            //     hasEdgesData: !!edgesData,
-            //     nodesDataLength: nodesData?.length
-            // });
             if (networkRef.current) {
-                // console.log("GraphComponent useEffect: Data became empty/invalid, destroying existing network.");
                 networkRef.current.destroy();
                 networkRef.current = null;
                 setNetworkInstance(null);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
-        nodesData,
-        edgesData,
-        options, // options is a dependency
-        onNodeClick,
-        onStabilizationDone,
-        setNetworkInstance,
+        // Dependencies should be stable if possible
+        nodesData, // These can change
+        edgesData, // These can change
+        options, // Should be memoized in parent if complex
+        onGraphClick, // Callback from parent
+        onStabilizationDone, // Callback from parent
+        setNetworkInstance, // Callback from parent
     ]);
 
     if (!nodesData || !edgesData) {

@@ -8,7 +8,7 @@ const LoadingContainer = styled.div`
     right: 0;
     bottom: 0;
     display: flex;
-    flex-direction: column; // Stack spinner and text
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: rgba(
@@ -16,8 +16,8 @@ const LoadingContainer = styled.div`
         29,
         31,
         0.6
-    ); // Use theme.colors.backgroundPrimary with alpha
-    z-index: 100;
+    ); /* Use theme.colors.backgroundPrimary with alpha */
+    z-index: 100; /* High z-index to cover content */
     backdrop-filter: blur(5px) saturate(150%);
     -webkit-backdrop-filter: blur(5px) saturate(150%);
 `;

@@ -1,16 +1,16 @@
-// Import types from the main 'vis-network' entry for type checking,
-// but runtime objects will come from window.vis
 import {
-    DataSet as VisDataSetConstructor, // Alias to avoid conflict if window.vis.DataSet is typed
-    Network as VisNetworkConstructor, // Alias
+    DataSet as VisDataSetConstructor,
+    Network as VisNetworkConstructor,
     IdType,
     Node,
     Edge,
     Options,
     NodeOptions,
     EdgeOptions,
-    Color,
+    Color as VisNetworkNodeColor, // For nodes (can be complex object)
+    // EdgeOptionsColor is not directly exported, use EdgeOptions['color']
     Font,
+    ArrowHead,
 } from 'vis-network';
 
 export interface LanguageNode extends Node {
@@ -49,17 +49,32 @@ export interface CategoryShortToFullName {
     [shortName: string]: string;
 }
 
+// For storing original styles
 export interface VisNodeStyle {
-    color: { background: string; border: string };
-    font: { color: string };
-    borderWidth: number;
+    color?: VisNetworkNodeColor | string;
+    font?: Font | string;
+    borderWidth?: number;
     label: string;
+    shadow?: NodeOptions['shadow'];
+}
+
+export interface VisEdgeStyle {
+    color?: EdgeOptions['color']; // Use EdgeOptions['color'] directly
+    width?: number;
+    arrows?:
+        | string
+        | {
+              to?: ArrowHead | boolean;
+              middle?: ArrowHead | boolean;
+              from?: ArrowHead | boolean;
+          };
+    dashes?: boolean | number[];
+    smooth?: EdgeOptions['smooth'];
 }
 
 export type AllNodesOriginalStyles = Map<string, VisNodeStyle>;
+export type AllEdgesOriginalStyles = Map<string, VisEdgeStyle>;
 
-// These types now refer to the constructor types from vis-network for type safety
-// The actual instances will be created via window.vis.DataSet
 export type VisDataSetNodes = InstanceType<
     typeof VisDataSetConstructor<LanguageNode, 'id'>
 >;
@@ -67,16 +82,23 @@ export type VisDataSetEdges = InstanceType<
     typeof VisDataSetConstructor<InfluenceEdge, 'id'>
 >;
 
-// Extend the global Window interface
 declare global {
     interface Window {
         vis: {
             DataSet: typeof VisDataSetConstructor;
             Network: typeof VisNetworkConstructor;
-            // Add other vis objects if needed, e.g., util
         };
     }
 }
 
-// Re-export Options and other specific types if they are used directly elsewhere
-export type { Options, NodeOptions, EdgeOptions, Color, Font, IdType };
+// Re-export main Color type for nodes as VisNetworkNodeColor for clarity if needed elsewhere
+// Do not re-export EdgeOptionsColor as it's not a standalone export from vis-network
+export type {
+    Options,
+    NodeOptions,
+    EdgeOptions,
+    VisNetworkNodeColor,
+    Font,
+    IdType,
+    ArrowHead,
+};

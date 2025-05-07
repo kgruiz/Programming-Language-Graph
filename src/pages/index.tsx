@@ -8,9 +8,10 @@ import type {
     Options,
     NodeOptions,
     EdgeOptions,
-    Color,
+    VisNetworkNodeColor,
     Font,
     IdType,
+    ArrowHead,
 } from '@/types';
 
 import Controls from '@/components/Controls';
@@ -29,17 +30,20 @@ import {
 
 import {
     LanguageNode,
+    InfluenceEdge,
     AllNodesOriginalStyles,
+    AllEdgesOriginalStyles,
     VisNodeStyle,
+    VisEdgeStyle,
     VisDataSetNodes,
     VisDataSetEdges,
     CategoryShortToFullName as CategoryShortToFullNameType,
-    InfluenceEdge,
 } from '@/types';
 import theme from '@/styles/theme';
 
 declare const vis: any;
 
+// Forward ref if needed for direct DOM access, but usually not for vis.js instance
 const GraphComponentWithNoSSR = dynamic(() => import('@/components/Graph'), {
     ssr: false,
 });
@@ -50,6 +54,7 @@ const PageContainer = styled.div`
     height: 100vh;
     width: 100vw;
     overflow: hidden;
+    background-color: ${(props) => props.theme.colors.backgroundPrimary};
 `;
 
 const MainContent = styled.div`
@@ -58,7 +63,7 @@ const MainContent = styled.div`
     flex: 1;
     min-height: 0;
     position: relative;
-    overflow: hidden; /* Important for containing absolute positioned children like Sidebar */
+    overflow: hidden;
 `;
 
 interface GroupOptionsExtended extends NodeOptions {
@@ -78,6 +83,7 @@ interface GraphOptionsExtended extends Options {
     edges?: EdgeOptions;
 }
 
+// Memoize graphOptionsBase to prevent it from causing re-renders if passed as prop
 const graphOptionsBase: GraphOptionsExtended = {
     autoResize: true,
     width: '100%',
@@ -87,9 +93,9 @@ const graphOptionsBase: GraphOptionsExtended = {
             enabled: true,
             direction: 'UD',
             sortMethod: 'directed',
-            levelSeparation: 190, // Increased
-            nodeSpacing: 170, // Increased
-            treeSpacing: 250, // Increased
+            levelSeparation: 200,
+            nodeSpacing: 180,
+            treeSpacing: 260,
         },
     },
     nodes: {
@@ -101,17 +107,17 @@ const graphOptionsBase: GraphOptionsExtended = {
             strokeWidth: 0,
         },
         borderWidth: 1.5,
-        borderWidthSelected: 3, // Thicker selection border
+        borderWidthSelected: 3,
         shapeProperties: {
             borderRadius: parseInt(theme.borderRadius.medium, 10),
         },
-        margin: { top: 14, right: 22, bottom: 14, left: 22 }, // Increased margin
+        margin: { top: 15, right: 25, bottom: 15, left: 25 },
         shadow: {
             enabled: true,
             color: theme.colors.nodeShadow,
-            size: 10, // Softer, larger shadow
-            x: 4,
-            y: 5,
+            size: 8,
+            x: 3,
+            y: 4,
         },
         color: {
             background: theme.colors.nodeBackground,
@@ -130,39 +136,38 @@ const graphOptionsBase: GraphOptionsExtended = {
         arrows: {
             to: {
                 enabled: true,
-                scaleFactor: 0.7,
+                scaleFactor: 0.75,
                 type: 'arrow',
             },
-        },
+        } as EdgeOptions['arrows'],
         smooth: {
             enabled: true,
             type: 'cubicBezier',
             forceDirection: 'vertical',
-            roundness: 0.45, // Slightly more curve
+            roundness: 0.5,
         },
         color: {
             color: theme.colors.separator,
             highlight: theme.colors.accentBlue,
             hover: theme.colors.contentTertiary,
             inherit: false,
-            opacity: 1,
+            opacity: 0.8,
         },
-        width: 1.3, // Slightly thicker edges
-        hoverWidth: 2,
-        selectionWidth: 2.5,
+        width: 1.5,
+        hoverWidth: 2.2,
+        selectionWidth: 2.8,
     },
     physics: { enabled: false },
     interaction: {
         dragNodes: true,
         dragView: true,
         zoomView: true,
-        tooltipDelay: 250, // Slightly longer delay
+        tooltipDelay: 300,
         navigationButtons: true,
         keyboard: true,
         selectConnectedEdges: false,
     },
     groups: {
-        // Muted, more uniform group colors for Apple style
         c_syntax_algol: { color: { background: '#3A424D', border: '#555E6B' } },
         c_syntax_core: { color: { background: '#3D3D44', border: '#585860' } },
         c_syntax_jvm: { color: { background: '#423C4A', border: '#5D5765' } },
@@ -203,14 +208,11 @@ if (graphOptionsBase.groups) {
                         baseColor.background || theme.colors.nodeBackground,
                     border: theme.colors.accentBlue,
                 };
-                // More subtle hover for groups
                 group.color.hover = {
-                    background:
-                        baseColor.background || theme.colors.nodeBackground,
-                    // Example of slightly lightening a border color if you had tinycolor or similar:
-                    // border: baseColor.border ? tinycolor(baseColor.border).lighten(5).toString() : theme.colors.nodeBorder,
-                    // For now, just use a predefined hover border or the existing border
-                    border: theme.colors.controlHoverBorder, // Or baseColor.border
+                    background: baseColor.background
+                        ? theme.colors.backgroundTertiary
+                        : theme.colors.backgroundTertiary,
+                    border: baseColor.border || theme.colors.nodeBorder,
                 };
             }
         }
@@ -236,21 +238,12 @@ const HomePage: React.FC = () => {
     );
 
     const allNodesOriginalStylesRef = useRef<AllNodesOriginalStyles>(new Map());
-    const networkInstanceRef = useRef<any | null>(null);
+    const allEdgesOriginalStylesRef = useRef<AllEdgesOriginalStyles>(new Map());
+    const networkInstanceRef = useRef<any | null>(null); // Keep this to potentially call network methods directly if needed
 
     useEffect(() => {
         if (isVisScriptLoaded) {
-            if (
-                typeof window.vis === 'undefined' ||
-                !window.vis.DataSet ||
-                !window.vis.Network
-            ) {
-                console.warn(
-                    'Data initialization useEffect: window.vis or its properties (DataSet/Network) are still UNDEFINED even though isVisScriptLoaded is true. Retrying initialization may be needed if script load had issues.'
-                );
-                return;
-            }
-            // console.log('Data initialization useEffect: vis script IS loaded and window.vis.DataSet IS available. Processing data...');
+            if (!window.vis?.DataSet || !window.vis?.Network) return;
 
             const processedNodes: LanguageNode[] = rawNodes.map((node) => {
                 const originalLabel = node.label;
@@ -297,151 +290,290 @@ const HomePage: React.FC = () => {
 
             setNodesDataSet(newNodesDataSet);
             setEdgesDataSet(newEdgesDataSet);
-            // console.log('Data initialization useEffect: DataSets created and set to state');
 
-            const tempStyles = new Map<string, VisNodeStyle>();
+            const tempNodeStyles = new Map<string, VisNodeStyle>();
             newNodesDataSet.forEach((node: LanguageNode) => {
                 const groupSettings = graphOptionsBase.groups?.[node.group];
-                const defaultNodeStyle = graphOptionsBase.nodes?.color as
-                    | Color
-                    | undefined;
-                const defaultNodeFont = graphOptionsBase.nodes?.font as
-                    | Font
-                    | undefined;
-
-                let bg =
-                    defaultNodeStyle?.background || theme.colors.nodeBackground;
-                let bd = defaultNodeStyle?.border || theme.colors.nodeBorder;
-                let fontColor = defaultNodeFont?.color || theme.colors.nodeText;
-
-                if (
-                    groupSettings?.color &&
-                    typeof groupSettings.color === 'object'
-                ) {
-                    const grpColor = groupSettings.color as {
-                        background?: string;
-                        border?: string;
-                    };
-                    bg = grpColor.background || bg;
-                    bd = grpColor.border || bd;
+                let nodeColorStyle: VisNetworkNodeColor | string | undefined =
+                    graphOptionsBase.nodes?.color;
+                if (groupSettings?.color) {
+                    nodeColorStyle = groupSettings.color;
                 }
-                tempStyles.set(node.id as string, {
-                    color: { background: bg, border: bd },
-                    font: { color: fontColor },
+
+                tempNodeStyles.set(node.id as string, {
+                    color: nodeColorStyle || {
+                        background: theme.colors.nodeBackground,
+                        border: theme.colors.nodeBorder,
+                    },
+                    font: graphOptionsBase.nodes?.font || {
+                        color: theme.colors.nodeText,
+                        size: 14,
+                    },
                     borderWidth: graphOptionsBase.nodes?.borderWidth || 1.5,
                     label: node.labelOriginal,
+                    shadow: graphOptionsBase.nodes?.shadow,
                 });
             });
-            allNodesOriginalStylesRef.current = tempStyles;
-            // console.log('Data initialization useEffect: Original styles stored');
+            allNodesOriginalStylesRef.current = tempNodeStyles;
+
+            const tempEdgeStyles = new Map<string, VisEdgeStyle>();
+            newEdgesDataSet.forEach((edge: InfluenceEdge) => {
+                const baseEdgeColorOptions = graphOptionsBase.edges?.color as
+                    | EdgeOptions['color']
+                    | undefined;
+                let edgeColorToStore: EdgeOptions['color'] | undefined =
+                    theme.colors.separator;
+
+                if (typeof baseEdgeColorOptions === 'string') {
+                    edgeColorToStore = baseEdgeColorOptions;
+                } else if (typeof baseEdgeColorOptions === 'object') {
+                    edgeColorToStore = { ...baseEdgeColorOptions };
+                }
+
+                tempEdgeStyles.set(edge.id as string, {
+                    color: edgeColorToStore,
+                    width: graphOptionsBase.edges?.width || 1.5,
+                    arrows: graphOptionsBase.edges
+                        ?.arrows as VisEdgeStyle['arrows'],
+                    smooth: graphOptionsBase.edges?.smooth,
+                });
+            });
+            allEdgesOriginalStylesRef.current = tempEdgeStyles;
+
             setAreDataSetsInitialized(true);
-            // console.log('Data initialization useEffect: setAreDataSetsInitialized(true)');
-        } else {
-            // console.log('Data initialization useEffect: isVisScriptLoaded is false. Waiting...');
         }
     }, [isVisScriptLoaded]);
 
-    const handleNodeClick = useCallback(
-        (nodeId: string | null) => {
-            setSelectedNodeId(nodeId);
-            // Optionally, if a node is clicked, reset highlights if it's not part of the current highlight
-            if (nodeId && activeHighlightType) {
-                const node = nodesDataSet?.get(
-                    nodeId as IdType
-                ) as LanguageNode | null;
-                if (node) {
-                    const langRankings =
-                        languageRankingsData[node.labelOriginal];
-                    let isMatch = false;
-                    if (
-                        langRankings &&
-                        langRankings[selectedHighlightCategory] !== undefined
-                    ) {
-                        const score = langRankings[selectedHighlightCategory];
-                        if (activeHighlightType === 'good' && score >= 4)
-                            isMatch = true;
-                        if (activeHighlightType === 'bad' && score <= 2)
-                            isMatch = true;
-                    }
-                    if (!isMatch) {
-                        // If the clicked node is not part of the highlight, reset highlights
-                        // This is an opinionated UX choice.
-                        // resetNodeHighlights();
-                    }
-                }
+    const resetAllGraphElementsToOriginalStyle = useCallback(() => {
+        if (!nodesDataSet || !edgesDataSet || !areDataSetsInitialized) return;
+
+        const nodeUpdates: Partial<LanguageNode>[] = [];
+        allNodesOriginalStylesRef.current.forEach((style, id) => {
+            nodeUpdates.push({
+                id: id as IdType,
+                ...style,
+            } as Partial<LanguageNode>);
+        });
+        if (nodeUpdates.length > 0) nodesDataSet.update(nodeUpdates);
+
+        const edgeUpdates: Partial<InfluenceEdge>[] = [];
+        allEdgesOriginalStylesRef.current.forEach((style, id) => {
+            edgeUpdates.push({
+                id: id as IdType,
+                ...style,
+            } as Partial<InfluenceEdge>);
+        });
+        if (edgeUpdates.length > 0) edgesDataSet.update(edgeUpdates);
+
+        setActiveHighlightType(null);
+    }, [nodesDataSet, edgesDataSet, areDataSetsInitialized]);
+
+    const highlightNodeLineage = useCallback(
+        (nodeId: string) => {
+            if (!nodesDataSet || !edgesDataSet || !areDataSetsInitialized)
+                return;
+            resetAllGraphElementsToOriginalStyle();
+
+            const nodeUpdates: Partial<LanguageNode>[] = [];
+            const edgeUpdates: Partial<InfluenceEdge>[] = [];
+
+            allNodesOriginalStylesRef.current.forEach((origStyle, id) => {
+                nodeUpdates.push({
+                    id: id as IdType,
+                    color: {
+                        background: theme.colors.dimmedNodeBackground,
+                        border: theme.colors.dimmedNodeBorder,
+                    } as VisNetworkNodeColor,
+                    font: { color: theme.colors.dimmedNodeText },
+                    shadow: { enabled: false },
+                });
+            });
+            allEdgesOriginalStylesRef.current.forEach((origStyle, id) => {
+                edgeUpdates.push({
+                    id: id as IdType,
+                    color: {
+                        color: theme.colors.dimmedEdgeColor,
+                        opacity: 0.3,
+                    } as EdgeOptions['color'],
+                    width: (origStyle.width || 1.5) * 0.8,
+                    arrows: origStyle.arrows,
+                    smooth: origStyle.smooth,
+                });
+            });
+
+            const selectedNodeOriginalStyle =
+                allNodesOriginalStylesRef.current.get(nodeId);
+            if (selectedNodeOriginalStyle) {
+                nodeUpdates.push({
+                    id: nodeId as IdType,
+                    color: {
+                        background:
+                            (
+                                selectedNodeOriginalStyle.color as VisNetworkNodeColor
+                            )?.background || theme.colors.nodeBackground,
+                        border: theme.colors.accentBlue,
+                    },
+                    font: selectedNodeOriginalStyle.font,
+                    borderWidth: 3,
+                    shadow: {
+                        enabled: true,
+                        color: `${theme.colors.accentBlue}99`,
+                        size: 12,
+                        x: 0,
+                        y: 0,
+                    },
+                });
             }
+
+            edgesDataSet
+                ?.get({ filter: (edge) => edge.to === nodeId })
+                .forEach((edge) => {
+                    const parentId = edge.from as string;
+                    const parentNodeOriginalStyle =
+                        allNodesOriginalStylesRef.current.get(parentId);
+                    if (parentNodeOriginalStyle) {
+                        nodeUpdates.push({
+                            id: parentId as IdType,
+                            color: {
+                                background:
+                                    (
+                                        parentNodeOriginalStyle.color as VisNetworkNodeColor
+                                    )?.background ||
+                                    theme.colors.nodeBackground,
+                                border: theme.colors.accentPurple,
+                            },
+                            font: parentNodeOriginalStyle.font,
+                            borderWidth: 2.5,
+                            shadow: {
+                                enabled: true,
+                                color: `${theme.colors.accentPurple}80`,
+                                size: 10,
+                                x: 0,
+                                y: 0,
+                            },
+                        });
+                    }
+                    edgeUpdates.push({
+                        id: edge.id,
+                        color: {
+                            color: theme.colors.accentPurple,
+                            opacity: 1,
+                        } as EdgeOptions['color'],
+                        width: 2.5,
+                    });
+                });
+
+            edgesDataSet
+                ?.get({ filter: (edge) => edge.from === nodeId })
+                .forEach((edge) => {
+                    const childId = edge.to as string;
+                    const childNodeOriginalStyle =
+                        allNodesOriginalStylesRef.current.get(childId);
+                    if (childNodeOriginalStyle) {
+                        nodeUpdates.push({
+                            id: childId as IdType,
+                            color: {
+                                background:
+                                    (
+                                        childNodeOriginalStyle.color as VisNetworkNodeColor
+                                    )?.background ||
+                                    theme.colors.nodeBackground,
+                                border: theme.colors.accentOrange,
+                            },
+                            font: childNodeOriginalStyle.font,
+                            borderWidth: 2.5,
+                            shadow: {
+                                enabled: true,
+                                color: `${theme.colors.accentOrange}80`,
+                                size: 10,
+                                x: 0,
+                                y: 0,
+                            },
+                        });
+                    }
+                    edgeUpdates.push({
+                        id: edge.id,
+                        color: {
+                            color: theme.colors.accentOrange,
+                            opacity: 1,
+                        } as EdgeOptions['color'],
+                        width: 2.5,
+                    });
+                });
+
+            if (nodeUpdates.length > 0) nodesDataSet.update(nodeUpdates);
+            if (edgeUpdates.length > 0 && edgesDataSet)
+                edgesDataSet.update(edgeUpdates);
         },
-        [activeHighlightType, selectedHighlightCategory, nodesDataSet]
+        [
+            nodesDataSet,
+            edgesDataSet,
+            areDataSetsInitialized,
+            resetAllGraphElementsToOriginalStyle,
+        ]
     );
 
-    const handleCloseSidebar = useCallback(() => {
-        setSelectedNodeId(null);
-    }, []);
-
-    const handleStabilizationDone = useCallback(() => {
-        // console.log('HomePage: stabilizationIterationsDone received by HomePage');
-    }, []);
-
-    const setNetwork = useCallback((network: any | null) => {
-        networkInstanceRef.current = network;
-    }, []);
-
-    const highlightNodes = useCallback(
+    const highlightCategoryNodes = useCallback(
         (category: string, type: 'good' | 'bad') => {
-            if (
-                !nodesDataSet ||
-                !allNodesOriginalStylesRef.current ||
-                !isVisScriptLoaded ||
-                !areDataSetsInitialized
-            )
-                return;
+            if (!nodesDataSet || !areDataSetsInitialized) return;
+            resetAllGraphElementsToOriginalStyle();
 
-            const updates: Partial<LanguageNode>[] = [];
+            const nodeUpdates: Partial<LanguageNode>[] = [];
+            const edgeUpdates: Partial<InfluenceEdge>[] = [];
+
+            allEdgesOriginalStylesRef.current.forEach((origStyle, id) => {
+                edgeUpdates.push({
+                    id: id as IdType,
+                    color: {
+                        color: theme.colors.dimmedEdgeColor,
+                        opacity: 0.3,
+                    } as EdgeOptions['color'],
+                    width: (origStyle.width || 1.5) * 0.8,
+                });
+            });
+
             nodesDataSet.getIds().forEach((nodeIdUntyped) => {
                 const nodeId = nodeIdUntyped as string;
                 const node = nodesDataSet.get(nodeId as IdType) as LanguageNode;
                 const originalStyle =
                     allNodesOriginalStylesRef.current.get(nodeId);
-
                 if (!node || !originalStyle) return;
 
                 const langRankings = languageRankingsData[node.labelOriginal];
                 let isMatch = false;
-
                 if (langRankings && langRankings[category] !== undefined) {
                     const score = langRankings[category];
                     if (type === 'good' && score >= 4) isMatch = true;
                     if (type === 'bad' && score <= 2) isMatch = true;
                 }
 
-                let newStyle: Partial<LanguageNode>;
                 if (isMatch) {
-                    newStyle = {
+                    nodeUpdates.push({
                         id: node.id,
                         color: {
                             border:
                                 type === 'good'
                                     ? theme.colors.accentGreen
                                     : theme.colors.accentRed,
-                            background: (originalStyle.color as Color)
-                                .background,
+                            background:
+                                (originalStyle.color as VisNetworkNodeColor)
+                                    ?.background || theme.colors.nodeBackground,
                         },
-                        borderWidth: 2.8, // Emphasize highlighted nodes more
-                        font: { color: (originalStyle.font as Font).color }, // Keep original font color unless specified
+                        borderWidth: 2.8,
+                        font: originalStyle.font,
                         shadow: {
-                            // Optionally enhance shadow for highlighted nodes
                             enabled: true,
                             color:
                                 type === 'good'
-                                    ? `${theme.colors.accentGreen}80`
-                                    : `${theme.colors.accentRed}80`,
+                                    ? `${theme.colors.accentGreen}99`
+                                    : `${theme.colors.accentRed}99`,
                             size: 12,
                             x: 0,
-                            y: 0, // Halo effect
+                            y: 0,
                         },
-                    };
+                    });
                 } else {
-                    newStyle = {
+                    nodeUpdates.push({
                         id: node.id,
                         color: {
                             background: theme.colors.dimmedNodeBackground,
@@ -449,124 +581,209 @@ const HomePage: React.FC = () => {
                         },
                         borderWidth: originalStyle.borderWidth,
                         font: { color: theme.colors.dimmedNodeText },
-                        shadow: { enabled: false }, // Remove shadow for dimmed nodes for more focus
-                    };
+                        shadow: { enabled: false },
+                    });
                 }
-                updates.push(newStyle);
             });
-            if (updates.length > 0) {
-                nodesDataSet.update(updates);
-            }
+            if (nodeUpdates.length > 0) nodesDataSet.update(nodeUpdates);
+            if (edgeUpdates.length > 0 && edgesDataSet)
+                edgesDataSet.update(edgeUpdates);
         },
-        [isVisScriptLoaded, areDataSetsInitialized, nodesDataSet]
+        [
+            nodesDataSet,
+            edgesDataSet,
+            areDataSetsInitialized,
+            resetAllGraphElementsToOriginalStyle,
+        ]
     );
 
-    const resetNodeHighlights = useCallback(() => {
-        if (
-            !nodesDataSet ||
-            !allNodesOriginalStylesRef.current ||
-            !isVisScriptLoaded ||
-            !areDataSetsInitialized
-        )
-            return;
-        setActiveHighlightType(null);
+    // This function is now passed to GraphComponent
+    const handleGraphClick = useCallback(
+        (
+            type: 'node' | 'edge' | 'background',
+            id: IdType | null,
+            params: any
+        ) => {
+            console.log(
+                '>>>> HomePage: handleGraphClick. Type:',
+                type,
+                'ID:',
+                id
+            ); // DEBUG
+            if (type === 'node' && id) {
+                setSelectedNodeId(id as string);
+                highlightNodeLineage(id as string);
+                setActiveHighlightType(null);
+            } else if (type === 'edge' && id && edgesDataSet && nodesDataSet) {
+                // Add null checks for datasets
+                const clickedEdgeId = id;
+                const edge = edgesDataSet.get(clickedEdgeId) as InfluenceEdge;
+                if (edge) {
+                    resetAllGraphElementsToOriginalStyle();
+                    setActiveHighlightType(null);
 
-        const updates: Partial<LanguageNode>[] = [];
-        nodesDataSet.getIds().forEach((nodeIdUntyped) => {
-            const nodeId = nodeIdUntyped as string;
-            const originalStyle = allNodesOriginalStylesRef.current.get(nodeId);
-            if (originalStyle) {
-                updates.push({
-                    id: nodeId as IdType,
-                    color: originalStyle.color,
-                    font: originalStyle.font,
-                    borderWidth: originalStyle.borderWidth,
-                    shadow: graphOptionsBase.nodes?.shadow, // Reset to default shadow options
-                });
+                    const nodeUpdates: Partial<LanguageNode>[] = [];
+                    const edgeUpdates: Partial<InfluenceEdge>[] = [];
+
+                    allNodesOriginalStylesRef.current.forEach(
+                        (origStyle, nId) => {
+                            nodeUpdates.push({
+                                id: nId as IdType,
+                                color: {
+                                    background:
+                                        theme.colors.dimmedNodeBackground,
+                                    border: theme.colors.dimmedNodeBorder,
+                                },
+                                font: { color: theme.colors.dimmedNodeText },
+                                shadow: { enabled: false },
+                            });
+                        }
+                    );
+                    allEdgesOriginalStylesRef.current.forEach(
+                        (origStyle, eId) => {
+                            if (eId !== clickedEdgeId) {
+                                edgeUpdates.push({
+                                    id: eId as IdType,
+                                    color: {
+                                        color: theme.colors.dimmedEdgeColor,
+                                        opacity: 0.3,
+                                    } as EdgeOptions['color'],
+                                    width: (origStyle.width || 1.5) * 0.8,
+                                });
+                            }
+                        }
+                    );
+
+                    const fromNodeOriginalStyle =
+                        allNodesOriginalStylesRef.current.get(
+                            edge.from as string
+                        );
+                    if (fromNodeOriginalStyle) {
+                        nodeUpdates.push({
+                            id: edge.from,
+                            color: {
+                                background: (
+                                    fromNodeOriginalStyle.color as VisNetworkNodeColor
+                                )?.background,
+                                border: theme.colors.accentPurple,
+                            },
+                            font: fromNodeOriginalStyle.font,
+                            borderWidth: 2.5,
+                            shadow: {
+                                enabled: true,
+                                color: `${theme.colors.accentPurple}80`,
+                                size: 10,
+                                x: 0,
+                                y: 0,
+                            },
+                        });
+                    }
+                    const toNodeOriginalStyle =
+                        allNodesOriginalStylesRef.current.get(
+                            edge.to as string
+                        );
+                    if (toNodeOriginalStyle) {
+                        nodeUpdates.push({
+                            id: edge.to,
+                            color: {
+                                background: (
+                                    toNodeOriginalStyle.color as VisNetworkNodeColor
+                                )?.background,
+                                border: theme.colors.accentOrange,
+                            },
+                            font: toNodeOriginalStyle.font,
+                            borderWidth: 2.5,
+                            shadow: {
+                                enabled: true,
+                                color: `${theme.colors.accentOrange}80`,
+                                size: 10,
+                                x: 0,
+                                y: 0,
+                            },
+                        });
+                    }
+                    edgeUpdates.push({
+                        id: clickedEdgeId,
+                        color: {
+                            color: theme.colors.accentBlue,
+                            opacity: 1,
+                        } as EdgeOptions['color'],
+                        width: 3,
+                    });
+
+                    if (nodeUpdates.length > 0)
+                        nodesDataSet.update(nodeUpdates);
+                    if (edgeUpdates.length > 0)
+                        edgesDataSet.update(edgeUpdates);
+
+                    setSelectedNodeId(null);
+                    setActiveHighlightType(null);
+                }
+            } else if (type === 'background') {
+                setSelectedNodeId(null);
+                resetAllGraphElementsToOriginalStyle();
             }
-        });
-        if (updates.length > 0) {
-            nodesDataSet.update(updates);
-        }
-    }, [isVisScriptLoaded, areDataSetsInitialized, nodesDataSet]);
+        },
+        [
+            highlightNodeLineage,
+            resetAllGraphElementsToOriginalStyle,
+            setSelectedNodeId,
+            setActiveHighlightType,
+            nodesDataSet,
+            edgesDataSet,
+        ]
+    );
+
+    const handleCloseSidebar = useCallback(() => {
+        setSelectedNodeId(null);
+    }, []);
+
+    const handleStabilizationDone = useCallback(() => {}, []);
+    const setNetwork = useCallback((network: any | null) => {
+        networkInstanceRef.current = network;
+    }, []);
 
     const handleHighlightGood = () => {
         if (activeHighlightType === 'good' && selectedHighlightCategory) {
-            resetNodeHighlights();
+            resetAllGraphElementsToOriginalStyle();
         } else {
-            highlightNodes(selectedHighlightCategory, 'good');
+            highlightCategoryNodes(selectedHighlightCategory, 'good');
             setActiveHighlightType('good');
+            setSelectedNodeId(null);
         }
     };
 
     const handleHighlightBad = () => {
         if (activeHighlightType === 'bad' && selectedHighlightCategory) {
-            resetNodeHighlights();
+            resetAllGraphElementsToOriginalStyle();
         } else {
-            highlightNodes(selectedHighlightCategory, 'bad');
+            highlightCategoryNodes(selectedHighlightCategory, 'bad');
             setActiveHighlightType('bad');
+            setSelectedNodeId(null);
         }
     };
 
-    // Effect to re-apply highlights when category changes while a highlight type is active
     useEffect(() => {
         if (activeHighlightType && selectedHighlightCategory) {
-            highlightNodes(selectedHighlightCategory, activeHighlightType);
+            highlightCategoryNodes(
+                selectedHighlightCategory,
+                activeHighlightType
+            );
         }
-    }, [selectedHighlightCategory, activeHighlightType, highlightNodes]);
+    }, [
+        selectedHighlightCategory,
+        activeHighlightType,
+        highlightCategoryNodes,
+    ]);
 
     const selectedNodeDetails =
         selectedNodeId && nodesDataSet
             ? (nodesDataSet.get(selectedNodeId as IdType) as LanguageNode)
             : null;
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (selectedNodeId && networkInstanceRef.current) {
-                const sidebarElement =
-                    document.getElementById('details-sidebar');
-                const graphElement = document.querySelector(
-                    '.vis-network canvas'
-                )?.parentElement;
-
-                if (
-                    sidebarElement &&
-                    !sidebarElement.contains(event.target as Node) &&
-                    graphElement &&
-                    graphElement.contains(event.target as Node)
-                ) {
-                    const pointerCoords = (event as any).pointer?.canvas || {
-                        x: event.clientX,
-                        y: event.clientY,
-                    };
-                    const clickedNodeId =
-                        networkInstanceRef.current.getNodeAt(pointerCoords);
-                    if (!clickedNodeId) {
-                        // Clicked on graph canvas, but not on a node
-                        handleCloseSidebar();
-                    }
-                } else if (
-                    sidebarElement &&
-                    !sidebarElement.contains(event.target as Node) &&
-                    (!graphElement ||
-                        !graphElement.contains(event.target as Node))
-                ) {
-                    // Clicked outside both sidebar and graph (e.g. on Controls)
-                    // Do nothing, or decide if sidebar should close
-                }
-            }
-        };
-        if (isVisScriptLoaded) {
-            document.addEventListener('click', handleClickOutside, true);
-        }
-        return () => {
-            if (isVisScriptLoaded) {
-                document.removeEventListener('click', handleClickOutside, true);
-            }
-        };
-    }, [selectedNodeId, handleCloseSidebar, isVisScriptLoaded]);
-
     const showLoadingIndicator = !isVisScriptLoaded || !areDataSetsInitialized;
+
+    // Remove the useEffect that was directly attaching 'click' listener to networkInstanceRef.current
+    // The click handling is now done via the onGraphClick prop passed to GraphComponent.
 
     return (
         <>
@@ -585,29 +802,16 @@ const HomePage: React.FC = () => {
                 src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
                 strategy="afterInteractive"
                 onLoad={() => {
-                    // console.log('vis-network SCRIPT onLoad: Fired.');
-                    if (
-                        window.vis &&
-                        typeof window.vis.DataSet === 'function' &&
-                        typeof window.vis.Network === 'function'
-                    ) {
-                        // console.log('vis-network SCRIPT onLoad: window.vis.DataSet and window.vis.Network ARE functions.');
+                    if (window.vis?.DataSet && window.vis?.Network)
                         setIsVisScriptLoaded(true);
-                    } else {
+                    else
                         console.error(
-                            'vis-network SCRIPT onLoad: window.vis or its properties (DataSet/Network) are NOT functions or undefined.',
-                            {
-                                visExists: typeof window.vis !== 'undefined',
-                                visDataSetType: typeof window.vis?.DataSet,
-                                visNetworkType: typeof window.vis?.Network,
-                                visObject: window.vis,
-                            }
+                            'vis-network script loaded but window.vis not fully initialized.'
                         );
-                    }
                 }}
-                onError={(e) => {
-                    console.error('Error loading vis-network script:', e);
-                }}
+                onError={(e) =>
+                    console.error('Error loading vis-network script:', e)
+                }
             />
             <PageContainer>
                 <Controls
@@ -619,7 +823,7 @@ const HomePage: React.FC = () => {
                     onCategoryChange={setSelectedHighlightCategory}
                     onHighlightGood={handleHighlightGood}
                     onHighlightBad={handleHighlightBad}
-                    onResetHighlights={resetNodeHighlights}
+                    onResetHighlights={resetAllGraphElementsToOriginalStyle}
                     activeHighlightType={activeHighlightType || undefined}
                 />
                 <MainContent>
@@ -632,7 +836,7 @@ const HomePage: React.FC = () => {
                                 nodesData={nodesDataSet}
                                 edgesData={edgesDataSet}
                                 options={graphOptionsBase as Options}
-                                onNodeClick={handleNodeClick}
+                                onGraphClick={handleGraphClick} // Pass the new handler
                                 onStabilizationDone={handleStabilizationDone}
                                 setNetworkInstance={setNetwork}
                             />

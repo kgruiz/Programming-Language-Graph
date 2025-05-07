@@ -25,7 +25,7 @@ const GlobalStyles = () => (
                 height: 100%;
                 display: flex;
                 flex-direction: column;
-                flex: 1; /* Ensure it takes full height */
+                flex: 1;
             }
 
             * {
@@ -33,45 +33,79 @@ const GlobalStyles = () => (
             }
 
             /* Vis Network Customizations */
-            .vis-navigation .vis-button {
+            .vis-navigation {
+                position: absolute;
+                bottom: ${theme.spacing.l};
+                right: ${theme.spacing.l}; /* Moved to bottom-right */
+                left: auto; /* Reset left */
+                z-index: 10;
                 background-color: ${theme.colors.visNavButtonBackground};
                 border: 1px solid ${theme.colors.visNavButtonBorder};
+                border-radius: ${theme.borderRadius.large};
+                padding: ${theme.spacing.s};
+                backdrop-filter: blur(12px) saturate(180%);
+                -webkit-backdrop-filter: blur(12px) saturate(180%);
+                box-shadow: ${theme.shadows.navigationControls};
+                display: flex;
+                flex-direction: column; /* Stack buttons vertically for compactness */
+                gap: ${theme.spacing.xs};
+            }
+
+            .vis-navigation .vis-button {
+                background-color: transparent;
+                border: none;
                 border-radius: ${theme.borderRadius.medium};
-                box-shadow: ${theme.shadows.control};
                 color: ${theme.colors.visNavButtonText};
                 font-size: 18px;
-                width: 34px;
-                height: 34px;
+                width: 38px;
+                height: 38px;
                 padding: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 transition: background-color 0.2s ease-in-out,
-                    box-shadow 0.2s ease-in-out;
+                    color 0.2s ease-in-out;
+                cursor: pointer;
 
                 &:hover {
-                    background-color: ${theme.colors
-                        .visNavButtonHoverBackground};
-                    box-shadow: ${theme.shadows.control},
-                        0 0 0 1px ${theme.colors.controlHoverBorder};
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: ${theme.colors.contentPrimary};
                 }
+                &:active {
+                    background-color: rgba(255, 255, 255, 0.15);
+                }
+                &:focus,
+                &:focus-visible {
+                    outline: 2px solid ${theme.colors.accentBlue}66;
+                    outline-offset: 1px;
+                }
+                /* Hide default images, use pseudo-elements for icons */
+                background-image: none !important;
+                font-family: ${theme.fonts.main}; /* Ensure consistent font */
             }
-            .vis-navigation {
-                position: absolute;
-                bottom: ${theme.spacing.m};
-                left: ${theme.spacing.m};
-                z-index: 5;
-                background-color: ${theme.colors
-                    .backgroundSecondary}99; // Semi-transparent
-                border-radius: ${theme.borderRadius
-                    .large}; // Slightly larger radius for the container
-                padding: ${theme.spacing.s};
-                backdrop-filter: blur(8px) saturate(180%);
-                -webkit-backdrop-filter: blur(8px) saturate(180%);
-                box-shadow: ${theme.shadows.sidebar};
+
+            /* Vis.js Icons - using text/symbols for simplicity */
+            /* You can replace these with SVG data URLs or an icon font for better icons */
+            .vis-zoomIn::before {
+                content: '+';
+                font-weight: bold;
             }
-            .vis-zoomExtends {
-                /* display: none !important; // Keep if original intention was to hide */
+            .vis-zoomOut::before {
+                content: '−';
+                font-weight: bold;
+            } /* Use minus sign */
+            .vis-zoomExtends::before {
+                content: '⤧';
+                font-size: 1.3em;
+                line-height: 1;
+            } /* Fit icon */
+
+            /* Hide directional buttons as they are less common in this style of graph nav */
+            .vis-up,
+            .vis-down,
+            .vis-left,
+            .vis-right {
+                display: none !important;
             }
 
             /* Custom select arrow */
@@ -87,7 +121,7 @@ const GlobalStyles = () => (
                 appearance: none;
                 padding-right: calc(
                     ${theme.spacing.s} + 1em + ${theme.spacing.m}
-                ); /* Adjusted padding */
+                );
             }
 
             /* Scrollbar styling (WebKit) */
@@ -96,7 +130,7 @@ const GlobalStyles = () => (
                 height: 8px;
             }
             ::-webkit-scrollbar-track {
-                background: transparent; /* Cleaner track */
+                background: transparent;
             }
             ::-webkit-scrollbar-thumb {
                 background: ${theme.colors.backgroundTertiary};

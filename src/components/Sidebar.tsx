@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import {
     LanguageNode,
@@ -10,7 +10,7 @@ import {
     VisDataSetNodes,
     VisDataSetEdges,
 } from '@/types';
-import theme from '@/styles/theme'; // Import theme for direct use in style prop
+import theme from '@/styles/theme';
 
 const IconWrapperSmall = styled.span`
     display: inline-flex;
@@ -93,26 +93,30 @@ interface SidebarContainerStyleProps {
 
 const SidebarContainer = styled.div<SidebarContainerStyleProps>`
     id: details-sidebar;
-    width: 380px; // Adjusted width
+    width: 380px;
+    /* Subtract top bar height and top/bottom margins from viewport height */
     max-height: calc(
-        100vh - ${(props) => props.theme.spacing.l} - 75px -
-            ${(props) => props.theme.spacing.l}
-    ); // Top and bottom margins
+        100vh - ${(props) => props.theme.spacing.topBarHeight} -
+            (${(props) => props.theme.spacing.l} * 2)
+    );
     background-color: ${(props) => props.theme.colors.sidebarBackground};
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid ${(props) => props.theme.colors.sidebarBorder};
     border-radius: ${(props) => props.theme.borderRadius.large};
     padding: ${(props) => props.theme.spacing.l};
-    padding-top: ${(props) =>
-        props.theme.spacing.xl}; // More space for close button
+    padding-top: calc(
+        ${(props) => props.theme.spacing.xl} +
+            ${(props) => props.theme.spacing.s}
+    );
     overflow-y: auto;
     color: ${(props) => props.theme.colors.sidebarListItem};
     position: absolute;
     right: ${(props) => props.theme.spacing.l};
     top: calc(
-        75px + ${(props) => props.theme.spacing.l}
-    ); // Position below controls
+        ${(props) => props.theme.spacing.topBarHeight} +
+            ${(props) => props.theme.spacing.l}
+    ); /* Position below controls */
     z-index: 1000;
     box-shadow: ${(props) => props.theme.shadows.sidebar};
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -121,15 +125,29 @@ const SidebarContainer = styled.div<SidebarContainerStyleProps>`
     transform: ${(props) =>
         props.isVisible
             ? 'translateX(0)'
-            : `translateX(${props.theme.spacing.l})`};
+            : `translateX(calc(100% + ${props.theme.spacing.l}))`};
     pointer-events: ${(props) => (props.isVisible ? 'auto' : 'none')};
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: ${(props) => props.theme.colors.contentTertiary}66;
+        border-radius: ${(props) => props.theme.borderRadius.large};
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: ${(props) => props.theme.colors.contentTertiary}99;
+    }
+    scrollbar-width: thin;
+    scrollbar-color: ${(props) => props.theme.colors.contentTertiary}66
+        transparent;
 `;
 
 const CloseButton = styled.button`
     position: absolute;
     top: ${(props) => props.theme.spacing.m};
     right: ${(props) => props.theme.spacing.m};
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(80, 80, 80, 0.5);
     border: none;
     border-radius: 50%;
     width: 32px;
@@ -142,7 +160,7 @@ const CloseButton = styled.button`
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
 
     &:hover {
-        background-color: rgba(0, 0, 0, 0.35);
+        background-color: rgba(100, 100, 100, 0.6);
         color: ${(props) => props.theme.colors.contentPrimary};
     }
     &:active {
@@ -151,16 +169,16 @@ const CloseButton = styled.button`
     &:focus,
     &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px ${(props) => props.theme.colors.accentBlue}4D;
+        box-shadow: 0 0 0 3px ${(props) => props.theme.colors.accentBlue}66;
     }
 `;
 
 const SidebarTitle = styled.h2`
     margin-top: 0;
     margin-bottom: ${(props) => props.theme.spacing.m};
-    font-size: 1.75em;
+    font-size: 1.85em;
     color: ${(props) => props.theme.colors.sidebarHeader};
-    border-bottom: 1px solid ${(props) => props.theme.colors.separator};
+    border-bottom: 1px solid ${(props) => props.theme.colors.separator}99;
     padding-bottom: ${(props) => props.theme.spacing.m};
     font-weight: 600;
     line-height: 1.2;
@@ -177,22 +195,21 @@ const LanguageTagsList = styled.ul`
     li {
         padding: ${(props) => props.theme.spacing.xs}
             ${(props) => props.theme.spacing.m};
-        border-radius: ${(props) =>
-            props.theme.borderRadius.large}; // Pill shape
+        border-radius: ${(props) => props.theme.borderRadius.large};
         font-size: 0.875em;
         font-weight: 500;
-        color: #fff;
+        color: ${(props) => props.theme.colors.contentPrimary};
         display: flex;
         align-items: center;
         line-height: 1.4;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); // Subtle shadow for tags
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     }
 `;
 
 const SectionTitle = styled.h3`
     margin-top: ${(props) => props.theme.spacing.l};
     margin-bottom: ${(props) => props.theme.spacing.s};
-    font-size: 0.875em;
+    font-size: 0.9em;
     color: ${(props) => props.theme.colors.sidebarSubheader};
     font-weight: 600;
     text-transform: uppercase;
@@ -209,6 +226,11 @@ const List = styled.ul`
         color: ${(props) => props.theme.colors.sidebarListItem};
         font-size: 0.975em;
         line-height: 1.5;
+
+        strong {
+            color: ${(props) => props.theme.colors.contentPrimary};
+            font-weight: 500;
+        }
     }
 `;
 
@@ -225,6 +247,20 @@ const PreformattedText = styled.pre`
     line-height: 1.6;
     max-height: 280px;
     overflow-y: auto;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: ${(props) => props.theme.colors.contentTertiary}4D;
+        border-radius: ${(props) => props.theme.borderRadius.large};
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: ${(props) => props.theme.colors.contentTertiary}80;
+    }
+    scrollbar-width: thin;
+    scrollbar-color: ${(props) => props.theme.colors.contentTertiary}4D
+        transparent;
 `;
 
 const CollapsibleSectionHeader = styled(SectionTitle)`
@@ -317,7 +353,14 @@ const Sidebar: React.FC<SidebarProps> = ({
     onClose,
     isVisible,
 }) => {
-    const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(false);
+    const [isRankingsCollapsed, setIsRankingsCollapsed] = useState(true); // Collapsed by default
+
+    // Reset collapse state when selectedNode changes
+    useEffect(() => {
+        if (selectedNode) {
+            setIsRankingsCollapsed(true);
+        }
+    }, [selectedNode]);
 
     if (!selectedNode || !nodesDataSet || !edgesDataSet) {
         return <SidebarContainer isVisible={false} />;
@@ -359,8 +402,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <li
                             key={`good-${tag}`}
                             style={{
-                                backgroundColor: `${theme.colors.accentGreen}33`, // 20% opacity
-                                border: `1px solid ${theme.colors.accentGreen}99`, // 60% opacity
+                                backgroundColor: `${theme.colors.accentGreen}E6`,
+                                border: `1px solid ${theme.colors.accentGreen}`,
                             }}
                         >
                             <ThumbUpIconSmall /> {tag}
@@ -370,8 +413,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <li
                             key={`bad-${tag}`}
                             style={{
-                                backgroundColor: `${theme.colors.accentRed}33`,
-                                border: `1px solid ${theme.colors.accentRed}99`,
+                                backgroundColor: `${theme.colors.accentRed}E6`,
+                                border: `1px solid ${theme.colors.accentRed}`,
                             }}
                         >
                             <ThumbDownIconSmall /> {tag}
@@ -410,9 +453,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </ToggleArrow>
             </CollapsibleSectionHeader>
             <CollapsibleContent isCollapsed={isRankingsCollapsed}>
-                <List>
-                    {langRankings ? (
-                        categoriesOrder.map((catShort: string) => {
+                {langRankings ? (
+                    <List>
+                        {categoriesOrder.map((catShort: string) => {
                             if (langRankings[catShort] === undefined)
                                 return null;
                             const score = langRankings[catShort];
@@ -423,11 +466,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                                     <strong>{score}</strong> ({legendText})
                                 </li>
                             );
-                        })
-                    ) : (
+                        })}
+                    </List>
+                ) : (
+                    <List>
                         <li>Rankings not available.</li>
-                    )}
-                </List>
+                    </List>
+                )}
             </CollapsibleContent>
 
             <SectionTitle>Basic Syntax Example</SectionTitle>

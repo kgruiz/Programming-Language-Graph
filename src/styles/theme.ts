@@ -24,17 +24,20 @@ const theme = {
         accentRedHover: '#FF3B30',
         accentRedBorder: '#D9362F',
 
+        accentPurple: '#AF52DE', // For lineage highlight (parent/ancestor)
+        accentOrange: '#FF9500', // For lineage highlight (child/descendant)
+
         // Controls
         controlBackground: '#363638',
         controlBorder: '#4A4A4C',
         controlText: '#F5F5F7',
         controlHoverBackground: '#454547',
         controlHoverBorder: '#58585C',
-        controlFocusBorder: '#0A84FF', // Blue outline on focus
+        controlFocusBorder: '#0A84FF',
 
         // Sidebar (Frosted Glass)
-        sidebarBackground: 'rgba(44, 44, 46, 0.85)', // Semi-transparent dark grey
-        sidebarBorder: 'rgba(120, 120, 120, 0.3)', // Faint border
+        sidebarBackground: 'rgba(44, 44, 46, 0.85)',
+        sidebarBorder: 'rgba(120, 120, 120, 0.3)',
         sidebarHeader: '#FFFFFF',
         sidebarSubheader: '#D1D1D6',
         sidebarListItem: '#E5E5EA',
@@ -50,16 +53,17 @@ const theme = {
         nodeText: '#F5F5F7',
         nodeShadow: 'rgba(0, 0, 0, 0.3)',
 
-        // Dimmed States
-        dimmedNodeBackground: 'rgba(30, 30, 32, 0.7)',
-        dimmedNodeBorder: 'rgba(50, 50, 52, 0.7)',
-        dimmedNodeText: '#8E8E93', // Apple's secondary label color
+        // Dimmed States & Lineage
+        dimmedNodeBackground: 'rgba(30, 30, 32, 0.5)', // More transparent
+        dimmedNodeBorder: 'rgba(50, 50, 52, 0.4)',
+        dimmedNodeText: '#7D7D82', // Darker dim text
+        dimmedEdgeColor: 'rgba(56, 56, 58, 0.3)', // #38383A with alpha
 
         // Vis.js Navigation Buttons
-        visNavButtonBackground: '#363638',
-        visNavButtonBorder: '#4A4A4C',
+        visNavButtonBackground: 'rgba(54, 54, 56, 0.85)',
+        visNavButtonBorder: 'rgba(74, 74, 76, 0.5)',
         visNavButtonText: '#E0E0E0',
-        visNavButtonHoverBackground: '#454547',
+        visNavButtonHoverBackground: 'rgba(69, 69, 71, 0.9)',
     },
     fonts: {
         main: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
@@ -71,10 +75,11 @@ const theme = {
         sidebar:
             '0 12px 38px rgba(0, 0, 0, 0.30), 0 0 12px rgba(0, 0, 0, 0.22)',
         node: '0 2px 5px rgba(0,0,0,0.25)',
+        navigationControls: '0 4px 12px rgba(0, 0, 0, 0.35)',
     },
     borderRadius: {
         small: '6px',
-        medium: '10px', // Standard Apple corner radius
+        medium: '10px',
         large: '14px',
     },
     spacing: {
@@ -83,6 +88,7 @@ const theme = {
         m: '16px',
         l: '24px',
         xl: '32px',
+        topBarHeight: '75px', // Define control bar height as a variable
     },
 };
 
